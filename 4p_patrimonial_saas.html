@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4P Patrimonial — Plataforma</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold-l:#F0D88A;--gold-d:#8B6914;--gold-bg:#FDF8EE;
+  --dark:#0F0F0F;--dark2:#1A1A1A;--dark3:#242424;--dark4:#2E2E2E;
+  --text:#F0EDE6;--text2:#A89F8C;--text3:#6B6359;
+  --green:#2D6A4F;--green-l:#52B788;--green-bg:#EAF3EE;
+  --red:#E05252;--blue:#3B82F6;
+  --r:14px;--r-sm:8px;--r-full:999px;
+  --trans:.18s ease;
+}
+body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── LAYOUT ── */
+#app{display:flex;flex-direction:column;height:100vh}
+.topbar{background:var(--dark2);border-bottom:1px solid #252525;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:100}
+.main{display:flex;flex:1;overflow:hidden}
+.sidebar{width:240px;background:var(--dark2);border-right:1px solid #252525;display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;transition:width var(--trans)}
+.content{flex:1;overflow-y:auto;background:var(--dark)}
+
+/* ── TOPBAR ── */
+.logo{font-family:'DM Serif Display',serif;font-size:18px;color:var(--gold);display:flex;align-items:center;gap:10px}
+.logo-badge{background:var(--gold);color:var(--dark);font-size:9px;font-weight:700;padding:3px 8px;border-radius:var(--r-full);letter-spacing:1px;font-family:'Sora',sans-serif}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.notif-btn{width:36px;height:36px;border-radius:var(--r-full);background:var(--dark3);border:1px solid #333;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:16px;transition:all var(--trans)}
+.notif-btn:hover{border-color:var(--gold);color:var(--gold)}
+.avatar{width:36px;height:36px;border-radius:var(--r-full);background:var(--dark4);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold);cursor:pointer}
+
+/* ── SIDEBAR ── */
+.sidebar-section{padding:16px 12px 8px;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r);margin:2px 8px;cursor:pointer;transition:all var(--trans);border:1px solid transparent;font-size:13px;color:var(--text2);position:relative}
+.nav-item:hover{background:var(--dark3);color:var(--text)}
+.nav-item.active{background:var(--dark3);color:var(--gold);border-color:#333}
+.nav-item .nav-icon{width:18px;text-align:center;font-size:15px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--gold);color:var(--dark);font-size:9px;font-weight:700;padding:2px 7px;border-radius:var(--r-full)}
+.nav-badge.green{background:var(--green-l);color:#0a2018}
+.sidebar-divider{height:1px;background:#252525;margin:8px 16px}
+
+.sidebar-bottom{margin-top:auto;padding:12px}
+.upgrade-card{background:linear-gradient(135deg,#1a2e24,#0f1a15);border:1px solid var(--green);border-radius:var(--r);padding:14px;cursor:pointer;transition:all var(--trans)}
+.upgrade-card:hover{border-color:var(--green-l)}
+.upgrade-label{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--green-l);text-transform:uppercase;margin-bottom:6px}
+.upgrade-text{font-size:11px;color:#6B9E80;line-height:1.5;margin-bottom:10px}
+.upgrade-btn{width:100%;background:var(--green);color:#fff;border:none;border-radius:var(--r-full);padding:8px;font-size:12px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;transition:opacity var(--trans)}
+.upgrade-btn:hover{opacity:.85}
+
+/* ── SCREENS ── */
+.screen{display:none;padding:28px 32px;animation:fadeIn .2s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── COMPONENTS ── */
+.page-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:24px}
+.section-label{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px}
+
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+
+.stat-card{background:var(--dark3);border:1px solid #2a2a2a;border-radius:var(--r);padding:18px;text-align:center}
+.stat-val{font-size:24px;font-weight:700;color:var(--gold)}
+.stat-label{font-size:11px;color:var(--text3);margin-top:4px}
+
+.card{background:var(--dark3);border:1px solid #2a2a2a;border-radius:var(--r);padding:20px;transition:border-color var(--trans)}
+.card:hover{border-color:#3a3a3a}
+.card-title{font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--text3);line-height:1.6}
+
+.prog-wrap{background:var(--dark4);border-radius:var(--r-full);height:6px;margin:8px 0}
+.prog-fill{background:linear-gradient(90deg,var(--gold-d),var(--gold));border-radius:var(--r-full);height:6px;transition:width .6s ease}
+
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:3px 10px;border-radius:var(--r-full)}
+.badge-gold{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3)}
+.badge-green{background:rgba(82,183,136,.15);color:var(--green-l);border:1px solid rgba(82,183,136,.3)}
+.badge-gray{background:var(--dark4);color:var(--text3);border:1px solid #333}
+.badge-blue{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+.badge-red{background:rgba(224,82,82,.15);color:#fca5a5;border:1px solid rgba(224,82,82,.3)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-full);padding:10px 22px;font-size:13px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;transition:all var(--trans);border:none}
+.btn-gold{background:var(--gold);color:var(--dark)}
+.btn-gold:hover{background:var(--gold-l)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid #333}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{opacity:.85}
+.btn-sm{padding:7px 16px;font-size:12px}
+.btn-full{width:100%}
+
+.divider{height:1px;background:#252525;margin:20px 0}
+
+/* ── AULA SIDEBAR ── */
+.aula-list{padding:0}
+.aula-item{display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;transition:all var(--trans);border-left:3px solid transparent}
+.aula-item:hover{background:var(--dark3)}
+.aula-item.active{background:var(--dark3);border-left-color:var(--gold)}
+.aula-item.locked{opacity:.4;cursor:not-allowed}
+.aula-num{width:30px;height:30px;border-radius:var(--r-full);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.num-done{background:var(--green);color:#fff}
+.num-active{background:var(--gold);color:var(--dark)}
+.num-lock{background:var(--dark4);color:var(--text3)}
+.aula-info{flex:1;min-width:0}
+.aula-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.aula-item.active .aula-name{color:var(--gold-l)}
+.aula-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ── VIDEO PLAYER ── */
+.player{background:var(--dark4);border-radius:var(--r);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;margin-bottom:20px;border:1px solid #333;position:relative;overflow:hidden}
+.play-btn{width:60px;height:60px;border-radius:var(--r-full);background:var(--gold);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform var(--trans)}
+.play-btn:hover{transform:scale(1.1)}
+.play-tri{width:0;height:0;border-style:solid;border-width:10px 0 10px 18px;border-color:transparent transparent transparent var(--dark);margin-left:3px}
+.player-tag{position:absolute;top:12px;left:12px;background:var(--gold);color:var(--dark);font-size:9px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:var(--r-full);text-transform:uppercase}
+.player-label{font-size:12px;color:var(--text2);margin-top:10px;text-align:center}
+
+/* ── MATERIAIS ── */
+.mat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.mat-card{background:var(--dark4);border:1px solid #2a2a2a;border-radius:var(--r);padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all var(--trans)}
+.mat-card:hover{border-color:var(--gold-d)}
+.mat-icon{width:36px;height:36px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.mat-label{font-size:12px;font-weight:600;color:var(--text)}
+.mat-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ── TAREFA ── */
+.tarefa-box{background:var(--dark4);border:1px solid #2a2a2a;border-radius:var(--r);padding:18px;margin-bottom:20px}
+.tarefa-label{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+.tarefa-text{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:14px}
+
+/* ── PREVIEW STRIP ── */
+.preview-strip{background:linear-gradient(135deg,#0f1f18,#0a1510);border:1px solid var(--green);border-radius:var(--r);padding:20px;margin-top:8px}
+.ps-label{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--green-l);text-transform:uppercase;margin-bottom:8px}
+.ps-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);margin-bottom:6px}
+.ps-text{font-size:12px;color:#6B9E80;line-height:1.6;margin-bottom:14px}
+
+/* ── MENTORIA MÓDULOS ── */
+.modulo-card{background:var(--dark3);border:1px solid #2a2a2a;border-radius:var(--r);padding:18px;margin-bottom:12px;transition:all var(--trans)}
+.modulo-card:hover{border-color:#3a3a3a}
+.modulo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.modulo-num{width:32px;height:32px;border-radius:var(--r-full);background:var(--gold);color:var(--dark);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modulo-num.locked{background:var(--dark4);color:var(--text3)}
+.modulo-title{font-size:14px;font-weight:600;color:var(--text);flex:1;margin:0 12px}
+.modulo-items{display:flex;gap:8px;flex-wrap:wrap}
+.modulo-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);background:var(--dark4);padding:4px 10px;border-radius:var(--r-full)}
+
+/* ── ENCONTROS ── */
+.encontro-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #222}
+.encontro-date{width:48px;text-align:center;flex-shrink:0}
+.encontro-day{font-size:20px;font-weight:700;color:var(--gold)}
+.encontro-month{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.encontro-info{flex:1}
+.encontro-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.encontro-sub{font-size:11px;color:var(--text3)}
+.encontro-action{flex-shrink:0}
+
+/* ── RANKING ── */
+.rank-row{display:flex;align-items:center;gap:14px;padding:14px;border-radius:var(--r);margin-bottom:8px;transition:all var(--trans)}
+.rank-row:hover{background:var(--dark3)}
+.rank-pos{width:28px;text-align:center;font-size:14px;flex-shrink:0}
+.rank-avatar{width:38px;height:38px;border-radius:var(--r-full);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.rank-info{flex:1}
+.rank-name{font-size:13px;font-weight:500;color:var(--text)}
+.rank-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.rank-val{font-size:13px;font-weight:700;color:var(--green-l)}
+
+/* ── INVESTIDOR ── */
+.timeline-item{display:flex;gap:14px;padding-bottom:20px;position:relative}
+.timeline-item:not(:last-child)::after{content:'';position:absolute;left:11px;top:24px;width:1px;bottom:0;background:#2a2a2a}
+.tl-dot{width:24px;height:24px;border-radius:var(--r-full);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;z-index:1}
+.tl-dot.done{background:var(--green);color:#fff}
+.tl-dot.active{background:var(--gold);color:var(--dark)}
+.tl-dot.pending{background:var(--dark4);color:var(--text3);border:1px solid #333}
+.tl-info{flex:1;padding-top:2px}
+.tl-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.tl-sub{font-size:11px;color:var(--text3)}
+
+/* ── DOC ROW ── */
+.doc-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #222;cursor:pointer;transition:all var(--trans)}
+.doc-row:hover .doc-name{color:var(--gold)}
+.doc-icon{width:32px;height:32px;border-radius:var(--r-sm);background:var(--dark4);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.doc-name{font-size:13px;color:var(--text);flex:1}
+.doc-status{font-size:11px;font-weight:600}
+
+/* ── QUIZ ── */
+.quiz-card{background:var(--dark3);border:1px solid #2a2a2a;border-radius:var(--r);padding:24px;max-width:600px}
+.quiz-q{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:20px;line-height:1.4}
+.quiz-opt{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid #333;border-radius:var(--r-full);margin-bottom:10px;cursor:pointer;transition:all var(--trans);font-size:13px;color:var(--text2)}
+.quiz-opt:hover{border-color:var(--gold);color:var(--text);background:rgba(201,168,76,.06)}
+.quiz-opt.selected{border-color:var(--gold);background:rgba(201,168,76,.1);color:var(--gold)}
+.quiz-opt-key{width:28px;height:28px;border-radius:var(--r-full);background:var(--dark4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.quiz-opt.selected .quiz-opt-key{background:var(--gold);color:var(--dark)}
+
+/* ── NOTIFICAÇÃO ── */
+.notif-panel{position:fixed;top:68px;right:16px;width:320px;background:var(--dark2);border:1px solid #333;border-radius:var(--r);box-shadow:0 16px 40px rgba(0,0,0,.6);z-index:200;display:none}
+.notif-panel.open{display:block;animation:fadeIn .15s ease}
+.notif-header{padding:16px 20px;border-bottom:1px solid #252525;font-size:13px;font-weight:600}
+.notif-item{display:flex;gap:12px;padding:14px 20px;border-bottom:1px solid #1a1a1a;cursor:pointer;transition:background var(--trans)}
+.notif-item:hover{background:var(--dark3)}
+.notif-dot{width:8px;height:8px;border-radius:var(--r-full);background:var(--gold);flex-shrink:0;margin-top:5px}
+.notif-text{font-size:12px;color:var(--text2);line-height:1.5}
+.notif-time{font-size:10px;color:var(--text3);margin-top:3px}
+
+/* ── PERFIL DROPDOWN ── */
+.perfil-panel{position:fixed;top:68px;right:16px;width:220px;background:var(--dark2);border:1px solid #333;border-radius:var(--r);box-shadow:0 16px 40px rgba(0,0,0,.6);z-index:200;display:none;overflow:hidden}
+.perfil-panel.open{display:block;animation:fadeIn .15s ease}
+.perfil-header{padding:16px;border-bottom:1px solid #252525;display:flex;align-items:center;gap:10px}
+.perfil-opt{padding:11px 16px;font-size:13px;color:var(--text2);cursor:pointer;transition:all var(--trans);display:flex;align-items:center;gap:10px}
+.perfil-opt:hover{background:var(--dark3);color:var(--text)}
+.perfil-opt.danger:hover{color:var(--red)}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex;animation:fadeIn .15s ease}
+.modal{background:var(--dark2);border:1px solid #333;border-radius:var(--r);padding:28px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto}
+.modal-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.modal-close{position:absolute;top:16px;right:16px;background:var(--dark3);border:none;border-radius:var(--r-full);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:16px}
+.input-group{margin-bottom:14px}
+.input-label{font-size:11px;color:var(--text3);margin-bottom:6px;display:block;letter-spacing:.5px}
+.input-field{width:100%;background:var(--dark3);border:1px solid #333;border-radius:var(--r-full);padding:10px 16px;font-size:13px;color:var(--text);font-family:'Sora',sans-serif;outline:none;transition:border-color var(--trans)}
+.input-field:focus{border-color:var(--gold)}
+textarea.input-field{border-radius:var(--r);resize:vertical;min-height:80px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark2);border:1px solid var(--green);border-radius:var(--r-full);padding:12px 20px;font-size:13px;color:var(--green-l);z-index:400;display:none;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast.show{display:flex;animation:slideUp .2s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:var(--dark);display:flex;align-items:center;justify-content:center;z-index:500}
+.login-box{background:var(--dark2);border:1px solid #2a2a2a;border-radius:var(--r);padding:40px;width:380px;text-align:center}
+.login-logo{font-family:'DM Serif Display',serif;font-size:28px;color:var(--gold);margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:28px}
+.login-divider{display:flex;align-items:center;gap:12px;margin:16px 0}
+.login-divider span{font-size:11px;color:var(--text3)}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:#2a2a2a}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">4P Patrimonial</div>
+    <div class="login-sub">Plataforma de Multiplicação Patrimonial</div>
+    <div class="input-group" style="text-align:left">
+      <label class="input-label">E-mail</label>
+      <input class="input-field" type="email" placeholder="seu@email.com" id="login-email" value="investidor@4ppatrimonial.com.br">
+    </div>
+    <div class="input-group" style="text-align:left">
+      <label class="input-label">Senha</label>
+      <input class="input-field" type="password" placeholder="••••••••" id="login-pass" value="12345678">
+    </div>
+    <button class="btn btn-gold btn-full" style="margin-top:8px" onclick="doLogin()">Entrar na plataforma</button>
+    <div class="login-divider"><span>ou</span></div>
+    <button class="btn btn-ghost btn-full" onclick="doLogin()">Continuar como visitante</button>
+    <div style="margin-top:16px;font-size:11px;color:var(--text3)">Ainda não tem acesso? <span style="color:var(--gold);cursor:pointer" onclick="showToast('Em breve — acesse via link de compra')">Adquira aqui</span></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">
+      4P Patrimonial
+      <span class="logo-badge">LOW TICKET</span>
+    </div>
+    <div class="topbar-right">
+      <div class="notif-btn" onclick="toggleNotif()" title="Notificações">🔔</div>
+      <div style="font-size:12px;color:var(--text2);text-align:right">
+        <div style="font-weight:500;color:var(--text)">Marcos Investidor</div>
+        <div style="font-size:10px;color:var(--text3)">Plano R$97</div>
+      </div>
+      <div class="avatar" onclick="togglePerfil()">MI</div>
+    </div>
+  </div>
+
+  <!-- NOTIF PANEL -->
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-header">Notificações <span class="badge badge-gold" style="margin-left:8px;font-size:9px">3 novas</span></div>
+    <div class="notif-item" onclick="navigate('aulas');closeDropdowns()">
+      <div class="notif-dot"></div>
+      <div>
+        <div class="notif-text">Aula 5 desbloqueada! Continue seu progresso.</div>
+        <div class="notif-time">Agora mesmo</div>
+      </div>
+    </div>
+    <div class="notif-item" onclick="navigate('mentoria');closeDropdowns()">
+      <div class="notif-dot"></div>
+      <div>
+        <div class="notif-text">Próximo encontro da mentoria: 28 de abril</div>
+        <div class="notif-time">Há 2 horas</div>
+      </div>
+    </div>
+    <div class="notif-item">
+      <div class="notif-dot" style="background:var(--green-l)"></div>
+      <div>
+        <div class="notif-text">Novo case publicado: Permuta em Santos — R$370k</div>
+        <div class="notif-time">Ontem</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERFIL PANEL -->
+  <div class="perfil-panel" id="perfil-panel">
+    <div class="perfil-header">
+      <div class="avatar" style="width:40px;height:40px;font-size:14px">MI</div>
+      <div>
+        <div style="font-size:13px;font-weight:500">Marcos Investidor</div>
+        <div style="font-size:11px;color:var(--text3)">Plano R$97</div>
+      </div>
+    </div>
+    <div class="perfil-opt" onclick="navigate('perfil');closeDropdowns()">👤 Meu perfil</div>
+    <div class="perfil-opt" onclick="navigate('dashboard');closeDropdowns()">🏠 Dashboard</div>
+    <div class="perfil-opt" onclick="openModal('modal-upgrade')">⭐ Upgrade mentoria</div>
+    <div style="height:1px;background:#252525;margin:4px 0"></div>
+    <div class="perfil-opt danger" onclick="doLogout()">🚪 Sair</div>
+  </div>
+
+  <div class="main">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-section">Principal</div>
+      <div class="nav-item active" id="nav-dashboard" onclick="navigate('dashboard')">
+        <span class="nav-icon">🏠</span> Dashboard
+      </div>
+      <div class="nav-item" id="nav-aulas" onclick="navigate('aulas')">
+        <span class="nav-icon">▶️</span> Minhas aulas
+        <span class="nav-badge">4/7</span>
+      </div>
+      <div class="nav-item" id="nav-materiais" onclick="navigate('materiais')">
+        <span class="nav-icon">📁</span> Materiais
+      </div>
+      <div class="nav-item" id="nav-tarefa" onclick="navigate('tarefa')">
+        <span class="nav-icon">✅</span> Tarefas
+        <span class="nav-badge green">1</span>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section">Mentoria</div>
+      <div class="nav-item" id="nav-mentoria" onclick="navigate('mentoria')">
+        <span class="nav-icon">🎓</span> Hub da mentoria
+      </div>
+      <div class="nav-item" id="nav-encontros" onclick="navigate('encontros')">
+        <span class="nav-icon">📅</span> Encontros
+      </div>
+      <div class="nav-item" id="nav-ranking" onclick="navigate('ranking')">
+        <span class="nav-icon">🏆</span> Ranking
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section">Investidor</div>
+      <div class="nav-item" id="nav-investidor" onclick="navigate('investidor')">
+        <span class="nav-icon">💰</span> Portal do investidor
+      </div>
+      <div class="nav-item" id="nav-cases" onclick="navigate('cases')">
+        <span class="nav-icon">📊</span> Cases reais
+      </div>
+      <div class="nav-item" id="nav-comunidade" onclick="navigate('comunidade')">
+        <span class="nav-icon">💬</span> Comunidade
+      </div>
+      <div class="nav-item" id="nav-perfil" onclick="navigate('perfil')">
+        <span class="nav-icon">👤</span> Meu perfil
+      </div>
+      <div class="sidebar-bottom">
+        <div class="upgrade-card" onclick="openModal('modal-upgrade')">
+          <div class="upgrade-label">Mentoria 4P Patrimonial</div>
+          <div class="upgrade-text">7 módulos · 24 encontros · Evento novembro · Ranking patrimonial</div>
+          <button class="upgrade-btn">Quero fazer upgrade ↗</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="screen active" id="screen-dashboard">
+        <div class="page-title">Bom dia, Marcos 👋</div>
+        <div class="page-sub">Seu progresso hoje no método 4P Patrimonial</div>
+        <div class="grid-4">
+          <div class="stat-card"><div class="stat-val">3/7</div><div class="stat-label">aulas concluídas</div></div>
+          <div class="stat-card"><div class="stat-val">43%</div><div class="stat-label">progresso geral</div></div>
+          <div class="stat-card"><div class="stat-val" style="color:var(--green-l)">R$280k</div><div class="stat-label">ativo projetado</div></div>
+          <div class="stat-card"><div class="stat-val">12</div><div class="stat-label">dias na plataforma</div></div>
+        </div>
+
+        <div class="section-label">Seu progresso</div>
+        <div class="card" style="margin-bottom:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div>
+              <div class="card-title">P4 — Patrimônio Multiplicado</div>
+              <div class="card-sub">Aula em andamento · 43% concluído</div>
+            </div>
+            <button class="btn btn-gold btn-sm" onclick="navigate('aulas')">Continuar aula ▶</button>
+          </div>
+          <div class="prog-wrap"><div class="prog-fill" style="width:43%"></div></div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:20px">
+          <div class="card" style="cursor:pointer" onclick="navigate('mentoria')">
+            <div class="section-label">Prévia exclusiva</div>
+            <div class="card-title" style="margin-bottom:6px">Mentoria 4P Patrimonial</div>
+            <div class="card-sub" style="margin-bottom:14px">Veja os 7 módulos que os mentorados acessam. Permuta, sociedade, escala e muito mais.</div>
+            <button class="btn btn-ghost btn-sm">Ver prévia ↗</button>
+          </div>
+          <div class="card" style="cursor:pointer" onclick="navigate('ranking')">
+            <div class="section-label">Ranking patrimonial</div>
+            <div class="card-title" style="margin-bottom:6px">Sua posição: —</div>
+            <div class="card-sub" style="margin-bottom:14px">Entre na mentoria e apareça no ranking. Os 100 primeiros ganham placa no evento de novembro.</div>
+            <button class="btn btn-ghost btn-sm">Ver ranking ↗</button>
+          </div>
+        </div>
+
+        <div class="section-label">Próximo passo sugerido</div>
+        <div class="card" style="display:flex;align-items:center;gap:16px;cursor:pointer" onclick="navigate('tarefa')">
+          <div style="width:44px;height:44px;border-radius:var(--r-full);background:rgba(201,168,76,.15);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✅</div>
+          <div style="flex:1">
+            <div class="card-title">Enviar tarefa da Aula 4</div>
+            <div class="card-sub">Simule seu primeiro empreendimento e publique na comunidade</div>
+          </div>
+          <button class="btn btn-gold btn-sm" onclick="event.stopPropagation();navigate('tarefa')">Enviar</button>
+        </div>
+      </div>
+
+      <!-- AULAS -->
+      <div class="screen" id="screen-aulas">
+        <div style="display:flex;gap:20px;height:calc(100vh - 120px)">
+          <div style="width:240px;background:var(--dark2);border-radius:var(--r);overflow-y:auto;flex-shrink:0;border:1px solid #252525">
+            <div style="padding:14px 20px;border-bottom:1px solid #252525;font-size:11px;color:var(--text3)">7 aulas · Método 4P</div>
+            <div id="aula-sidebar"></div>
+          </div>
+          <div style="flex:1;overflow-y:auto" id="aula-content"></div>
+        </div>
+      </div>
+
+      <!-- MATERIAIS -->
+      <div class="screen" id="screen-materiais">
+        <div class="page-title">Materiais</div>
+        <div class="page-sub">PDFs, planilhas e recursos de cada aula</div>
+        <div id="materiais-list"></div>
+      </div>
+
+      <!-- TAREFA -->
+      <div class="screen" id="screen-tarefa">
+        <div class="page-title">Tarefas</div>
+        <div class="page-sub">Pratique o método e envie para a comunidade</div>
+        <div id="tarefa-content"></div>
+      </div>
+
+      <!-- MENTORIA -->
+      <div class="screen" id="screen-mentoria">
+        <div class="page-title">Hub da Mentoria</div>
+        <div class="page-sub">Prévia exclusiva para alunos do low ticket</div>
+        <div style="background:linear-gradient(135deg,#1a2e24,#0f1a15);border:1px solid var(--green);border-radius:var(--r);padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px">
+          <div style="font-size:24px">🔒</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--green-l);margin-bottom:2px">Você está vendo uma prévia</div>
+            <div style="font-size:12px;color:#6B9E80">Os mentorados têm acesso completo a 7 módulos, 24 encontros ao vivo e comunidade exclusiva.</div>
+          </div>
+          <button class="btn btn-green btn-sm" style="margin-left:auto;white-space:nowrap" onclick="openModal('modal-upgrade')">Fazer upgrade</button>
+        </div>
+        <div id="mentoria-modulos"></div>
+      </div>
+
+      <!-- ENCONTROS -->
+      <div class="screen" id="screen-encontros">
+        <div class="page-title">Encontros Quinzenais</div>
+        <div class="page-sub">24 encontros ao vivo · Apenas mentorados</div>
+        <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:18px">⚡</span>
+          <div style="font-size:13px;color:var(--text2)">Próximo encontro: <strong style="color:var(--gold)">28 de abril · 19h</strong> — P2 Projeto Validado ao vivo</div>
+          <button class="btn btn-gold btn-sm" style="margin-left:auto" onclick="openModal('modal-upgrade')">Participar</button>
+        </div>
+        <div id="encontros-list"></div>
+      </div>
+
+      <!-- RANKING -->
+      <div class="screen" id="screen-ranking">
+        <div class="page-title">Ranking Patrimonial</div>
+        <div class="page-sub">Bronze · Prata · Ouro · Diamante</div>
+        <div class="grid-4" style="margin-bottom:24px">
+          <div class="stat-card"><div class="stat-val" style="color:#CD7F32">Bronze</div><div class="stat-label">1 empreendimento</div></div>
+          <div class="stat-card"><div class="stat-val" style="color:#A8A8A8">Prata</div><div class="stat-label">2 empreendimentos</div></div>
+          <div class="stat-card"><div class="stat-val" style="color:var(--gold)">Ouro</div><div class="stat-label">3 empreendimentos</div></div>
+          <div class="stat-card"><div class="stat-val" style="color:var(--green-l)">Diamante</div><div class="stat-label">5+ empreendimentos</div></div>
+        </div>
+        <div id="ranking-list"></div>
+        <div class="preview-strip" style="margin-top:16px">
+          <div class="ps-label">Sua posição</div>
+          <div class="ps-title">Seu nome pode estar aqui</div>
+          <div class="ps-text">Entre na mentoria, aplique o método e apareça no ranking. Os 100 primeiros mentorados ganham placa no evento presencial de novembro.</div>
+          <button class="btn btn-green btn-sm" onclick="openModal('modal-upgrade')">Entrar na mentoria ↗</button>
+        </div>
+      </div>
+
+      <!-- INVESTIDOR -->
+      <div class="screen" id="screen-investidor">
+        <div class="page-title">Portal do Investidor</div>
+        <div class="page-sub">Acompanhe seu ativo em tempo real</div>
+        <div class="grid-4" style="margin-bottom:24px">
+          <div class="stat-card"><div class="stat-val">R$200k</div><div class="stat-label">capital investido</div></div>
+          <div class="stat-card"><div class="stat-val" style="color:var(--green-l)">R$280k</div><div class="stat-label">ativo projetado</div></div>
+          <div class="stat-card"><div class="stat-val">40%</div><div class="stat-label">retorno estimado</div></div>
+          <div class="stat-card"><div class="stat-val">Mês 6</div><div class="stat-label">etapa atual</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-label" style="margin-bottom:14px">Cronograma</div>
+            <div id="timeline-content"></div>
+          </div>
+          <div class="card">
+            <div class="section-label" style="margin-bottom:14px">Documentos</div>
+            <div id="docs-content"></div>
+            <button class="btn btn-ghost btn-sm btn-full" style="margin-top:14px" onclick="openModal('modal-doc')">Solicitar documento</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CASES -->
+      <div class="screen" id="screen-cases">
+        <div class="page-title">Cases Reais</div>
+        <div class="page-sub">Operações reais do método 4P Patrimonial</div>
+        <div id="cases-content"></div>
+      </div>
+
+      <!-- COMUNIDADE -->
+      <div class="screen" id="screen-comunidade">
+        <div class="page-title">Comunidade 4P</div>
+        <div class="page-sub">Interaja com outros investidores e mentorados</div>
+        <div id="comunidade-content"></div>
+      </div>
+
+      <!-- PERFIL -->
+      <div class="screen" id="screen-perfil">
+        <div class="page-title">Meu Perfil</div>
+        <div class="page-sub">Gerencie suas informações e preferências</div>
+        <div id="perfil-content"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAIS -->
+<div class="modal-bg" id="modal-upgrade" onclick="closeModal('modal-upgrade')">
+  <div class="modal" onclick="event.stopPropagation()" style="position:relative">
+    <div class="modal-title">Mentoria 4P Patrimonial</div>
+    <div class="modal-sub">Eleve seu nível. Acesse os 7 módulos completos, 24 encontros quinzenais ao vivo, comunidade exclusiva e o evento presencial de novembro com premiação.</div>
+    <div class="grid-2" style="margin-bottom:20px">
+      <div class="stat-card"><div class="stat-val">7</div><div class="stat-label">módulos completos</div></div>
+      <div class="stat-card"><div class="stat-val">24</div><div class="stat-label">encontros ao vivo</div></div>
+    </div>
+    <div style="background:var(--dark3);border-radius:var(--r);padding:14px;margin-bottom:18px;font-size:13px;color:var(--text2);line-height:1.7">
+      ✅ Análise de empreendimento ao vivo<br>
+      ✅ Modelo de permuta (R$370k sem desembolso)<br>
+      ✅ Revisão de contrato com especialista<br>
+      ✅ Ranking Bronze → Diamante<br>
+      ✅ Evento presencial novembro (100 primeiros = incluso)
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold btn-full" onclick="showToast('Redirecionando para o checkout...');closeModal('modal-upgrade')">Quero por R$5.000/ano ↗</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-upgrade')">Agora não</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-tarefa" onclick="closeModal('modal-tarefa')">
+  <div class="modal" onclick="event.stopPropagation()" style="position:relative">
+    <div class="modal-title">Enviar Tarefa — Aula 4</div>
+    <div class="modal-sub">Simule seu primeiro empreendimento 4P Patrimonial.</div>
+    <div class="input-group">
+      <label class="input-label">Valor do terreno simulado</label>
+      <input class="input-field" type="text" placeholder="Ex: R$ 150.000">
+    </div>
+    <div class="input-group">
+      <label class="input-label">Retorno estimado em 12 meses</label>
+      <input class="input-field" type="text" placeholder="Ex: R$ 280.000">
+    </div>
+    <div class="input-group">
+      <label class="input-label">Sua análise e comentários</label>
+      <textarea class="input-field" placeholder="Descreva sua simulação e raciocínio..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold btn-full" onclick="showToast('Tarefa enviada com sucesso! 🎉');closeModal('modal-tarefa')">Enviar tarefa</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-tarefa')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-doc" onclick="closeModal('modal-doc')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Solicitar Documento</div>
+    <div class="modal-sub">Informe qual documento você precisa e nossa equipe enviará em até 24h.</div>
+    <div class="input-group">
+      <label class="input-label">Documento solicitado</label>
+      <input class="input-field" type="text" placeholder="Ex: Relatório de progresso Mês 7">
+    </div>
+    <div class="input-group">
+      <label class="input-label">Observações</label>
+      <textarea class="input-field" placeholder="Informações adicionais..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold btn-full" onclick="showToast('Solicitação enviada!');closeModal('modal-doc')">Solicitar</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-doc')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-case" onclick="closeModal('modal-case')">
+  <div class="modal" onclick="event.stopPropagation()" id="modal-case-inner" style="position:relative"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ <span id="toast-msg"></span></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const aulas = [
+  {num:1,p:'P1',titulo:'Ponto Estratégico',tag:'Fundamento',done:true,locked:false,
+   desc:'Aprenda a identificar terrenos com potencial de multiplicação antes que o mercado perceba.',
+   tarefa:'Identifique 3 terrenos na Baixada Santista entre 300m² e 600m² e publique os valores na comunidade.',
+   preview:null},
+  {num:2,p:'P2',titulo:'Projeto Validado',tag:'Método',done:true,locked:false,
+   desc:'Processo completo de aprovação de projeto sem burocracia e com segurança jurídica.',
+   tarefa:'Baixe o memorial descritivo e adapte para um terreno identificado na Aula 1.',
+   preview:null},
+  {num:3,p:'P3',titulo:'Posição Antecipada',tag:'Estratégia',done:true,locked:false,
+   desc:'Entrar antes do mercado perceber. Estruture a venda na planta e garanta os 5 compradores.',
+   tarefa:'Calcule as unidades necessárias para cobrir 100% do custo. Use a planilha.',
+   preview:null},
+  {num:4,p:'P4',titulo:'Patrimônio Multiplicado',tag:'Resultado',done:false,locked:false,
+   desc:'Como transformar R$200k em um ativo de R$280k em 12 meses — sem obra, sem gestão.',
+   tarefa:'Simule seu primeiro empreendimento. Qual seria seu lucro líquido hoje?',
+   preview:{titulo:'Na mentoria você vai além',texto:'Análise ao vivo, revisão de contrato com especialista e o modelo de permuta que gerou 2 casas de R$350k sem desembolso.'}},
+  {num:5,titulo:'Calculadora de retorno real',locked:true,desc:'Complete a aula 4.'},
+  {num:6,titulo:'Cases reais comentados',locked:true,desc:'R$170k→R$250k · Permuta · Sociedade'},
+  {num:7,titulo:'Seu próximo passo',locked:true,desc:'A porta de entrada para a mentoria.'},
+];
+
+const modulos = [
+  {num:1,titulo:'Fundamentos do método 4P',items:['Aula ao vivo','Gravação','PDF','Tarefa'],locked:false},
+  {num:2,titulo:'Análise de terrenos e permuta',items:['3 modelos','Planilha','Mentoria ao vivo'],locked:true},
+  {num:3,titulo:'Montando sua sociedade 4P',items:['Contratos','Divisão de lucros','Caso real'],locked:true},
+  {num:4,titulo:'Venda na planta — estratégia completa',items:['Scripts de venda','CRM','Simulação'],locked:true},
+  {num:5,titulo:'Gestão financeira do empreendimento',items:['Fluxo de caixa','DRE','Relatório'],locked:true},
+  {num:6,titulo:'Escala — próximo empreendimento',items:['Reinvestimento','Permuta avançada'],locked:true},
+  {num:7,titulo:'Patrimônio e legado',items:['Holding','Sucessão','Blindagem patrimonial'],locked:true},
+];
+
+const encontros = [
+  {dia:'28',mes:'ABR',titulo:'P2 Projeto Validado — ao vivo',sub:'Análise de terreno real com o método completo',status:'proximo'},
+  {dia:'12',mes:'MAI',titulo:'Cases de permuta — comentados',sub:'3 operações reais da Baixada Santista',status:'futuro'},
+  {dia:'26',mes:'MAI',titulo:'Montando sua primeira sociedade',sub:'Contratos, divisão e proteção jurídica',status:'futuro'},
+  {dia:'09',mes:'JUN',titulo:'Calculadora ao vivo — simulação real',sub:'Tire suas dúvidas em tempo real',status:'futuro'},
+  {dia:'15',mes:'ABR',titulo:'P1 Ponto Estratégico — revisão',sub:'Análise dos terrenos enviados pelos alunos',status:'feito'},
+  {dia:'01',mes:'ABR',titulo:'Abertura da turma — boas-vindas',sub:'Apresentação do método e primeiros passos',status:'feito'},
+];
+
+const ranking = [
+  {pos:1,ini:'MA',nome:'Marcos A.',local:'Baixada Santista',emp:3,nivel:'Diamante',cor:'#52B788',bg:'rgba(82,183,136,.15)',pat:'R$840k'},
+  {pos:2,ini:'RS',nome:'Rodrigo S.',local:'Santos',emp:2,nivel:'Ouro',cor:'#C9A84C',bg:'rgba(201,168,76,.15)',pat:'R$560k'},
+  {pos:3,ini:'CF',nome:'Camila F.',local:'Praia Grande',emp:1,nivel:'Prata',cor:'#A8A8A8',bg:'rgba(168,168,168,.15)',pat:'R$280k'},
+  {pos:4,ini:'JP',nome:'João P.',local:'São Vicente',emp:1,nivel:'Bronze',cor:'#CD7F32',bg:'rgba(205,127,50,.15)',pat:'R$250k'},
+  {pos:5,ini:'LM',nome:'Letícia M.',local:'Guarujá',emp:1,nivel:'Bronze',cor:'#CD7F32',bg:'rgba(205,127,50,.15)',pat:'R$240k'},
+];
+
+const timeline = [
+  {status:'done',mes:'Mês 1–2',titulo:'Terreno adquirido',sub:'Contrato assinado · Documentação completa'},
+  {status:'done',mes:'Mês 3–4',titulo:'Projeto aprovado',sub:'Memorial aprovado pela prefeitura'},
+  {status:'done',mes:'Mês 5–6',titulo:'5 unidades vendidas na planta',sub:'Contratos com compradores assinados'},
+  {status:'active',mes:'Mês 7–10',titulo:'Obra em andamento',sub:'Acompanhamento quinzenal disponível'},
+  {status:'pending',mes:'Mês 11',titulo:'Vistoria e entrega',sub:'Habite-se e laudo técnico'},
+  {status:'pending',mes:'Mês 12',titulo:'Ativo de R$280k entregue',sub:'Escritura em seu nome'},
+];
+
+const docs = [
+  {nome:'Contrato de participação',status:'Assinado',ok:true},
+  {nome:'Memorial descritivo',status:'Disponível',ok:true},
+  {nome:'Alvará de construção',status:'Disponível',ok:true},
+  {nome:'Relatório Mês 6',status:'Em breve',ok:false},
+  {nome:'Habite-se',status:'Pendente',ok:false},
+];
+
+const cases = [
+  {id:1,tag:'Compra e venda',titulo:'R$170k → R$250k em 6 meses',local:'Mongaguá · SP',prazo:'6 meses',retorno:'+47%',desc:'Terreno de 400m² adquirido por R$170k na planta. Projeto aprovado em 45 dias. Cinco unidades vendidas antes da obra começar. Retorno de R$80k líquido em 6 meses.',cor:'var(--gold)'},
+  {id:2,tag:'Permuta',titulo:'Terreno R$370k → 2 casas R$350k cada',local:'Praia Grande · SP',prazo:'14 meses',retorno:'R$700k',desc:'Permuta de terreno avaliado em R$370k por 2 unidades do condomínio. Saída sem desembolso de caixa. Ativo gerado: R$700k em patrimônio.',cor:'var(--green-l)'},
+  {id:3,tag:'Sociedade',titulo:'R$150k por sócio → R$250k cada',local:'Santos · SP',prazo:'12 meses',retorno:'+67%',desc:'3 sócios com R$150k cada formaram SPE para empreendimento de 6 casas. Custos divididos, lucro garantido. Cada sócio saiu com ativo de R$250k.',cor:'#93c5fd'},
+];
+
+const posts = [
+  {ini:'MA',nome:'Marcos A.',tempo:'2h',texto:'Consegui fechar o terceiro empreendimento! Terreno em Mongaguá, já com 3 das 5 unidades reservadas. O método funciona!',likes:24},
+  {ini:'CF',nome:'Camila F.',tempo:'5h',texto:'Concluí a aula 3 e já tenho 2 terrenos mapeados em Praia Grande. Quem mais está na região?',likes:11},
+  {ini:'JP',nome:'João P.',tempo:'1d',texto:'Dúvida: no case de permuta, o terreno precisa estar no nome de pessoa física ou PJ? Alguém sabe?',likes:6},
+];
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+let currentAula = 4;
+
+function renderAulaSidebar(){
+  const el = document.getElementById('aula-sidebar');
+  el.innerHTML = aulas.map(a=>`
+    <div class="aula-item ${a.locked?'locked':''} ${currentAula===a.num?'active':''}" onclick="${a.locked?'showToast(\'Complete a aula anterior primeiro\')':'selectAula('+a.num+')'}">
+      <div class="aula-num ${a.done?'num-done':a.locked?'num-lock':currentAula===a.num?'num-active':'num-lock'}">${a.done?'✓':a.locked?'🔒':a.num}</div>
+      <div class="aula-info">
+        <div class="aula-name">${a.p?a.p+' — ':''}${a.titulo}</div>
+        <div class="aula-sub">${a.done?'Concluída':a.locked?'Bloqueada':'Em andamento'}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderAulaContent(){
+  const a = aulas[currentAula-1];
+  const el = document.getElementById('aula-content');
+  if(a.locked){
+    el.innerHTML=`<div class="card" style="text-align:center;padding:40px">
+      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <div class="card-title" style="font-size:16px;margin-bottom:8px">Aula ${a.num} — ${a.titulo}</div>
+      <div class="card-sub" style="margin-bottom:20px">${a.desc}</div>
+      <button class="btn btn-gold" onclick="selectAula(4)">Voltar à aula 4</button>
+    </div>`;return;
+  }
+  el.innerHTML=`
+    <div class="player">
+      <div class="player-tag">${a.tag||'Aula '+a.num}</div>
+      <div style="text-align:center">
+        <button class="play-btn" onclick="showToast('Reproduzindo aula ${a.num}...')"><div class="play-tri"></div></button>
+        <div class="player-label">Aula ${a.num} de 7 — ${a.titulo}</div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <span class="badge badge-gold" style="margin-bottom:8px;display:inline-flex">${a.p||'Aula '+a.num}</span>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:6px">${a.titulo}</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7">${a.desc}</div>
+    </div>
+    <div class="mat-grid">
+      <div class="mat-card" onclick="showToast('Baixando PDF da Aula ${a.num}...')">
+        <div class="mat-icon" style="background:rgba(201,168,76,.12)">📄</div>
+        <div><div class="mat-label">Material PDF</div><div class="mat-sub">Resumo da aula</div></div>
+      </div>
+      <div class="mat-card" onclick="showToast('Baixando planilha da Aula ${a.num}...')">
+        <div class="mat-icon" style="background:rgba(82,183,136,.12)">📊</div>
+        <div><div class="mat-label">Planilha</div><div class="mat-sub">Modelo editável</div></div>
+      </div>
+    </div>
+    <div class="tarefa-box">
+      <div class="tarefa-label">Tarefa da aula</div>
+      <div class="tarefa-text">${a.tarefa}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-gold btn-sm" onclick="openModal('modal-tarefa')">Enviar tarefa</button>
+        <button class="btn btn-ghost btn-sm" onclick="showToast('Abrindo comunidade...');navigate(\'comunidade\')">Ver na comunidade</button>
+      </div>
+    </div>
+    ${a.preview?`<div class="preview-strip">
+      <div class="ps-label">Prévia exclusiva — mentoria 4P Patrimonial</div>
+      <div class="ps-title">${a.preview.titulo}</div>
+      <div class="ps-text">${a.preview.texto}</div>
+      <button class="btn btn-green btn-sm" onclick="openModal('modal-upgrade')">Conhecer a mentoria ↗</button>
+    </div>`:''}
+    <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+      ${currentAula>1?`<button class="btn btn-ghost btn-sm" onclick="selectAula(${currentAula-1})">← Aula anterior</button>`:''}
+      ${currentAula<7&&!aulas[currentAula].locked?`<button class="btn btn-gold btn-sm" onclick="selectAula(${currentAula+1})">Próxima aula →</button>`:''}
+      ${currentAula<7&&aulas[currentAula].locked?`<button class="btn btn-gold btn-sm" onclick="showToast('Aula marcada como concluída! ✓');if(currentAula===4){aulas[3].done=true;aulas[4].locked=false;renderAulaSidebar();}">Concluir e avançar →</button>`:''}
+    </div>`;
+}
+
+function selectAula(n){currentAula=n;renderAulaSidebar();renderAulaContent()}
+
+function renderMateriais(){
+  document.getElementById('materiais-list').innerHTML=aulas.filter(a=>!a.locked).map(a=>`
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <span class="badge badge-gold" style="margin-bottom:6px">${a.p||'Aula '+a.num}</span>
+          <div class="card-title">${a.titulo}</div>
+        </div>
+      </div>
+      <div class="mat-grid">
+        <div class="mat-card" onclick="showToast('Baixando PDF — ${a.titulo}...')">
+          <div class="mat-icon" style="background:rgba(201,168,76,.12)">📄</div>
+          <div><div class="mat-label">PDF da aula</div><div class="mat-sub">Resumo completo</div></div>
+        </div>
+        <div class="mat-card" onclick="showToast('Baixando planilha — ${a.titulo}...')">
+          <div class="mat-icon" style="background:rgba(82,183,136,.12)">📊</div>
+          <div><div class="mat-label">Planilha</div><div class="mat-sub">Modelo editável</div></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderTarefa(){
+  document.getElementById('tarefa-content').innerHTML=aulas.filter(a=>!a.locked).map((a,i)=>`
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <span class="badge ${a.done?'badge-green':'badge-gold'}" style="margin-bottom:6px">${a.done?'✓ Concluída':'Em andamento'}</span>
+          <div class="card-title">Tarefa ${a.num} — ${a.titulo}</div>
+        </div>
+        ${!a.done?`<button class="btn btn-gold btn-sm" onclick="openModal('modal-tarefa')">Enviar</button>`:`<span class="badge badge-green">Enviada ✓</span>`}
+      </div>
+      <div class="card-sub">${a.tarefa}</div>
+    </div>`).join('');
+}
+
+function renderMentoria(){
+  document.getElementById('mentoria-modulos').innerHTML=modulos.map(m=>`
+    <div class="modulo-card">
+      <div class="modulo-header">
+        <div class="modulo-num ${m.locked?'locked':''}">${m.locked?'🔒':m.num}</div>
+        <div class="modulo-title">${m.titulo}</div>
+        <span class="badge ${m.locked?'badge-gray':'badge-green'}">${m.locked?'Só na mentoria':'Liberado'}</span>
+      </div>
+      <div class="modulo-items">${m.items.map(i=>`<div class="modulo-item">• ${i}</div>`).join('')}</div>
+      ${m.locked?`<div style="margin-top:12px"><button class="btn btn-ghost btn-sm" onclick="openModal('modal-upgrade')">Desbloquear com upgrade ↗</button></div>`:''}
+    </div>`).join('');
+}
+
+function renderEncontros(){
+  document.getElementById('encontros-list').innerHTML=encontros.map(e=>`
+    <div class="encontro-row">
+      <div class="encontro-date">
+        <div class="encontro-day">${e.dia}</div>
+        <div class="encontro-month">${e.mes}</div>
+      </div>
+      <div class="encontro-info">
+        <div class="encontro-title">${e.titulo}</div>
+        <div class="encontro-sub">${e.sub}</div>
+      </div>
+      <div class="encontro-action">
+        ${e.status==='proximo'?`<button class="btn btn-gold btn-sm" onclick="openModal('modal-upgrade')">Participar</button>`:''}
+        ${e.status==='futuro'?`<button class="btn btn-ghost btn-sm" onclick="openModal('modal-upgrade')">Ver detalhes</button>`:''}
+        ${e.status==='feito'?`<span class="badge badge-green">Realizado ✓</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function renderRanking(){
+  document.getElementById('ranking-list').innerHTML=ranking.map(r=>`
+    <div class="rank-row">
+      <div class="rank-pos">${r.pos===1?'🥇':r.pos===2?'🥈':r.pos===3?'🥉':r.pos}</div>
+      <div class="rank-avatar" style="background:${r.bg};color:${r.cor}">${r.ini}</div>
+      <div class="rank-info">
+        <div class="rank-name">${r.nome}</div>
+        <div class="rank-sub">${r.emp} empreendimento${r.emp>1?'s':''} · ${r.local}</div>
+      </div>
+      <span class="badge" style="background:${r.bg};color:${r.cor};border-color:${r.cor}33">${r.nivel}</span>
+      <div class="rank-val">${r.pat}</div>
+    </div>`).join('');
+}
+
+function renderInvestidor(){
+  document.getElementById('timeline-content').innerHTML=timeline.map(t=>`
+    <div class="timeline-item">
+      <div class="tl-dot ${t.status}">${t.status==='done'?'✓':t.status==='active'?'▶':'○'}</div>
+      <div class="tl-info">
+        <div class="tl-title">${t.titulo}</div>
+        <div class="tl-sub">${t.mes} · ${t.sub}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('docs-content').innerHTML=docs.map(d=>`
+    <div class="doc-row" onclick="showToast('${d.ok?'Baixando: '+d.nome:'Documento ainda não disponível'}')">
+      <div class="doc-icon">${d.ok?'📄':'⏳'}</div>
+      <div class="doc-name">${d.nome}</div>
+      <div class="doc-status" style="color:${d.ok?'var(--green-l)':'var(--text3)'}">${d.status}</div>
+    </div>`).join('');
+}
+
+function renderCases(){
+  document.getElementById('cases-content').innerHTML=`<div class="grid-3">${cases.map(c=>`
+    <div class="card" style="cursor:pointer;border-color:#2a2a2a" onclick="openCaseModal(${c.id})">
+      <span class="badge badge-gray" style="margin-bottom:10px">${c.tag}</span>
+      <div class="card-title" style="margin-bottom:6px;font-size:15px">${c.titulo}</div>
+      <div class="card-sub" style="margin-bottom:12px">📍 ${c.local} · ⏱ ${c.prazo}</div>
+      <div style="font-size:20px;font-weight:700;color:${c.cor};margin-bottom:12px">${c.retorno}</div>
+      <button class="btn btn-ghost btn-sm btn-full">Ver detalhes ↗</button>
+    </div>`).join('')}</div>`;
+}
+
+function openCaseModal(id){
+  const c=cases.find(x=>x.id===id);
+  document.getElementById('modal-case-inner').innerHTML=`
+    <span class="badge badge-gray" style="margin-bottom:10px">${c.tag}</span>
+    <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:6px">${c.titulo}</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">📍 ${c.local} · ⏱ ${c.prazo}</div>
+    <div style="font-size:28px;font-weight:700;color:${c.cor};margin-bottom:16px">${c.retorno}</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px">${c.desc}</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold btn-sm" onclick="openModal('modal-upgrade')">Replicar este case ↗</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-case')">Fechar</button>
+    </div>`;
+  openModal('modal-case');
+}
+
+function renderComunidade(){
+  document.getElementById('comunidade-content').innerHTML=`
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;font-weight:500">Publicar na comunidade</div>
+      <textarea class="input-field" placeholder="Compartilhe seu progresso, dúvidas ou conquistas..." style="margin-bottom:10px;border-radius:var(--r)"></textarea>
+      <button class="btn btn-gold btn-sm" onclick="showToast('Post publicado na comunidade! 🎉')">Publicar</button>
+    </div>
+    ${posts.map(p=>`
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div class="rank-avatar" style="width:34px;height:34px;background:rgba(201,168,76,.15);color:var(--gold);font-size:11px">${p.ini}</div>
+        <div>
+          <div style="font-size:13px;font-weight:500">${p.nome}</div>
+          <div style="font-size:11px;color:var(--text3)">Há ${p.tempo}</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">${p.texto}</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost btn-sm" onclick="showToast('Curtido! ❤️')">❤️ ${p.likes}</button>
+        <button class="btn btn-ghost btn-sm" onclick="showToast('Responder: abrindo editor...')">💬 Responder</button>
+      </div>
+    </div>`).join('')}`;
+}
+
+function renderPerfil(){
+  document.getElementById('perfil-content').innerHTML=`
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-label" style="margin-bottom:14px">Informações pessoais</div>
+        <div class="input-group">
+          <label class="input-label">Nome completo</label>
+          <input class="input-field" value="Marcos Investidor">
+        </div>
+        <div class="input-group">
+          <label class="input-label">E-mail</label>
+          <input class="input-field" value="investidor@4ppatrimonial.com.br">
+        </div>
+        <div class="input-group">
+          <label class="input-label">WhatsApp</label>
+          <input class="input-field" value="(13) 99999-0000">
+        </div>
+        <button class="btn btn-gold btn-sm" style="margin-top:4px" onclick="showToast('Perfil atualizado! ✓')">Salvar alterações</button>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <div class="section-label" style="margin-bottom:10px">Meu plano</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div class="card-title">Low Ticket</div>
+              <div class="card-sub">R$97 · 7 aulas do método 4P</div>
+            </div>
+            <span class="badge badge-gold">Ativo</span>
+          </div>
+          <div class="divider"></div>
+          <button class="btn btn-green btn-sm btn-full" onclick="openModal('modal-upgrade')">Upgrade para mentoria R$5.000 ↗</button>
+        </div>
+        <div class="card">
+          <div class="section-label" style="margin-bottom:10px">Segurança</div>
+          <div class="input-group">
+            <label class="input-label">Nova senha</label>
+            <input class="input-field" type="password" placeholder="••••••••">
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="showToast('Senha atualizada! ✓')">Alterar senha</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function navigate(id){
+  closeDropdowns();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  const nav=document.getElementById('nav-'+id);
+  if(nav)nav.classList.add('active');
+  if(id==='aulas'){renderAulaSidebar();renderAulaContent()}
+  if(id==='materiais')renderMateriais();
+  if(id==='tarefa')renderTarefa();
+  if(id==='mentoria')renderMentoria();
+  if(id==='encontros')renderEncontros();
+  if(id==='ranking')renderRanking();
+  if(id==='investidor')renderInvestidor();
+  if(id==='cases')renderCases();
+  if(id==='comunidade')renderComunidade();
+  if(id==='perfil')renderPerfil();
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function toggleNotif(){
+  closeDropdowns('notif');
+  document.getElementById('notif-panel').classList.toggle('open');
+}
+function togglePerfil(){
+  closeDropdowns('perfil');
+  document.getElementById('perfil-panel').classList.toggle('open');
+}
+function closeDropdowns(skip){
+  if(skip!=='notif')document.getElementById('notif-panel').classList.remove('open');
+  if(skip!=='perfil')document.getElementById('perfil-panel').classList.remove('open');
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#notif-panel')&&!e.target.closest('.notif-btn'))
+    document.getElementById('notif-panel').classList.remove('open');
+  if(!e.target.closest('#perfil-panel')&&!e.target.closest('.avatar'))
+    document.getElementById('perfil-panel').classList.remove('open');
+});
+
+function doLogin(){
+  document.getElementById('login-screen').style.opacity='0';
+  document.getElementById('login-screen').style.transition='opacity .3s';
+  setTimeout(()=>{
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('app').style.animation='fadeIn .3s ease';
+  },300);
+}
+
+function doLogout(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-screen').style.opacity='1';
+}
+</script>
+</body>
+</html>
