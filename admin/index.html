@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4P Patrimonial — Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e2c47a;
+      --gold-dim: #8a6e2f;
+      --bg: #080808;
+      --surface: #111111;
+      --card: #181818;
+      --card2: #1f1f1f;
+      --border: #2a2a2a;
+      --border-gold: #3a2e10;
+      --text: #e8e8e8;
+      --text-muted: #888;
+      --text-dim: #555;
+      --danger: #c0392b;
+      --danger-dim: #7b241c;
+      --success: #27ae60;
+      --success-dim: #1a6b3c;
+      --radius: 10px;
+      --sidebar: 240px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ─── LOGIN ─── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at center, #1a1200 0%, #080808 70%);
+    }
+    .login-box {
+      width: 380px;
+      background: var(--card);
+      border: 1px solid var(--border-gold);
+      border-radius: 16px;
+      padding: 48px 40px;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(201,168,76,0.08);
+    }
+    .login-logo {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .login-sub {
+      color: var(--text-muted);
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 36px;
+    }
+    .login-box label {
+      display: block;
+      text-align: left;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .login-box input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .login-box input:focus { border-color: var(--gold-dim); }
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+      color: #000;
+      font-weight: 700;
+      font-size: 14px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      letter-spacing: .5px;
+      transition: opacity .2s;
+    }
+    .btn-login:hover { opacity: .88; }
+    #login-error {
+      color: #e74c3c;
+      font-size: 12px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* ─── LAYOUT ─── */
+    #admin-panel { display: none; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar);
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 28px 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo span {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold);
+      letter-spacing: 1.5px;
+    }
+    .sidebar-logo small {
+      display: block;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .sidebar nav { flex: 1; padding: 16px 0; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 20px;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+      font-size: 13.5px;
+      user-select: none;
+    }
+    .nav-item:hover { color: var(--text); background: rgba(201,168,76,.04); }
+    .nav-item.active {
+      color: var(--gold);
+      border-left-color: var(--gold);
+      background: rgba(201,168,76,.06);
+    }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .btn-logout {
+      width: 100%;
+      padding: 9px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 12px;
+      transition: all .2s;
+    }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* MAIN */
+    .main {
+      margin-left: var(--sidebar);
+      padding: 32px;
+      min-height: 100vh;
+    }
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .page-title { font-size: 22px; font-weight: 700; color: var(--text); }
+    .page-title span { color: var(--gold); }
+    .page-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+    /* SECTIONS */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* CARDS GRID */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    }
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .metric-value {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--gold-light);
+      line-height: 1;
+    }
+    .metric-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+    .metric-icon {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 32px;
+      opacity: .08;
+    }
+
+    /* TABLE CARD */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .card-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .card-title { font-size: 15px; font-weight: 600; color: var(--text); }
+
+    /* SEARCH */
+    .search-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 14px;
+      font-size: 13px;
+      width: 260px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-input:focus { border-color: var(--gold-dim); }
+    .search-input::placeholder { color: var(--text-dim); }
+
+    /* TABLE */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: var(--card2);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .12s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.02); }
+    tbody td {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--text);
+      vertical-align: middle;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .3px;
+    }
+    .badge-gold { background: rgba(201,168,76,.15); color: var(--gold); }
+    .badge-green { background: rgba(39,174,96,.15); color: #2ecc71; }
+    .badge-red { background: rgba(192,57,43,.15); color: #e74c3c; }
+    .badge-gray { background: rgba(100,100,100,.15); color: #888; }
+
+    /* BUTTONS */
+    .btn {
+      padding: 7px 14px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity .2s;
+      white-space: nowrap;
+    }
+    .btn:hover { opacity: .82; }
+    .btn-sm { padding: 5px 11px; font-size: 11px; }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+      color: #000;
+    }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .btn-outline:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+    /* FORM */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 24px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    .form-input, .form-select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--gold-dim); }
+    .form-select option { background: var(--surface); }
+    .form-actions {
+      padding: 0 24px 24px;
+      display: flex;
+      gap: 10px;
+    }
+
+    /* CLASSES CHART */
+    .classes-list { padding: 8px 0; }
+    .class-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .class-row:last-child { border-bottom: none; }
+    .class-rank {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--gold);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .class-name { flex: 1; font-size: 13px; }
+    .class-bar-wrap {
+      width: 120px;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .class-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      border-radius: 3px;
+    }
+    .class-views { font-size: 12px; color: var(--text-muted); width: 60px; text-align: right; }
+
+    /* TOAST */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 13px;
+      color: var(--text);
+      z-index: 9999;
+      display: none;
+      max-width: 320px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    }
+    #toast.show { display: block; animation: slideIn .25s ease; }
+    #toast.success { border-left: 3px solid var(--success); }
+    #toast.error { border-left: 3px solid var(--danger); }
+    @keyframes slideIn { from { transform: translateY(16px); opacity:0; } to { transform: none; opacity:1; } }
+
+    /* LOADING */
+    .loading-row td {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border-gold);
+      border-radius: 14px;
+      width: 420px;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    }
+    .modal h3 { font-size: 17px; color: var(--gold); margin-bottom: 10px; }
+    .modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+
+    @media (max-width: 1100px) {
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 700px) {
+      :root { --sidebar: 0px; }
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">4P PATRIMONIAL</div>
+    <div class="login-sub">Painel Administrativo</div>
+    <label>Senha master</label>
+    <input type="password" id="login-password" placeholder="••••••••••••" autocomplete="current-password" />
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+    <div id="login-error">Senha incorreta. Tente novamente.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ ADMIN PANEL ═══════════════ -->
+<div id="admin-panel">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>4P ADMIN</span>
+      <small>Painel de Controle</small>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showSection('dashboard', this)">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showSection('alunos', this)">
+        <span class="nav-icon">👥</span> Alunos
+      </div>
+      <div class="nav-item" onclick="showSection('acesso', this)">
+        <span class="nav-icon">🔑</span> Liberar Acesso
+      </div>
+      <div class="nav-item" onclick="showSection('aulas', this)">
+        <span class="nav-icon">🎬</span> Aulas Assistidas
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="doLogout()">⟵ Sair</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── DASHBOARD ── -->
+    <div id="section-dashboard" class="section active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard <span>Geral</span></div>
+          <div class="page-sub" id="dash-updated">Carregando métricas...</div>
+        </div>
+        <button class="btn btn-outline" onclick="loadDashboard()">↻ Atualizar</button>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total de Alunos</div>
+          <div class="metric-value" id="m-total">—</div>
+          <div class="metric-sub">cadastros ativos</div>
+          <div class="metric-icon">👥</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Receita do Mês</div>
+          <div class="metric-value" id="m-receita">—</div>
+          <div class="metric-sub" id="m-receita-sub">novos este mês</div>
+          <div class="metric-icon">💰</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Alunos Ativos</div>
+          <div class="metric-value" id="m-ativos">—</div>
+          <div class="metric-sub" id="m-bloqueados-sub">sem restrição</div>
+          <div class="metric-icon">✅</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Conversão do Mês</div>
+          <div class="metric-value" id="m-conversao">—</div>
+          <div class="metric-sub">novos / base total</div>
+          <div class="metric-icon">📈</div>
+        </div>
+      </div>
+
+      <!-- Recent students -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Últimos Cadastros</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Plano</th>
+                <th>Cadastro</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-tbody">
+              <tr class="loading-row"><td colspan="5"><span class="spinner"></span>Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ALUNOS ── -->
+    <div id="section-alunos" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Gestão de <span>Alunos</span></div>
+          <div class="page-sub">Bloqueie, libere e pesquise alunos</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <input class="search-input" id="search-input" type="text" placeholder="🔍  Buscar por nome ou e-mail..." oninput="filterAlunos(this.value)" />
+          <button class="btn btn-gold" onclick="exportCSV()">⬇ Exportar CSV</button>
+          <button class="btn btn-outline" onclick="loadAlunos()">↻</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Plano</th>
+                <th>Cadastro</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="alunos-tbody">
+              <tr class="loading-row"><td colspan="6"><span class="spinner"></span>Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ACESSO ── -->
+    <div id="section-acesso" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Liberar <span>Acesso Manual</span></div>
+          <div class="page-sub">Cria usuário e envia magic link por e-mail</div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:600px;">
+        <div class="card-header">
+          <div class="card-title">🔑 Novo Acesso</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Nome completo</label>
+            <input class="form-input" id="ac-nome" type="text" placeholder="João Silva" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-mail</label>
+            <input class="form-input" id="ac-email" type="email" placeholder="joao@email.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Plano</label>
+            <select class="form-select" id="ac-plano">
+              <option value="lowticket">Low Ticket</option>
+              <option value="premium">Premium</option>
+              <option value="vip">VIP</option>
+              <option value="trial">Trial</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Produto ID (opcional)</label>
+            <input class="form-input" id="ac-produto" type="text" placeholder="UUID do produto" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-gold" onclick="liberarAcesso()">✉ Criar e Enviar Magic Link</button>
+        </div>
+        <div id="ac-result" style="padding:0 24px 20px;font-size:13px;display:none;"></div>
+      </div>
+    </div>
+
+    <!-- ── AULAS ── -->
+    <div id="section-aulas" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Aulas Mais <span>Assistidas</span></div>
+          <div class="page-sub">Ranking de engajamento por aula</div>
+        </div>
+        <button class="btn btn-outline" onclick="loadAulas()">↻ Atualizar</button>
+      </div>
+
+      <div class="card" style="max-width:760px;">
+        <div class="card-header">
+          <div class="card-title">🎬 Top Aulas</div>
+        </div>
+        <div class="classes-list" id="aulas-list">
+          <div style="padding:40px;text-align:center;color:var(--text-dim);">
+            <span class="spinner"></span>Carregando...
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL CONFIRM -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Confirmar ação</h3>
+    <p id="modal-body">Deseja continuar?</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" id="modal-confirm-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+  // ── CONFIG ──
+  const SUPABASE_URL  = 'https://vfmtntdaohuwitajxyqc.supabase.co';
+  const SERVICE_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Njc4ODI5OSwiZXhwIjoyMDkyMzY0Mjk5fQ.uMarVb3dj3MQ0GSsMZArlARUrF6m2I-4aDUe_Kz3lv8';
+  const ADMIN_PASS    = '4P@admin2025';
+  const PLAN_PRICES   = { lowticket: 197, premium: 497, vip: 997, trial: 0 };
+
+  const sb = supabase.createClient(SUPABASE_URL, SERVICE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+
+  let allAlunos = [];
+
+  // ── LOGIN ──
+  function doLogin() {
+    const pw = document.getElementById('login-password').value;
+    const err = document.getElementById('login-error');
+    if (pw === ADMIN_PASS) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      loadDashboard();
+      loadAlunos();
+      loadAulas();
+    } else {
+      err.style.display = 'block';
+      document.getElementById('login-password').value = '';
+    }
+  }
+  document.getElementById('login-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  function doLogout() {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-error').style.display = 'none';
+  }
+
+  // ── NAV ──
+  function showSection(id, el) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  // ── TOAST ──
+  function toast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show ' + type;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.className = '', 3500);
+  }
+
+  // ── MODAL ──
+  let modalCb = null;
+  function openModal(title, body, btnLabel, btnClass, cb) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').textContent = body;
+    const btn = document.getElementById('modal-confirm-btn');
+    btn.textContent = btnLabel;
+    btn.className = 'btn ' + btnClass;
+    modalCb = cb;
+    document.getElementById('modal-overlay').classList.add('open');
+    btn.onclick = () => { closeModal(); cb(); };
+  }
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  // ── HELPERS ──
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('pt-BR');
+  }
+  function fmtBRL(n) {
+    return 'R$ ' + n.toLocaleString('pt-BR');
+  }
+  function planBadge(plano) {
+    const map = { lowticket: 'badge-gold', premium: 'badge-green', vip: 'badge-gold', trial: 'badge-gray' };
+    const cls = map[plano] || 'badge-gray';
+    return `<span class="badge ${cls}">${(plano||'—').toUpperCase()}</span>`;
+  }
+  function statusBadge(blocked) {
+    return blocked
+      ? '<span class="badge badge-red">Bloqueado</span>'
+      : '<span class="badge badge-green">Ativo</span>';
+  }
+
+  // ── DASHBOARD ──
+  async function loadDashboard() {
+    document.getElementById('dash-updated').textContent = 'Carregando...';
+    document.getElementById('recent-tbody').innerHTML = '<tr class="loading-row"><td colspan="5"><span class="spinner"></span>Carregando...</td></tr>';
+
+    const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+    if (error) { toast('Erro: ' + error.message, 'error'); return; }
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const novosDoMes = data.filter(a => a.created_at >= monthStart);
+    const ativos = data.filter(a => !a.blocked);
+    const bloqueados = data.filter(a => a.blocked);
+
+    // Revenue estimate
+    const receita = novosDoMes.reduce((acc, a) => acc + (PLAN_PRICES[a.plano] || 0), 0);
+    const conversao = data.length ? ((novosDoMes.length / data.length) * 100).toFixed(1) + '%' : '0%';
+
+    document.getElementById('m-total').textContent = data.length;
+    document.getElementById('m-receita').textContent = fmtBRL(receita);
+    document.getElementById('m-receita-sub').textContent = novosDoMes.length + ' novos este mês';
+    document.getElementById('m-ativos').textContent = ativos.length;
+    document.getElementById('m-bloqueados-sub').textContent = bloqueados.length + ' bloqueado(s)';
+    document.getElementById('m-conversao').textContent = conversao;
+    document.getElementById('dash-updated').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
+
+    // Recent 8
+    const recent = data.slice(0, 8);
+    document.getElementById('recent-tbody').innerHTML = recent.length
+      ? recent.map(a => `
+        <tr>
+          <td>${a.full_name || '—'}</td>
+          <td style="color:var(--text-muted)">${a.email || '—'}</td>
+          <td>${planBadge(a.plano)}</td>
+          <td style="color:var(--text-muted)">${fmtDate(a.created_at)}</td>
+          <td>${statusBadge(a.blocked)}</td>
+        </tr>`).join('')
+      : '<tr class="loading-row"><td colspan="5" style="color:var(--text-dim)">Nenhum aluno cadastrado.</td></tr>';
+  }
+
+  // ── ALUNOS ──
+  async function loadAlunos() {
+    document.getElementById('alunos-tbody').innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span>Carregando...</td></tr>';
+    const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+    if (error) { toast('Erro ao carregar alunos: ' + error.message, 'error'); return; }
+    allAlunos = data || [];
+    renderAlunos(allAlunos);
+  }
+
+  function renderAlunos(list) {
+    const tbody = document.getElementById('alunos-tbody');
+    if (!list.length) {
+      tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:var(--text-dim)">Nenhum aluno encontrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(a => `
+      <tr>
+        <td><strong>${a.full_name || '—'}</strong></td>
+        <td style="color:var(--text-muted);font-size:12px">${a.email || '—'}</td>
+        <td>${planBadge(a.plano)}</td>
+        <td style="color:var(--text-muted)">${fmtDate(a.created_at)}</td>
+        <td>${statusBadge(a.blocked)}</td>
+        <td>
+          ${a.blocked
+            ? `<button class="btn btn-sm btn-success" onclick="toggleBlock('${a.id}','${(a.email||'').replace(/'/g,"\\'")}',false,'${(a.full_name||'Aluno').replace(/'/g,"\\'")}')">✓ Liberar</button>`
+            : `<button class="btn btn-sm btn-danger" onclick="toggleBlock('${a.id}','${(a.email||'').replace(/'/g,"\\'")}',true,'${(a.full_name||'Aluno').replace(/'/g,"\\'")}')">✕ Bloquear</button>`}
+        </td>
+      </tr>`).join('');
+  }
+
+  function filterAlunos(q) {
+    const term = q.toLowerCase().trim();
+    if (!term) { renderAlunos(allAlunos); return; }
+    renderAlunos(allAlunos.filter(a =>
+      (a.full_name||'').toLowerCase().includes(term) ||
+      (a.email||'').toLowerCase().includes(term)
+    ));
+  }
+
+  async function toggleBlock(userId, email, block, name) {
+    const action = block ? 'bloquear' : 'liberar';
+    openModal(
+      (block ? '🚫 Bloquear' : '✅ Liberar') + ' Aluno',
+      `Deseja ${action} o acesso de ${name} (${email})?`,
+      block ? 'Bloquear' : 'Liberar',
+      block ? 'btn-danger' : 'btn-success',
+      async () => {
+        const { error: pe } = await sb.from('profiles').update({ blocked: block }).eq('id', userId);
+        if (pe) { toast('Erro ao atualizar perfil: ' + pe.message, 'error'); return; }
+
+        const { error: ae } = block
+          ? await sb.auth.admin.updateUserById(userId, { ban_duration: '876600h' })
+          : await sb.auth.admin.updateUserById(userId, { ban_duration: 'none' });
+
+        if (ae) { toast('Erro no Auth: ' + ae.message, 'error'); return; }
+
+        toast(`Acesso de ${name} ${block ? 'bloqueado' : 'liberado'} com sucesso.`, block ? 'error' : 'success');
+        loadAlunos();
+        loadDashboard();
+      }
+    );
+  }
+
+  // ── EXPORT CSV ──
+  function exportCSV() {
+    if (!allAlunos.length) { toast('Nenhum dado para exportar.', 'error'); return; }
+    const header = ['Nome', 'Email', 'Plano', 'Cadastro', 'Status'];
+    const rows = allAlunos.map(a => [
+      `"${(a.full_name||'').replace(/"/g,'""')}"`,
+      `"${(a.email||'').replace(/"/g,'""')}"`,
+      a.plano || '',
+      fmtDate(a.created_at),
+      a.blocked ? 'Bloqueado' : 'Ativo'
+    ]);
+    const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `alunos_4P_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('CSV exportado com sucesso!');
+  }
+
+  // ── LIBERAR ACESSO ──
+  async function liberarAcesso() {
+    const nome   = document.getElementById('ac-nome').value.trim();
+    const email  = document.getElementById('ac-email').value.trim().toLowerCase();
+    const plano  = document.getElementById('ac-plano').value;
+    const produto = document.getElementById('ac-produto').value.trim();
+    const result = document.getElementById('ac-result');
+
+    if (!email) { toast('Informe o e-mail.', 'error'); return; }
+
+    result.style.display = 'none';
+
+    // Check existing
+    let userId;
+    const { data: users } = await sb.auth.admin.listUsers();
+    const existing = users?.users?.find(u => u.email === email);
+
+    if (existing) {
+      userId = existing.id;
+    } else {
+      const { data: created, error: ce } = await sb.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { full_name: nome }
+      });
+      if (ce) { toast('Erro ao criar usuário: ' + ce.message, 'error'); return; }
+      userId = created.user.id;
+    }
+
+    // Upsert profile
+    const profileData = {
+      id: userId,
+      email,
+      full_name: nome || null,
+      plano,
+      blocked: false,
+      updated_at: new Date().toISOString()
+    };
+    if (produto) profileData.produto_id = produto;
+
+    const { error: pe } = await sb.from('profiles').upsert(profileData, { onConflict: 'id' });
+    if (pe) { toast('Erro ao salvar perfil: ' + pe.message, 'error'); return; }
+
+    // Magic link
+    const { data: link, error: le } = await sb.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+      options: { redirectTo: SUPABASE_URL.replace('supabase.co', 'vercel.app') + '/plataforma' }
+    });
+    if (le) { toast('Usuário criado, mas erro no magic link: ' + le.message, 'error'); return; }
+
+    result.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="color:var(--success);font-weight:600;margin-bottom:6px;">✅ Acesso liberado com sucesso!</div>
+        <div style="color:var(--text-muted);font-size:12px;">Magic link gerado para <strong style="color:var(--text)">${email}</strong></div>
+        ${link?.properties?.action_link ? `<div style="margin-top:10px;word-break:break-all;font-size:11px;color:var(--gold-dim)">${link.properties.action_link}</div>` : ''}
+      </div>`;
+    result.style.display = 'block';
+    toast('Acesso liberado e magic link enviado!');
+    loadAlunos();
+    loadDashboard();
+  }
+
+  // ── AULAS ──
+  async function loadAulas() {
+    const container = document.getElementById('aulas-list');
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim);"><span class="spinner"></span>Carregando...</div>';
+
+    const { data, error } = await sb
+      .from('video_views')
+      .select('video_id, video_title')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      container.innerHTML = '<div style="padding:32px 20px;color:var(--text-dim);font-size:13px;">Tabela <code>video_views</code> não encontrada ou sem dados.</div>';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div style="padding:32px 20px;color:var(--text-dim);font-size:13px;">Nenhuma visualização registrada ainda.</div>';
+      return;
+    }
+
+    // Count views per video
+    const counts = {};
+    data.forEach(r => {
+      const key = r.video_id || 'unknown';
+      if (!counts[key]) counts[key] = { title: r.video_title || r.video_id || 'Aula sem título', views: 0 };
+      counts[key].views++;
+    });
+
+    const sorted = Object.values(counts).sort((a, b) => b.views - a.views).slice(0, 10);
+    const max = sorted[0]?.views || 1;
+
+    container.innerHTML = sorted.map((item, i) => `
+      <div class="class-row">
+        <div class="class-rank">${i + 1}</div>
+        <div class="class-name">${item.title}</div>
+        <div class="class-bar-wrap">
+          <div class="class-bar" style="width:${(item.views / max * 100).toFixed(1)}%"></div>
+        </div>
+        <div class="class-views">${item.views} views</div>
+      </div>`).join('');
+  }
+
+  // ── INIT ──
+  // Close modal on overlay click
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+</script>
+</body>
+</html>
