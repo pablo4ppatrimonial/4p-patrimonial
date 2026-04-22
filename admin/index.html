@@ -658,8 +658,11 @@
       <div class="nav-item" onclick="showSection('comunidade', this)">
         <span class="nav-icon">💬</span> Comunidade
       </div>
+      <div class="nav-item" onclick="showSection('casos', this)">
+        <span class="nav-icon">🏗</span> Cases Reais
+      </div>
       <div class="nav-item" onclick="showSection('portal', this)">
-        <span class="nav-icon">🏗</span> Portal Investidor
+        <span class="nav-icon">📊</span> Portal Investidor
       </div>
       <div class="sidebar-sep"></div>
       <div class="nav-label">PLATAFORMA</div>
@@ -1020,6 +1023,26 @@
       </div>
     </div>
 
+    <!-- ── CASES REAIS ── -->
+    <div id="section-casos" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Cases <span>Reais</span></div>
+          <div class="page-sub">Operações reais do Pablo Dantas — exibidas na plataforma dos alunos</div>
+        </div>
+        <button class="btn btn-gold" onclick="openCasoForm(null)">+ Novo Case</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Cases cadastrados</div>
+          <button class="btn btn-sm btn-outline" onclick="loadCasosReais()">↻ Atualizar</button>
+        </div>
+        <div id="casos-list" style="padding:0 20px 20px">
+          <div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── NOTIFICAÇÕES ── -->
     <div id="section-notificacoes" class="section">
       <div class="page-header">
@@ -1109,6 +1132,40 @@
     <div class="modal-lg-foot">
       <button class="btn btn-outline" onclick="closeFormModal()">Cancelar</button>
       <button class="btn btn-gold" id="save-aula-btn" onclick="saveAula()">💾 Salvar Aula</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CASO MODAL ── -->
+<div class="modal-lg-overlay" id="caso-overlay">
+  <div class="modal-lg" style="max-width:600px">
+    <div class="modal-lg-head">
+      <h3 id="caso-modal-title">Novo Case Real</h3>
+      <button class="x-btn" onclick="closeCasoModal()">✕</button>
+    </div>
+    <div class="modal-lg-body">
+      <input type="hidden" id="c-id">
+      <div class="fg" style="margin-bottom:14px"><label>Título *</label><input class="fi" id="c-titulo" placeholder="Ex: Kitnet Cubatão — Reforma e Locação"></div>
+      <div class="fg" style="margin-bottom:14px"><label>Descrição</label><textarea class="fi fi-ta" id="c-descricao" placeholder="Breve descrição da operação..."></textarea></div>
+      <div class="form-row-3" style="margin-bottom:14px">
+        <div class="fg"><label>Tipo de operação</label><input class="fi" id="c-tipo" placeholder="Ex: Compra e Reforma"></div>
+        <div class="fg"><label>Valor de entrada</label><input class="fi" id="c-entrada" placeholder="R$ 85.000"></div>
+        <div class="fg"><label>Valor de saída / atual</label><input class="fi" id="c-saida" placeholder="R$ 130.000"></div>
+      </div>
+      <div class="form-row-3" style="margin-bottom:14px">
+        <div class="fg"><label>Prazo</label><input class="fi" id="c-prazo" placeholder="Ex: 8 meses"></div>
+        <div class="fg"><label>Ordem de exibição</label><input class="fi" id="c-ordem" type="number" min="0" placeholder="0"></div>
+        <div class="fg"><label>Status</label>
+          <select class="fi fi-sel" id="c-ativo">
+            <option value="true">✓ Ativo</option>
+            <option value="false">○ Inativo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-lg-foot">
+      <button class="btn btn-outline" onclick="closeCasoModal()">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveCaso()">Salvar Case</button>
     </div>
   </div>
 </div>
@@ -1204,6 +1261,7 @@
     if (id === 'aulas')        loadAulas();
     if (id === 'encontros')    loadEncontros();
     if (id === 'comunidade')   loadComunidade();
+    if (id === 'casos')        loadCasosReais();
     if (id === 'portal')       loadPortal();
     if (id === 'config')       loadConfig();
     if (id === 'notificacoes') loadNotificacoes();
@@ -1989,6 +2047,109 @@
       toast('Post restaurado.');
       loadComunidade();
     } catch (e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  // ── CASES REAIS ──
+  let casosData = [];
+  let casoEditId = null;
+
+  async function loadCasosReais() {
+    const container = document.getElementById('casos-list');
+    container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
+    try {
+      const { data, error } = await sb.from('casos_reais').select('*').order('ordem', { ascending: true });
+      if (error) throw error;
+      casosData = data || [];
+      renderCasosReais();
+    } catch (e) {
+      container.innerHTML = '<div style="padding:24px;color:var(--text-muted)">Erro: ' + e.message + '</div>';
+    }
+  }
+
+  function renderCasosReais() {
+    const container = document.getElementById('casos-list');
+    if (!casosData.length) {
+      container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-dim)">Nenhum case cadastrado. Clique em "+ Novo Case" para começar.</div>';
+      return;
+    }
+    container.innerHTML = casosData.map(c => `
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">${c.titulo}</div>
+          ${c.descricao ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${c.descricao.length > 80 ? c.descricao.slice(0,80)+'…' : c.descricao}</div>` : ''}
+          <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text-dim)">
+            ${c.tipo_operacao ? `<span>🏷 ${c.tipo_operacao}</span>` : ''}
+            ${c.valor_entrada ? `<span>↓ ${c.valor_entrada}</span>` : ''}
+            ${c.valor_saida ? `<span>↑ ${c.valor_saida}</span>` : ''}
+            ${c.prazo ? `<span>⏱ ${c.prazo}</span>` : ''}
+            <span style="color:${c.ativo ? 'var(--success)' : 'var(--text-dim)'}">${c.ativo ? '✓ Ativo' : '○ Inativo'}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button class="btn btn-sm btn-outline" onclick="openCasoForm('${c.id}')">Editar</button>
+          <button class="btn btn-sm btn-danger-outline" onclick="deleteCaso('${c.id}','${c.titulo.replace(/'/g,"\\'")}')">✕</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function openCasoForm(id) {
+    casoEditId = id;
+    const c = id ? casosData.find(x => x.id === id) : null;
+    document.getElementById('caso-modal-title').textContent = c ? 'Editar Case' : 'Novo Case Real';
+    document.getElementById('c-id').value = c?.id ?? '';
+    document.getElementById('c-titulo').value = c?.titulo ?? '';
+    document.getElementById('c-descricao').value = c?.descricao ?? '';
+    document.getElementById('c-tipo').value = c?.tipo_operacao ?? '';
+    document.getElementById('c-entrada').value = c?.valor_entrada ?? '';
+    document.getElementById('c-saida').value = c?.valor_saida ?? '';
+    document.getElementById('c-prazo').value = c?.prazo ?? '';
+    document.getElementById('c-ordem').value = c?.ordem ?? '0';
+    document.getElementById('c-ativo').value = c ? String(c.ativo) : 'true';
+    document.getElementById('caso-overlay').classList.add('open');
+  }
+
+  function closeCasoModal() {
+    document.getElementById('caso-overlay').classList.remove('open');
+    casoEditId = null;
+  }
+
+  async function saveCaso() {
+    const titulo = document.getElementById('c-titulo').value.trim();
+    if (!titulo) { toast('Título é obrigatório.', 'error'); return; }
+    const payload = {
+      titulo,
+      descricao:      document.getElementById('c-descricao').value.trim() || null,
+      tipo_operacao:  document.getElementById('c-tipo').value.trim() || null,
+      valor_entrada:  document.getElementById('c-entrada').value.trim() || null,
+      valor_saida:    document.getElementById('c-saida').value.trim() || null,
+      prazo:          document.getElementById('c-prazo').value.trim() || null,
+      ordem:          parseInt(document.getElementById('c-ordem').value) || 0,
+      ativo:          document.getElementById('c-ativo').value === 'true',
+    };
+    try {
+      if (casoEditId) {
+        const { error } = await sb.from('casos_reais').update(payload).eq('id', casoEditId);
+        if (error) throw error;
+        toast('Case atualizado!');
+      } else {
+        const { error } = await sb.from('casos_reais').insert(payload);
+        if (error) throw error;
+        toast('Case criado!');
+      }
+      closeCasoModal();
+      loadCasosReais();
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  async function deleteCaso(id, titulo) {
+    openModal('Excluir case', `Deseja excluir "${titulo}"? Esta ação não pode ser desfeita.`, 'Excluir', 'btn-danger', async () => {
+      try {
+        const { error } = await sb.from('casos_reais').delete().eq('id', id);
+        if (error) throw error;
+        toast('Case excluído.');
+        loadCasosReais();
+      } catch (e) { toast('Erro: ' + e.message, 'error'); }
+    });
   }
 
   // ── PORTAL INVESTIDOR ──
