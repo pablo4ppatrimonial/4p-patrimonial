@@ -301,9 +301,9 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 
         <div class="grid-4">
           <div class="stat-card">
-            <div class="stat-val">3/7</div>
+            <div class="stat-val" id="stat-aulas-val">—</div>
             <div class="stat-label">Aulas concluídas</div>
-            <div class="stat-delta">+1 esta semana</div>
+            <div class="stat-delta" id="stat-aulas-delta">carregando...</div>
           </div>
           <div class="stat-card">
             <div class="stat-val">1.240</div>
@@ -311,9 +311,9 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
             <div class="stat-delta">#12 no ranking</div>
           </div>
           <div class="stat-card">
-            <div class="stat-val">42%</div>
+            <div class="stat-val" id="stat-prog-val">—</div>
             <div class="stat-label">Progresso geral</div>
-            <div class="stat-delta">↑ 8% este mês</div>
+            <div class="stat-delta">do curso completo</div>
           </div>
           <div class="stat-card">
             <div class="stat-val">4</div>
@@ -326,10 +326,10 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
         <div class="card" style="margin-bottom:20px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <div class="card-title">Método 4P — Fundamentos</div>
-            <span class="badge badge-gold">42%</span>
+            <span class="badge badge-gold" id="dash-prog-pct">0%</span>
           </div>
-          <div class="prog-wrap"><div class="prog-fill" style="width:42%"></div></div>
-          <div style="font-size:11px;color:var(--text3);margin-top:4px">3 de 7 aulas concluídas</div>
+          <div class="prog-wrap"><div class="prog-fill" id="dash-prog-fill" style="width:0%"></div></div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px" id="dash-prog-text">carregando...</div>
         </div>
 
         <div class="section-label">Próximos encontros de mentoria</div>
@@ -357,10 +357,10 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
           <div style="display:flex;align-items:center;gap:16px">
             <div style="width:54px;height:54px;background:var(--dark4);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🎓</div>
             <div style="flex:1">
-              <div class="badge badge-gold" style="margin-bottom:6px">AULA 4</div>
-              <div class="card-title">Diversificação inteligente de ativos</div>
-              <div class="card-sub">24 min restantes · Iniciado ontem</div>
-              <div class="prog-wrap" style="margin:6px 0 0"><div class="prog-fill" style="width:35%"></div></div>
+              <div class="badge badge-gold" style="margin-bottom:6px" id="dash-continue-badge">AULA 1</div>
+              <div class="card-title" id="dash-continue-title">Fundamentos do Patrimônio</div>
+              <div class="card-sub" id="dash-continue-sub">Clique para continuar</div>
+              <div class="prog-wrap" style="margin:6px 0 0"><div class="prog-fill" id="dash-continue-fill" style="width:0%"></div></div>
             </div>
             <button class="btn btn-gold btn-sm">Continuar</button>
           </div>
@@ -387,8 +387,8 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
           <div class="aula-sidebar">
             <div style="padding:16px 14px 8px;border-bottom:1px solid #1e1e1e">
               <div class="section-label" style="margin:0 0 4px">Módulo 1 — Fundamentos</div>
-              <div style="font-size:11px;color:var(--text3)">3 de 7 aulas concluídas</div>
-              <div class="prog-wrap"><div class="prog-fill" style="width:42%"></div></div>
+              <div style="font-size:11px;color:var(--text3)" id="aulas-prog-text">carregando...</div>
+              <div class="prog-wrap"><div class="prog-fill" id="aulas-prog-fill" style="width:0%"></div></div>
             </div>
             <div id="aula-list">
               <!-- dynamically rendered -->
@@ -577,10 +577,10 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
               <div class="section-label">Meu progresso</div>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
                 <span style="font-size:12px;color:var(--text2)">Curso completo</span>
-                <span style="font-size:12px;font-weight:700;color:var(--gold)">42%</span>
+                <span style="font-size:12px;font-weight:700;color:var(--gold)" id="perfil-prog-pct">0%</span>
               </div>
-              <div class="prog-wrap"><div class="prog-fill" style="width:42%"></div></div>
-              <div style="font-size:11px;color:var(--text3);margin-top:4px">3 de 7 aulas · 1.240 pts no ranking</div>
+              <div class="prog-wrap"><div class="prog-fill" id="perfil-prog-fill" style="width:0%"></div></div>
+              <div style="font-size:11px;color:var(--text3);margin-top:4px" id="perfil-prog-text">carregando...</div>
             </div>
           </div>
         </div>
@@ -631,6 +631,81 @@ async function loadUserData() {
   document.getElementById('p-nome').value = nome;
   document.getElementById('p-sobrenome').value = sobrenome;
   document.getElementById('p-email').value = email;
+
+  await loadProgresso();
+}
+
+// ── PROGRESSO REAL ──
+async function loadProgresso() {
+  if (!currentUser) return;
+  try {
+    const { data, error } = await sb
+      .from('progresso')
+      .select('aula_num')
+      .eq('user_id', currentUser.id)
+      .eq('concluida', true);
+
+    if (error) { console.error('Erro ao carregar progresso:', error.message); return; }
+
+    const concluidasSet = new Set((data || []).map(p => p.aula_num));
+
+    // Atualiza status de cada aula sequencialmente
+    let nextSet = false;
+    AULAS.forEach(a => {
+      if (concluidasSet.has(a.id)) {
+        a.status = 'done';
+      } else if (!nextSet) {
+        a.status = 'active';
+        aulaAtiva = a.id;
+        nextSet = true;
+      } else {
+        a.status = 'locked';
+      }
+    });
+
+    // Todas concluídas
+    if (!nextSet && AULAS.length) {
+      aulaAtiva = AULAS[AULAS.length - 1].id;
+    }
+
+    updateProgressUI(concluidasSet.size);
+  } catch (e) {
+    console.error('Erro inesperado ao carregar progresso:', e);
+  }
+}
+
+function updateProgressUI(totalDone) {
+  const total = AULAS.length;
+  const pct = total ? Math.round((totalDone / total) * 100) : 0;
+  const aulaContinuar = AULAS.find(a => a.status === 'active') || AULAS[AULAS.length - 1];
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setW = (id, w) => { const el = document.getElementById(id); if (el) el.style.width = w; };
+
+  // Stat cards
+  set('stat-aulas-val', `${totalDone}/${total}`);
+  set('stat-aulas-delta', totalDone > 0 ? `${total - totalDone} restante(s)` : 'Nenhuma concluída ainda');
+  set('stat-prog-val', `${pct}%`);
+
+  // Barra de progresso do dashboard
+  set('dash-prog-pct', `${pct}%`);
+  setW('dash-prog-fill', `${pct}%`);
+  set('dash-prog-text', `${totalDone} de ${total} aulas concluídas`);
+
+  // Card "Continue de onde parou"
+  set('dash-continue-badge', `AULA ${aulaContinuar.id}`);
+  set('dash-continue-title', aulaContinuar.titulo);
+  set('dash-continue-sub', aulaContinuar.dur + (totalDone > 0 ? ' · Continue de onde parou' : ' · Comece agora'));
+  setW('dash-continue-fill', `${pct}%`);
+
+  // Sidebar de aulas
+  set('aulas-prog-text', `${totalDone} de ${total} aulas concluídas`);
+  setW('aulas-prog-fill', `${pct}%`);
+
+  // Perfil
+  set('perfil-prog-pct', `${pct}%`);
+  setW('perfil-prog-fill', `${pct}%`);
+  set('perfil-prog-text', `${totalDone} de ${total} aulas · 1.240 pts no ranking`);
 }
 
 // ── NAV ──
@@ -737,13 +812,31 @@ function renderPlayerMain() {
   `;
 }
 
-function marcarConcluida(id) {
+async function marcarConcluida(id) {
   const a = AULAS.find(x => x.id === id);
-  if (a && a.status !== 'done') {
+  if (!a || a.status === 'done') return;
+  if (!currentUser) { toast('Faça login para salvar o progresso.', 'error'); return; }
+
+  try {
+    const { error } = await sb.from('progresso').upsert({
+      user_id: currentUser.id,
+      aula_num: id,
+      concluida: true,
+      data_conclusao: new Date().toISOString()
+    }, { onConflict: 'user_id,aula_num' });
+
+    if (error) { toast('Erro ao salvar progresso: ' + error.message, 'error'); return; }
+
     a.status = 'done';
-    if (id < 7) AULAS[id].status = 'active';
+    const next = AULAS.find(x => x.id === id + 1);
+    if (next) { next.status = 'active'; aulaAtiva = next.id; }
+
+    const totalDone = AULAS.filter(x => x.status === 'done').length;
+    updateProgressUI(totalDone);
     renderAulas();
-    toast('Aula concluída! +100 pontos no ranking.','success');
+    toast('✅ Aula concluída! +100 pontos no ranking.', 'success');
+  } catch (e) {
+    toast('Erro inesperado ao salvar progresso.', 'error');
   }
 }
 

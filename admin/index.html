@@ -1049,7 +1049,17 @@
     }
   }
 
-  // ── AULAS ──
+  // ── AULAS MAIS CONCLUÍDAS ──
+  const AULA_TITLES = {
+    1: 'Fundamentos do Patrimônio',
+    2: "Os 4 P's — Método completo",
+    3: 'Blindagem patrimonial e holding',
+    4: 'Diversificação inteligente de ativos',
+    5: 'FIIs de alto rendimento',
+    6: 'Renda passiva perpétua',
+    7: 'Legado e planejamento sucessório',
+  };
+
   async function loadAulas() {
     const container = document.getElementById('aulas-list');
     container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim);"><span class="spinner"></span>Carregando...</div>';
@@ -1057,43 +1067,50 @@
     let data, error;
     try {
       ({ data, error } = await sb
-        .from('video_views')
-        .select('video_id, video_title')
-        .order('created_at', { ascending: false }));
+        .from('progresso')
+        .select('aula_num')
+        .eq('concluida', true));
     } catch (e) {
       container.innerHTML = '<div style="padding:32px 20px;color:var(--danger);font-size:13px;">Erro de rede ao carregar aulas.</div>';
       return;
     }
 
     if (error) {
-      container.innerHTML = '<div style="padding:32px 20px;color:var(--text-dim);font-size:13px;">Tabela <code>video_views</code> não encontrada ou sem dados.</div>';
+      container.innerHTML = `<div style="padding:32px 20px;color:var(--text-dim);font-size:13px;">Erro: ${error.message}</div>`;
       return;
     }
 
     if (!data || data.length === 0) {
-      container.innerHTML = '<div style="padding:32px 20px;color:var(--text-dim);font-size:13px;">Nenhuma visualização registrada ainda.</div>';
+      container.innerHTML = '<div style="padding:32px 20px;color:var(--text-dim);font-size:13px;">Nenhuma conclusão de aula registrada ainda.</div>';
       return;
     }
 
-    // Count views per video
+    // Contagem de conclusões por aula
     const counts = {};
     data.forEach(r => {
-      const key = r.video_id || 'unknown';
-      if (!counts[key]) counts[key] = { title: r.video_title || r.video_id || 'Aula sem título', views: 0 };
-      counts[key].views++;
+      const num = r.aula_num;
+      counts[num] = (counts[num] || 0) + 1;
     });
 
-    const sorted = Object.values(counts).sort((a, b) => b.views - a.views).slice(0, 10);
-    const max = sorted[0]?.views || 1;
+    const sorted = Object.entries(counts)
+      .map(([num, conclusoes]) => ({
+        num: parseInt(num),
+        title: AULA_TITLES[parseInt(num)] || `Aula ${num}`,
+        conclusoes
+      }))
+      .sort((a, b) => b.conclusoes - a.conclusoes)
+      .slice(0, 10);
+
+    const max = sorted[0]?.conclusoes || 1;
 
     container.innerHTML = sorted.map((item, i) => `
       <div class="class-row">
         <div class="class-rank">${i + 1}</div>
-        <div class="class-name">${item.title}</div>
+        <div class="class-name">Aula ${item.num} — ${item.title}</div>
         <div class="class-bar-wrap">
-          <div class="class-bar" style="width:${(item.views / max * 100).toFixed(1)}%"></div>
+          <div class="class-bar" style="width:${(item.conclusoes / max * 100).toFixed(1)}%"></div>
         </div>
-        <div class="class-views">${item.views} views</div>
+        <div class="class-views">${item.conclusoes} conclusões</div>
       </div>`).join('');
   }
 
