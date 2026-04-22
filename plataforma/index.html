@@ -228,6 +228,19 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{border-color:rgba(82,183,136,.4);background:rgba(82,183,136,.08)}
 .toast.error{border-color:rgba(224,82,82,.4)}
+
+/* ── NOTIF DROPDOWN ── */
+.notif-badge{position:absolute;top:-4px;right:-4px;background:#e05252;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;line-height:1}
+.notif-dropdown{position:absolute;top:44px;right:0;width:320px;background:#1c1c1c;border:1px solid #2e2e2e;border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,.6);z-index:500;display:none;overflow:hidden}
+.notif-dropdown.open{display:block}
+.notif-dd-head{padding:14px 16px;border-bottom:1px solid #252525;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600}
+.notif-item{padding:12px 16px;border-bottom:1px solid #1e1e1e;cursor:default;transition:background var(--trans)}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:rgba(255,255,255,.02)}
+.notif-item.unread{background:rgba(201,168,76,.04)}
+.notif-item-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.notif-item-msg{font-size:11px;color:var(--text3);line-height:1.5}
+.notif-item-time{font-size:10px;color:var(--text3);margin-top:4px}
 </style>
 </head>
 <body>
@@ -240,7 +253,20 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
       <a class="logo" href="#">4P Patrimonial <span class="logo-badge">PRO</span></a>
     </div>
     <div class="topbar-right">
-      <div class="icon-btn" onclick="toast('Sem novas notificações','success')" title="Notificações">🔔</div>
+      <div style="position:relative">
+        <div class="icon-btn" onclick="toggleNotifDropdown()" title="Notificações" id="notif-bell" style="position:relative">🔔
+          <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+        </div>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-dd-head">
+            <span>Notificações</span>
+            <span style="font-size:10px;color:var(--gold);cursor:pointer" onclick="marcarTodasLidas()">Marcar lidas</span>
+          </div>
+          <div id="notif-list" style="max-height:360px;overflow-y:auto">
+            <div style="padding:20px;text-align:center;font-size:12px;color:var(--text3)">Carregando...</div>
+          </div>
+        </div>
+      </div>
       <div class="avatar" id="avatarBtn" onclick="navigate('perfil')" title="Perfil">P</div>
     </div>
   </div>
@@ -333,22 +359,9 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
         </div>
 
         <div class="section-label">Próximos encontros de mentoria</div>
-        <div class="card" style="margin-bottom:20px">
-          <div class="encontro-row">
-            <div class="encontro-date"><div class="encontro-day">28</div><div class="encontro-month">Mai</div></div>
-            <div class="encontro-info">
-              <div class="encontro-title">Alocação estratégica em FIIs</div>
-              <div class="encontro-sub">Terça-feira · 20h00 (horário de Brasília)</div>
-            </div>
-            <button class="btn btn-ghost btn-sm">Entrar</button>
-          </div>
-          <div class="encontro-row" style="border:0">
-            <div class="encontro-date"><div class="encontro-day">04</div><div class="encontro-month">Jun</div></div>
-            <div class="encontro-info">
-              <div class="encontro-title">Revisão de carteira ao vivo</div>
-              <div class="encontro-sub">Terça-feira · 20h00 (horário de Brasília)</div>
-            </div>
-            <button class="btn btn-ghost btn-sm">Lembrar</button>
+        <div class="card" style="margin-bottom:20px" id="dash-encontros-card">
+          <div id="dash-encontros">
+            <div style="padding:16px;color:var(--text3);font-size:12px">Carregando...</div>
           </div>
         </div>
 
@@ -424,21 +437,9 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 
         <div class="divider"></div>
         <div class="section-label">Próximos encontros</div>
-        <div class="card">
-          <div class="encontro-row">
-            <div class="encontro-date"><div class="encontro-day">28</div><div class="encontro-month">Mai</div></div>
-            <div class="encontro-info"><div class="encontro-title">Alocação estratégica em FIIs</div><div class="encontro-sub">Terça-feira · 20h · Zoom</div></div>
-            <button class="btn btn-green btn-sm">Entrar</button>
-          </div>
-          <div class="encontro-row">
-            <div class="encontro-date"><div class="encontro-day">04</div><div class="encontro-month">Jun</div></div>
-            <div class="encontro-info"><div class="encontro-title">Revisão de carteira ao vivo</div><div class="encontro-sub">Terça-feira · 20h · Zoom</div></div>
-            <button class="btn btn-ghost btn-sm">Salvar</button>
-          </div>
-          <div class="encontro-row" style="border:0">
-            <div class="encontro-date"><div class="encontro-day">11</div><div class="encontro-month">Jun</div></div>
-            <div class="encontro-info"><div class="encontro-title">Proteção patrimonial e holding familiar</div><div class="encontro-sub">Terça-feira · 20h · Zoom</div></div>
-            <button class="btn btn-ghost btn-sm">Salvar</button>
+        <div class="card" id="mentoria-encontros-card">
+          <div id="mentoria-encontros">
+            <div style="padding:16px;color:var(--text3);font-size:12px">Carregando...</div>
           </div>
         </div>
       </div>
@@ -609,6 +610,8 @@ sb.auth.getSession().then(async ({ data }) => {
   currentUser = data.session.user;
   await loadAulasFromDB();
   loadUserData();
+  loadEncontros();
+  loadNotificacoes();
 });
 sb.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT') window.location.href = '../auth.html';
@@ -719,8 +722,8 @@ function navigate(screen) {
   currentScreen = screen;
   if (screen === 'aulas') renderAulas();
   if (screen === 'ranking') renderRanking();
-  if (screen === 'comunidade') renderPosts();
-  if (screen === 'mentoria') renderModulos();
+  if (screen === 'comunidade') loadPosts();
+  if (screen === 'mentoria') { renderModulos(); loadEncontros(); }
 }
 
 function toggleSidebar() {
@@ -750,7 +753,7 @@ async function loadAulasFromDB() {
     if (error) { console.error('Erro aulas:', error.message); return; }
     if (!data || !data.length) return;
     AULAS = data.map(row => ({
-      id:          row.numero,
+      id:          row.aula_num,
       titulo:      row.titulo,
       dur:         row.duracao      || '—',
       desc:        row.descricao    || '',
@@ -958,44 +961,216 @@ function renderRanking() {
   `).join('');
 }
 
-// ── POSTS DATA ──
-let posts = [
-  { autor:'Mariana S.', tempo:'há 2h', texto:'Acabei de fechar minha primeira holding familiar! Muito obrigada pelo suporte da comunidade e pelas aulas. O módulo 3 foi transformador.', likes:14, comentarios:5 },
-  { autor:'Pedro A.', tempo:'há 5h', texto:'Dúvida: como calcular o yield real de um FII descontando a taxa de administração e a inflação? Alguém tem uma planilha pronta?', likes:8, comentarios:12 },
-  { autor:'Carlos M.', tempo:'ontem', texto:'Compartilhando minha carteira após aplicar o Método 4P: 40% renda fixa, 30% FIIs, 20% ações e 10% cripto. Rendimento médio de 12,3% a.a. Valeu demais a mentoria!', likes:31, comentarios:9 },
-];
+// ── ENCONTROS (dinâmico) ──
+let encontrosData = [];
+
+async function loadEncontros() {
+  try {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const { data, error } = await sb.from('encontros')
+      .select('*')
+      .eq('ativo', true)
+      .gte('data', hoje)
+      .order('data', { ascending: true })
+      .limit(5);
+    if (error) throw error;
+    encontrosData = data || [];
+    renderEncontros();
+  } catch (e) {
+    console.error('Erro ao carregar encontros:', e);
+  }
+}
+
+function renderEncontros() {
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const semanas = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  const buildRows = (maxRows) => {
+    if (!encontrosData.length) {
+      return '<div style="padding:16px;color:var(--text3);font-size:12px">Nenhum encontro agendado no momento.</div>';
+    }
+    return encontrosData.slice(0, maxRows).map((enc, i) => {
+      const d = new Date(enc.data + 'T12:00:00');
+      const dia = d.getDate();
+      const mes = meses[d.getMonth()];
+      const semana = semanas[d.getDay()];
+      const hora = enc.hora ? enc.hora.slice(0,5) + 'h' : '';
+      const isLast = i === Math.min(encontrosData.length, maxRows) - 1;
+      return `
+        <div class="encontro-row" ${isLast ? 'style="border:0"' : ''}>
+          <div class="encontro-date"><div class="encontro-day">${dia}</div><div class="encontro-month">${mes}</div></div>
+          <div class="encontro-info">
+            <div class="encontro-title">${enc.titulo}</div>
+            <div class="encontro-sub">${semana}${hora ? ' · ' + hora + ' (Brasília)' : ''}${enc.descricao ? ' · ' + enc.descricao : ''}</div>
+          </div>
+          ${enc.link
+            ? `<a href="${enc.link}" target="_blank" class="btn btn-green btn-sm" style="text-decoration:none">Entrar</a>`
+            : `<button class="btn btn-ghost btn-sm" disabled style="opacity:.4">Em breve</button>`}
+        </div>`;
+    }).join('');
+  };
+
+  const dashEl = document.getElementById('dash-encontros');
+  const mentEl = document.getElementById('mentoria-encontros');
+  if (dashEl) dashEl.innerHTML = buildRows(2);
+  if (mentEl) mentEl.innerHTML = buildRows(5);
+}
+
+// ── NOTIFICAÇÕES (dinâmico) ──
+let notifList = [];
+let notifDropdownOpen = false;
+
+async function loadNotificacoes() {
+  if (!currentUser) return;
+  try {
+    const { data, error } = await sb.from('notificacoes')
+      .select('*')
+      .or(`user_id.eq.${currentUser.id},user_id.is.null`)
+      .order('criado_em', { ascending: false })
+      .limit(30);
+    if (error) throw error;
+    notifList = data || [];
+    renderNotifDropdown();
+  } catch (e) { console.error('Erro ao carregar notificações:', e); }
+}
+
+function renderNotifDropdown() {
+  const unread = notifList.filter(n => !n.lida).length;
+  const badge = document.getElementById('notif-badge');
+  if (badge) {
+    badge.textContent = unread > 9 ? '9+' : unread;
+    badge.style.display = unread > 0 ? 'flex' : 'none';
+  }
+  const list = document.getElementById('notif-list');
+  if (!list) return;
+  if (!notifList.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3)">Nenhuma notificação.</div>';
+    return;
+  }
+  list.innerHTML = notifList.map(n => {
+    const d = new Date(n.criado_em);
+    const ago = timeAgo(d);
+    return `
+      <div class="notif-item ${n.lida ? '' : 'unread'}">
+        <div class="notif-item-title">${n.titulo}</div>
+        ${n.mensagem ? `<div class="notif-item-msg">${n.mensagem}</div>` : ''}
+        <div class="notif-item-time">${ago}</div>
+      </div>`;
+  }).join('');
+}
+
+function toggleNotifDropdown() {
+  const dd = document.getElementById('notif-dropdown');
+  notifDropdownOpen = !notifDropdownOpen;
+  dd.classList.toggle('open', notifDropdownOpen);
+  if (notifDropdownOpen && notifList.some(n => !n.lida)) {
+    marcarTodasLidas();
+  }
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#notif-bell') && !e.target.closest('#notif-dropdown')) {
+    document.getElementById('notif-dropdown')?.classList.remove('open');
+    notifDropdownOpen = false;
+  }
+});
+
+async function marcarTodasLidas() {
+  if (!currentUser || !notifList.some(n => !n.lida)) return;
+  try {
+    await sb.from('notificacoes')
+      .update({ lida: true })
+      .or(`user_id.eq.${currentUser.id},user_id.is.null`)
+      .eq('lida', false);
+    notifList.forEach(n => { n.lida = true; });
+    renderNotifDropdown();
+  } catch (e) { console.error('Erro ao marcar notificações:', e); }
+}
+
+function timeAgo(date) {
+  const diff = Math.floor((Date.now() - date) / 1000);
+  if (diff < 60) return 'agora mesmo';
+  if (diff < 3600) return Math.floor(diff/60) + ' min atrás';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h atrás';
+  return Math.floor(diff/86400) + 'd atrás';
+}
+
+// ── POSTS (dinâmico do Supabase) ──
+let dbPosts = [];
+
+async function loadPosts() {
+  const container = document.getElementById('posts-list');
+  container.innerHTML = '<div style="padding:24px;text-align:center;font-size:12px;color:var(--text3)">Carregando...</div>';
+  try {
+    const { data, error } = await sb.from('posts')
+      .select('*')
+      .eq('deletado', false)
+      .order('fixado', { ascending: false })
+      .order('criado_em', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    dbPosts = data || [];
+    renderPosts();
+  } catch (e) {
+    container.innerHTML = '<div style="padding:24px;color:var(--text3);font-size:12px">Erro ao carregar posts.</div>';
+  }
+}
 
 function renderPosts() {
-  document.getElementById('posts-list').innerHTML = posts.map((p, i) => `
-    <div class="post-card">
+  const container = document.getElementById('posts-list');
+  if (!dbPosts.length) {
+    container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text3);font-size:13px">Ainda não há posts. Seja o primeiro a compartilhar!</div>';
+    return;
+  }
+  container.innerHTML = dbPosts.map(p => `
+    <div class="post-card" ${p.fixado ? 'style="border-color:rgba(201,168,76,.3)"' : ''}>
+      ${p.fixado ? '<div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:8px">📌 FIXADO PELO MENTOR</div>' : ''}
       <div class="post-header">
-        <div class="post-avatar">${p.autor[0]}</div>
-        <div><div class="post-author">${p.autor}</div><div class="post-time">${p.tempo}</div></div>
+        <div class="post-avatar">${(p.autor_nome||'A')[0].toUpperCase()}</div>
+        <div>
+          <div class="post-author">${p.autor_nome || 'Anônimo'}</div>
+          <div class="post-time">${timeAgo(new Date(p.criado_em))}</div>
+        </div>
       </div>
-      <div class="post-text">${p.texto}</div>
+      <div class="post-text">${p.conteudo}</div>
       <div class="post-actions">
-        <div class="post-action" onclick="likePost(${i})">👍 ${p.likes}</div>
-        <div class="post-action">💬 ${p.comentarios}</div>
-        <div class="post-action">↗ Compartilhar</div>
+        <div class="post-action" onclick="likePost('${p.id}',${p.likes})">👍 ${p.likes}</div>
+        <div class="post-action">💬 Responder</div>
       </div>
     </div>
   `).join('');
 }
 
-function likePost(i) {
-  posts[i].likes++;
-  renderPosts();
+async function likePost(id, currentLikes) {
+  try {
+    await sb.from('posts').update({ likes: currentLikes + 1 }).eq('id', id);
+    const p = dbPosts.find(x => x.id === id);
+    if (p) { p.likes++; renderPosts(); }
+  } catch (e) { toast('Erro ao dar like.', 'error'); }
 }
 
-function submitPost() {
+async function submitPost() {
   const inp = document.getElementById('compose-input');
   const txt = inp.value.trim();
-  if (!txt) { toast('Escreva algo antes de publicar.','error'); return; }
-  const nome = document.getElementById('p-nome')?.value || 'Você';
-  posts.unshift({ autor: nome, tempo: 'agora mesmo', texto: txt, likes: 0, comentarios: 0 });
-  inp.value = '';
-  renderPosts();
-  toast('Post publicado com sucesso!','success');
+  if (!txt) { toast('Escreva algo antes de publicar.', 'error'); return; }
+  if (!currentUser) { toast('Faça login para publicar.', 'error'); return; }
+
+  const meta = currentUser.user_metadata || {};
+  const nome = meta.nome || meta.nome_completo?.split(' ')[0] || 'Investidor';
+
+  try {
+    const { error } = await sb.from('posts').insert({
+      user_id: currentUser.id,
+      autor_nome: nome,
+      conteudo: txt,
+    });
+    if (error) throw error;
+    inp.value = '';
+    toast('Post publicado!', 'success');
+    loadPosts();
+  } catch (e) {
+    toast('Erro ao publicar: ' + e.message, 'error');
+  }
 }
 
 // ── PERFIL ──

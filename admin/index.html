@@ -543,6 +543,39 @@
     .prev-player iframe { width: 100%; height: 100%; border: none; }
     .prev-play-btn { width: 52px; height: 52px; border-radius: 50%; background: #c9a84c; border: none; display: flex; align-items: center; justify-content: center; cursor: default; }
     .prev-tri { width: 0; height: 0; border-style: solid; border-width: 8px 0 8px 14px; border-color: transparent transparent transparent #000; margin-left: 3px; }
+
+    /* ─── EXTRA SECTIONS ─── */
+    .sidebar-sep { height: 1px; background: var(--border); margin: 6px 12px; }
+    .nav-label { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-dim); text-transform: uppercase; padding: 10px 20px 4px; }
+    .inline-form { background: var(--card2); border: 1px solid var(--border-gold); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; display: none; }
+    .inline-form.open { display: block; }
+    .inline-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .inline-form-grid.g3 { grid-template-columns: 1fr 1fr 1fr; }
+    .inline-form-grid.g1 { grid-template-columns: 1fr; }
+    .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; }
+    .pill-green { background: rgba(39,174,96,.15); color: #2ecc71; }
+    .pill-gray  { background: rgba(100,100,100,.15); color: #888; }
+    .pill-gold  { background: rgba(201,168,76,.15); color: var(--gold); }
+    .pill-red   { background: rgba(192,57,43,.15); color: #e74c3c; }
+    .config-row { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .config-key { width: 180px; flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--text-muted); padding-top: 10px; }
+    .config-val { flex: 1; }
+    .post-mod-row { padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .post-mod-row:last-child { border-bottom: none; }
+    .post-mod-author { font-size: 11px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+    .post-mod-text { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
+    .post-mod-actions { display: flex; gap: 8px; align-items: center; }
+    .notif-dest { display: flex; gap: 10px; margin-bottom: 14px; }
+    .radio-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 12px; color: var(--text-muted); transition: all .2s; }
+    .radio-btn.selected { border-color: var(--gold-dim); color: var(--gold); background: rgba(201,168,76,.06); }
+    .etapa-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .etapa-row:last-child { border-bottom: none; }
+    .etapa-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .dot-done { background: #2ecc71; }
+    .dot-prog { background: var(--gold); }
+    .dot-pend { background: var(--text-dim); }
+    .notif-sent-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .notif-sent-row:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
@@ -569,6 +602,7 @@
       <small>Painel de Controle</small>
     </div>
     <nav>
+      <div class="nav-label">ALUNOS</div>
       <div class="nav-item active" onclick="showSection('dashboard', this)">
         <span class="nav-icon">📊</span> Dashboard
       </div>
@@ -578,11 +612,32 @@
       <div class="nav-item" onclick="showSection('acesso', this)">
         <span class="nav-icon">🔑</span> Liberar Acesso
       </div>
+      <div class="sidebar-sep"></div>
+      <div class="nav-label">CONTEÚDO</div>
       <div class="nav-item" onclick="showSection('cms', this)">
         <span class="nav-icon">📝</span> Gerenciar Aulas
       </div>
       <div class="nav-item" onclick="showSection('aulas', this)">
         <span class="nav-icon">📊</span> Métricas de Aulas
+      </div>
+      <div class="nav-item" onclick="showSection('encontros', this)">
+        <span class="nav-icon">📅</span> Encontros
+      </div>
+      <div class="sidebar-sep"></div>
+      <div class="nav-label">COMUNIDADE</div>
+      <div class="nav-item" onclick="showSection('comunidade', this)">
+        <span class="nav-icon">💬</span> Comunidade
+      </div>
+      <div class="nav-item" onclick="showSection('portal', this)">
+        <span class="nav-icon">🏗</span> Portal Investidor
+      </div>
+      <div class="sidebar-sep"></div>
+      <div class="nav-label">PLATAFORMA</div>
+      <div class="nav-item" onclick="showSection('config', this)">
+        <span class="nav-icon">⚙️</span> Configurações
+      </div>
+      <div class="nav-item" onclick="showSection('notificacoes', this)">
+        <span class="nav-icon">🔔</span> Notificações
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -796,6 +851,177 @@
       </div>
     </div>
 
+    <!-- ── ENCONTROS ── -->
+    <div id="section-encontros" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Encontros <span>Ao Vivo</span></div>
+          <div class="page-sub">Datas que aparecem no dashboard do aluno</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" onclick="loadEncontros()">↻</button>
+          <button class="btn btn-gold" onclick="openEncontroForm(null)">+ Novo Encontro</button>
+        </div>
+      </div>
+
+      <div class="inline-form" id="encontro-form">
+        <div style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:16px" id="enc-form-title">Novo Encontro</div>
+        <div class="inline-form-grid g3">
+          <div class="fg"><label>Título *</label><input class="fi" id="enc-titulo" type="text" placeholder="Ex: Encontro ao Vivo — Módulo 3"></div>
+          <div class="fg"><label>Data *</label><input class="fi" id="enc-data" type="date"></div>
+          <div class="fg"><label>Hora</label><input class="fi" id="enc-hora" type="time"></div>
+        </div>
+        <div class="inline-form-grid g1" style="margin-bottom:14px">
+          <div class="fg"><label>Link (Zoom, Meet…)</label><input class="fi" id="enc-link" type="url" placeholder="https://meet.google.com/..."></div>
+        </div>
+        <div class="inline-form-grid g1" style="margin-bottom:14px">
+          <div class="fg"><label>Descrição</label><textarea class="fi fi-ta" id="enc-descricao" placeholder="Detalhes sobre o encontro..."></textarea></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+          <input type="checkbox" id="enc-ativo" checked style="accent-color:var(--gold)">
+          <label for="enc-ativo" style="font-size:12px;color:var(--text-muted)">Ativo (visível para alunos)</label>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-gold" onclick="saveEncontro()">💾 Salvar</button>
+          <button class="btn btn-outline" onclick="closeEncontroForm()">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Título</th><th>Data</th><th>Hora</th><th>Link</th><th>Status</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="encontros-tbody">
+              <tr class="loading-row"><td colspan="6"><span class="spinner"></span>Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COMUNIDADE ── -->
+    <div id="section-comunidade" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Moderação da <span>Comunidade</span></div>
+          <div class="page-sub">Fixe e remova posts dos alunos</div>
+        </div>
+        <button class="btn btn-outline" onclick="loadComunidade()">↻ Atualizar</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💬 Posts da Comunidade</div>
+          <div id="posts-count" style="font-size:12px;color:var(--text-muted)"></div>
+        </div>
+        <div id="posts-list" style="padding:0 20px">
+          <div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PORTAL INVESTIDOR ── -->
+    <div id="section-portal" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Portal do <span>Investidor</span></div>
+          <div class="page-sub">Cronograma e status de cada etapa do empreendimento</div>
+        </div>
+        <button class="btn btn-gold" onclick="openEtapaForm(null)">+ Nova Etapa</button>
+      </div>
+
+      <div class="inline-form" id="etapa-form">
+        <div style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:16px" id="etapa-form-title">Nova Etapa</div>
+        <input type="hidden" id="etapa-idx" value="-1">
+        <div class="inline-form-grid" style="margin-bottom:14px">
+          <div class="fg"><label>Título da Etapa *</label><input class="fi" id="etapa-titulo" type="text" placeholder="Ex: Fundação concluída"></div>
+          <div class="fg">
+            <label>Status</label>
+            <select class="fi fi-sel" id="etapa-status">
+              <option value="pendente">⏳ Pendente</option>
+              <option value="andamento">🔄 Em andamento</option>
+              <option value="concluida">✅ Concluída</option>
+            </select>
+          </div>
+        </div>
+        <div class="inline-form-grid g1" style="margin-bottom:16px">
+          <div class="fg"><label>Descrição</label><textarea class="fi fi-ta" id="etapa-desc" placeholder="Detalhes sobre esta etapa..."></textarea></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-gold" onclick="saveEtapa()">💾 Salvar</button>
+          <button class="btn btn-outline" onclick="closeEtapaForm()">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">🏗 Cronograma do Empreendimento</div></div>
+        <div id="portal-etapas-list" style="padding:0 20px">
+          <div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>
+        </div>
+        <div style="padding:14px 20px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text-dim)">As etapas são salvas na tabela <code style="color:var(--gold)">configuracoes</code> como JSON.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONFIGURAÇÕES ── -->
+    <div id="section-config" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Configurações da <span>Plataforma</span></div>
+          <div class="page-sub">Textos, links e informações do mentor exibidos na plataforma</div>
+        </div>
+        <button class="btn btn-gold" id="save-config-btn" onclick="saveConfig()">💾 Salvar Configurações</button>
+      </div>
+      <div class="card" style="max-width:860px">
+        <div class="card-header"><div class="card-title">⚙️ Configurações Gerais</div></div>
+        <div id="config-list" style="padding:0 20px">
+          <div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>
+        </div>
+        <div style="padding:16px 20px;border-top:1px solid var(--border)">
+          <button class="btn btn-gold" onclick="saveConfig()">💾 Salvar Configurações</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NOTIFICAÇÕES ── -->
+    <div id="section-notificacoes" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Enviar <span>Notificação</span></div>
+          <div class="page-sub">Aparece no sininho da plataforma do aluno</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔔 Nova Notificação</div></div>
+          <div style="padding:20px">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Destinatário</div>
+            <div class="notif-dest" style="margin-bottom:16px">
+              <div class="radio-btn selected" id="notif-dest-todos" onclick="setNotifDest('todos')">📢 Todos os alunos</div>
+              <div class="radio-btn" id="notif-dest-especifico" onclick="setNotifDest('especifico')">👤 Aluno específico</div>
+            </div>
+            <div id="notif-email-row" style="display:none;margin-bottom:14px">
+              <div class="fg"><label>E-mail do aluno</label><input class="fi" id="notif-email" type="email" placeholder="aluno@email.com"></div>
+            </div>
+            <div class="fg" style="margin-bottom:14px"><label>Título *</label><input class="fi" id="notif-titulo" type="text" placeholder="Ex: Novo material disponível"></div>
+            <div class="fg" style="margin-bottom:20px"><label>Mensagem</label><textarea class="fi fi-ta" id="notif-mensagem" placeholder="Texto da notificação (opcional)..."></textarea></div>
+            <button class="btn btn-gold" id="enviar-notif-btn" onclick="enviarNotificacao()" style="width:100%">🔔 Enviar Notificação</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Histórico de Envios</div>
+            <button class="btn btn-sm btn-outline" onclick="loadNotificacoes()">↻</button>
+          </div>
+          <div id="notif-historico" style="padding:0 20px;max-height:500px;overflow-y:auto">
+            <div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -919,8 +1145,13 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('section-' + id).classList.add('active');
     el.classList.add('active');
-    if (id === 'cms')   loadCMS();
-    if (id === 'aulas') loadAulas();
+    if (id === 'cms')          loadCMS();
+    if (id === 'aulas')        loadAulas();
+    if (id === 'encontros')    loadEncontros();
+    if (id === 'comunidade')   loadComunidade();
+    if (id === 'portal')       loadPortal();
+    if (id === 'config')       loadConfig();
+    if (id === 'notificacoes') loadNotificacoes();
   }
 
   // ── TOAST ──
@@ -1507,6 +1738,399 @@
     e.currentTarget.classList.remove('dragging');
     document.querySelectorAll('.aula-card').forEach(c => c.classList.remove('drag-over'));
     dragSrcIdx = null;
+  }
+
+  // ── ENCONTROS ──
+  let cmsEncontros = [];
+  let editingEncontroId = null;
+
+  async function loadEncontros() {
+    const tbody = document.getElementById('encontros-tbody');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span>Carregando...</td></tr>';
+    try {
+      const { data, error } = await sb.from('encontros').select('*').order('data', { ascending: true });
+      if (error) throw error;
+      cmsEncontros = data || [];
+      renderEncontros();
+    } catch (e) {
+      tbody.innerHTML = `<tr class="loading-row"><td colspan="6" style="color:var(--danger)">${e.message}</td></tr>`;
+    }
+  }
+
+  function renderEncontros() {
+    const tbody = document.getElementById('encontros-tbody');
+    if (!cmsEncontros.length) {
+      tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:var(--text-dim)">Nenhum encontro cadastrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = cmsEncontros.map(enc => `
+      <tr>
+        <td><strong>${enc.titulo}</strong></td>
+        <td>${fmtDate(enc.data)}</td>
+        <td style="color:var(--text-muted)">${enc.hora ? enc.hora.slice(0,5) : '—'}</td>
+        <td>${enc.link ? `<a href="${enc.link}" target="_blank" style="color:var(--gold);font-size:12px">🔗 Abrir</a>` : '<span style="color:var(--text-dim)">—</span>'}</td>
+        <td><span class="badge ${enc.ativo ? 'badge-green' : 'badge-gray'}">${enc.ativo ? 'Ativo' : 'Inativo'}</span></td>
+        <td style="display:flex;gap:6px">
+          <button class="btn btn-sm btn-gold" onclick="openEncontroForm('${enc.id}')">✎ Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="confirmDeleteEncontro('${enc.id}','${(enc.titulo||'').replace(/'/g,"\\'")}')">✕</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function openEncontroForm(id) {
+    editingEncontroId = id || null;
+    const enc = id ? cmsEncontros.find(x => x.id === id) : null;
+    document.getElementById('enc-titulo').value    = enc?.titulo    ?? '';
+    document.getElementById('enc-data').value      = enc?.data      ?? '';
+    document.getElementById('enc-hora').value      = enc?.hora      ?? '';
+    document.getElementById('enc-link').value      = enc?.link      ?? '';
+    document.getElementById('enc-descricao').value = enc?.descricao ?? '';
+    document.getElementById('enc-ativo').checked  = enc ? enc.ativo : true;
+    document.getElementById('enc-form-title').textContent = enc ? 'Editar Encontro' : 'Novo Encontro';
+    document.getElementById('encontro-form').classList.add('open');
+  }
+
+  function closeEncontroForm() {
+    document.getElementById('encontro-form').classList.remove('open');
+    editingEncontroId = null;
+  }
+
+  async function saveEncontro() {
+    const titulo = document.getElementById('enc-titulo').value.trim();
+    const data   = document.getElementById('enc-data').value;
+    if (!titulo || !data) { toast('Título e data são obrigatórios.', 'error'); return; }
+    const payload = {
+      titulo,
+      data,
+      hora:      document.getElementById('enc-hora').value      || null,
+      link:      document.getElementById('enc-link').value.trim()      || null,
+      descricao: document.getElementById('enc-descricao').value.trim() || null,
+      ativo:     document.getElementById('enc-ativo').checked,
+    };
+    try {
+      const { error } = editingEncontroId
+        ? await sb.from('encontros').update(payload).eq('id', editingEncontroId)
+        : await sb.from('encontros').insert(payload);
+      if (error) throw error;
+      toast(editingEncontroId ? '✅ Encontro atualizado!' : '✅ Encontro criado!');
+      closeEncontroForm();
+      loadEncontros();
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  function confirmDeleteEncontro(id, titulo) {
+    openModal('🗑 Deletar Encontro', `Confirma exclusão de "${titulo}"?`, 'Deletar', 'btn-danger', () => deleteEncontro(id));
+  }
+
+  async function deleteEncontro(id) {
+    try {
+      const { error } = await sb.from('encontros').delete().eq('id', id);
+      if (error) throw error;
+      toast('Encontro removido.');
+      loadEncontros();
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  // ── COMUNIDADE ──
+  let cmsPosts = [];
+
+  async function loadComunidade() {
+    const container = document.getElementById('posts-list');
+    container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
+    try {
+      const { data, error } = await sb.from('posts').select('*')
+        .order('fixado', { ascending: false })
+        .order('criado_em', { ascending: false });
+      if (error) throw error;
+      cmsPosts = data || [];
+      renderComunidade();
+    } catch (e) {
+      container.innerHTML = `<div style="padding:24px;color:var(--danger)">${e.message}</div>`;
+    }
+  }
+
+  function renderComunidade() {
+    const container = document.getElementById('posts-list');
+    const ativos    = cmsPosts.filter(p => !p.deletado);
+    const deletados = cmsPosts.filter(p => p.deletado);
+    document.getElementById('posts-count').textContent =
+      `${ativos.length} ativos · ${deletados.length} deletados`;
+
+    if (!cmsPosts.length) {
+      container.innerHTML = '<div style="padding:32px;color:var(--text-dim)">Nenhum post encontrado.</div>';
+      return;
+    }
+
+    let html = ativos.map(p => `
+      <div class="post-mod-row">
+        <div class="post-mod-author">
+          ${p.fixado ? '📌 ' : ''}${p.autor_nome || 'Anônimo'}
+          <span style="font-weight:400;color:var(--text-dim);margin-left:8px">${fmtDate(p.criado_em)}</span>
+          ${p.likes ? `<span style="margin-left:8px;color:var(--text-dim)">❤️ ${p.likes}</span>` : ''}
+        </div>
+        <div class="post-mod-text">${p.conteudo}</div>
+        <div class="post-mod-actions">
+          <button class="btn btn-sm ${p.fixado ? 'btn-gold' : 'btn-outline'}" onclick="toggleFixar('${p.id}',${!p.fixado})">
+            ${p.fixado ? '📌 Fixado' : '📌 Fixar'}
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deletarPost('${p.id}')">🗑 Deletar</button>
+        </div>
+      </div>`).join('');
+
+    if (deletados.length) {
+      html += `<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text-dim);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Posts deletados (${deletados.length})</div>
+        ${deletados.map(p => `
+          <div class="post-mod-row" style="opacity:.45">
+            <div class="post-mod-author">${p.autor_nome || 'Anônimo'} <span style="font-weight:400;color:var(--text-dim)">${fmtDate(p.criado_em)}</span></div>
+            <div class="post-mod-text" style="text-decoration:line-through">${p.conteudo}</div>
+            <div class="post-mod-actions">
+              <button class="btn btn-sm btn-outline" onclick="restaurarPost('${p.id}')">↩ Restaurar</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    }
+    container.innerHTML = html;
+  }
+
+  async function toggleFixar(id, fixar) {
+    try {
+      const { error } = await sb.from('posts').update({ fixado: fixar }).eq('id', id);
+      if (error) throw error;
+      toast(fixar ? '📌 Post fixado.' : 'Post desfixado.');
+      loadComunidade();
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  async function deletarPost(id) {
+    try {
+      const { error } = await sb.from('posts').update({ deletado: true }).eq('id', id);
+      if (error) throw error;
+      toast('Post deletado.');
+      loadComunidade();
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  async function restaurarPost(id) {
+    try {
+      const { error } = await sb.from('posts').update({ deletado: false }).eq('id', id);
+      if (error) throw error;
+      toast('Post restaurado.');
+      loadComunidade();
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  // ── PORTAL INVESTIDOR ──
+  let portalEtapas = [];
+
+  async function loadPortal() {
+    const container = document.getElementById('portal-etapas-list');
+    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
+    try {
+      const { data, error } = await sb.from('configuracoes').select('valor').eq('chave', 'portal_etapas').maybeSingle();
+      if (error) throw error;
+      portalEtapas = data?.valor ? JSON.parse(data.valor) : [];
+      renderPortalEtapas();
+    } catch (e) {
+      container.innerHTML = `<div style="padding:24px;color:var(--danger)">${e.message}</div>`;
+    }
+  }
+
+  function renderPortalEtapas() {
+    const container = document.getElementById('portal-etapas-list');
+    if (!portalEtapas.length) {
+      container.innerHTML = '<div style="padding:32px;color:var(--text-dim)">Nenhuma etapa cadastrada. Clique em "+ Nova Etapa" para começar.</div>';
+      return;
+    }
+    container.innerHTML = portalEtapas.map((et, i) => {
+      const dotClass    = et.status === 'concluida' ? 'dot-done' : et.status === 'andamento' ? 'dot-prog' : 'dot-pend';
+      const badgeCls    = et.status === 'concluida' ? 'badge-green' : et.status === 'andamento' ? 'badge-gold' : 'badge-gray';
+      const statusLabel = et.status === 'concluida' ? 'Concluída' : et.status === 'andamento' ? 'Em andamento' : 'Pendente';
+      return `
+      <div class="etapa-row">
+        <div class="etapa-status-dot ${dotClass}"></div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${et.titulo}</div>
+          ${et.descricao ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${et.descricao}</div>` : ''}
+        </div>
+        <span class="badge ${badgeCls}">${statusLabel}</span>
+        <button class="btn btn-sm btn-gold" onclick="openEtapaForm(${i})">✎</button>
+        <button class="btn btn-sm btn-danger" onclick="confirmDeleteEtapa(${i},'${(et.titulo||'').replace(/'/g,"\\'")}')">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  function openEtapaForm(idx) {
+    const et = (idx !== null && idx >= 0) ? portalEtapas[idx] : null;
+    document.getElementById('etapa-idx').value    = idx !== null && idx >= 0 ? idx : -1;
+    document.getElementById('etapa-titulo').value = et?.titulo    ?? '';
+    document.getElementById('etapa-status').value = et?.status    ?? 'pendente';
+    document.getElementById('etapa-desc').value   = et?.descricao ?? '';
+    document.getElementById('etapa-form-title').textContent = et ? 'Editar Etapa' : 'Nova Etapa';
+    document.getElementById('etapa-form').classList.add('open');
+  }
+
+  function closeEtapaForm() {
+    document.getElementById('etapa-form').classList.remove('open');
+  }
+
+  async function saveEtapa() {
+    const titulo = document.getElementById('etapa-titulo').value.trim();
+    if (!titulo) { toast('Título obrigatório.', 'error'); return; }
+    const idx = parseInt(document.getElementById('etapa-idx').value);
+    const etapa = {
+      titulo,
+      status:    document.getElementById('etapa-status').value,
+      descricao: document.getElementById('etapa-desc').value.trim() || null,
+    };
+    if (idx >= 0) { portalEtapas[idx] = etapa; } else { portalEtapas.push(etapa); }
+    await persistPortal();
+  }
+
+  function confirmDeleteEtapa(idx, titulo) {
+    openModal('🗑 Remover Etapa', `Confirma remoção de "${titulo}"?`, 'Remover', 'btn-danger', () => deleteEtapa(idx));
+  }
+
+  async function deleteEtapa(idx) {
+    portalEtapas.splice(idx, 1);
+    await persistPortal();
+  }
+
+  async function persistPortal() {
+    try {
+      const { error } = await sb.from('configuracoes').upsert(
+        { chave: 'portal_etapas', valor: JSON.stringify(portalEtapas), updated_at: new Date().toISOString() },
+        { onConflict: 'chave' }
+      );
+      if (error) throw error;
+      toast('✅ Portal atualizado!');
+      closeEtapaForm();
+      renderPortalEtapas();
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  // ── CONFIGURAÇÕES ──
+  const CONFIG_KEYS = [
+    { chave: 'plataforma_nome',  label: 'Nome da Plataforma',    type: 'text' },
+    { chave: 'mentor_nome',      label: 'Nome do Mentor',         type: 'text' },
+    { chave: 'mentor_bio',       label: 'Bio do Mentor',          type: 'textarea' },
+    { chave: 'mentor_foto',      label: 'URL da Foto do Mentor',  type: 'text' },
+    { chave: 'upsell_titulo',    label: 'Título do Upsell',       type: 'text' },
+    { chave: 'upsell_descricao', label: 'Descrição do Upsell',    type: 'textarea' },
+    { chave: 'whatsapp_link',    label: 'Link do WhatsApp',       type: 'text' },
+  ];
+  let cmsConfig = {};
+
+  async function loadConfig() {
+    const container = document.getElementById('config-list');
+    container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
+    try {
+      const { data, error } = await sb.from('configuracoes').select('chave, valor');
+      if (error) throw error;
+      cmsConfig = {};
+      (data || []).forEach(row => { cmsConfig[row.chave] = row.valor || ''; });
+      renderConfig();
+    } catch (e) {
+      container.innerHTML = `<div style="padding:24px;color:var(--danger)">${e.message}</div>`;
+    }
+  }
+
+  function renderConfig() {
+    document.getElementById('config-list').innerHTML = CONFIG_KEYS.map(k => `
+      <div class="config-row">
+        <div class="config-key">${k.label}</div>
+        <div class="config-val">
+          ${k.type === 'textarea'
+            ? `<textarea class="fi fi-ta" id="cfg-${k.chave}" style="min-height:72px">${(cmsConfig[k.chave] || '').replace(/</g,'&lt;')}</textarea>`
+            : `<input class="fi" type="text" id="cfg-${k.chave}" value="${(cmsConfig[k.chave] || '').replace(/"/g,'&quot;')}">`}
+        </div>
+      </div>`).join('');
+  }
+
+  async function saveConfig() {
+    const btn = document.getElementById('save-config-btn');
+    btn.textContent = 'Salvando...'; btn.disabled = true;
+    try {
+      const rows = CONFIG_KEYS.map(k => ({
+        chave: k.chave,
+        valor: document.getElementById('cfg-' + k.chave).value.trim(),
+        updated_at: new Date().toISOString(),
+      }));
+      const { error } = await sb.from('configuracoes').upsert(rows, { onConflict: 'chave' });
+      if (error) throw error;
+      toast('✅ Configurações salvas!');
+    } catch (e) {
+      toast('Erro: ' + e.message, 'error');
+    } finally {
+      btn.textContent = '💾 Salvar Configurações'; btn.disabled = false;
+    }
+  }
+
+  // ── NOTIFICAÇÕES ──
+  let notifDestinatario = 'todos';
+
+  async function loadNotificacoes() {
+    const container = document.getElementById('notif-historico');
+    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
+    try {
+      const { data, error } = await sb.from('notificacoes').select('*').order('criado_em', { ascending: false }).limit(50);
+      if (error) throw error;
+      if (!data || !data.length) {
+        container.innerHTML = '<div style="padding:24px;color:var(--text-dim)">Nenhuma notificação enviada ainda.</div>';
+        return;
+      }
+      container.innerHTML = data.map(n => `
+        <div class="notif-sent-row">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600;margin-bottom:2px">${n.titulo}</div>
+            ${n.mensagem ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">${n.mensagem}</div>` : ''}
+            <div style="font-size:11px;color:var(--text-dim)">
+              ${n.user_id ? '👤 Aluno específico' : '📢 Para todos'} · ${fmtDate(n.criado_em)}
+            </div>
+          </div>
+        </div>`).join('');
+    } catch (e) {
+      container.innerHTML = `<div style="padding:24px;color:var(--danger)">${e.message}</div>`;
+    }
+  }
+
+  function setNotifDest(dest) {
+    notifDestinatario = dest;
+    document.querySelectorAll('.radio-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('notif-dest-' + dest).classList.add('selected');
+    document.getElementById('notif-email-row').style.display = dest === 'especifico' ? 'block' : 'none';
+  }
+
+  async function enviarNotificacao() {
+    const titulo   = document.getElementById('notif-titulo').value.trim();
+    const mensagem = document.getElementById('notif-mensagem').value.trim();
+    if (!titulo) { toast('Título é obrigatório.', 'error'); return; }
+
+    let user_id = null;
+    if (notifDestinatario === 'especifico') {
+      const email = document.getElementById('notif-email').value.trim().toLowerCase();
+      if (!email) { toast('Informe o e-mail do aluno.', 'error'); return; }
+      const { data: p, error: pe } = await sb.from('profiles').select('id').eq('email', email).maybeSingle();
+      if (pe) { toast('Erro ao buscar aluno: ' + pe.message, 'error'); return; }
+      if (!p) { toast('Aluno não encontrado.', 'error'); return; }
+      user_id = p.id;
+    }
+
+    const btn = document.getElementById('enviar-notif-btn');
+    btn.textContent = 'Enviando...'; btn.disabled = true;
+    try {
+      const { error } = await sb.from('notificacoes').insert({ titulo, mensagem: mensagem || null, user_id });
+      if (error) throw error;
+      toast('✅ Notificação enviada!');
+      document.getElementById('notif-titulo').value   = '';
+      document.getElementById('notif-mensagem').value = '';
+      document.getElementById('notif-email').value    = '';
+      loadNotificacoes();
+    } catch (e) {
+      toast('Erro: ' + e.message, 'error');
+    } finally {
+      btn.textContent = '🔔 Enviar Notificação'; btn.disabled = false;
+    }
   }
 </script>
 </body>
