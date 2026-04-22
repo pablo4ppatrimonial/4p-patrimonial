@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4P Patrimonial — Mentoria Exclusiva R$5.000</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold-l:#F0D88A;--gold-d:#8B6914;
+  --dark:#0A0A0A;--dark2:#141414;--dark3:#1C1C1C;--dark4:#242424;
+  --text:#F0EDE6;--text2:#A89F8C;--text3:#6B6359;
+  --green:#2D6A4F;--green-l:#52B788;
+  --r:14px;--r-sm:8px;--r-full:999px;
+}
+body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);overflow-x:hidden}
+
+/* ── HEADER ── */
+.header{background:var(--dark2);border-bottom:1px solid #1e1e1e;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.header-logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold)}
+.header-badge{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);color:var(--gold);font-size:10px;font-weight:700;letter-spacing:1.5px;padding:4px 14px;border-radius:var(--r-full);text-transform:uppercase}
+
+/* ── LUXURY HERO ── */
+.hero{position:relative;padding:80px 24px 70px;text-align:center;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,.08),transparent 55%)}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.2),transparent)}
+.hero-line{position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:80px;background:linear-gradient(180deg,transparent,var(--gold));opacity:.4}
+.hero-eyebrow{display:inline-block;background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.04));border:1px solid rgba(201,168,76,.2);color:var(--gold);font-size:10px;font-weight:700;letter-spacing:3px;padding:6px 20px;border-radius:var(--r-full);text-transform:uppercase;margin-bottom:24px}
+.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(32px,5.5vw,62px);color:var(--text);line-height:1.1;margin-bottom:20px;max-width:820px;margin-left:auto;margin-right:auto}
+.hero-title em{font-style:italic;color:var(--gold)}
+.hero-sub{font-size:clamp(14px,2vw,18px);color:var(--text2);line-height:1.8;max-width:600px;margin:0 auto 40px}
+.hero-price-block{display:inline-block;background:var(--dark2);border:1px solid rgba(201,168,76,.2);border-radius:18px;padding:28px 40px;margin-bottom:36px}
+.price-from{font-size:13px;color:var(--text3);text-decoration:line-through;margin-bottom:6px}
+.price-tag{font-size:11px;color:var(--gold);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.price-val{font-size:clamp(48px,7vw,72px);font-weight:800;color:var(--gold);line-height:1;letter-spacing:-2px}
+.price-per{font-size:14px;color:var(--text3);margin-top:6px}
+.price-install{font-size:13px;color:var(--green-l);margin-top:6px;font-weight:500}
+.cta-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-family:'Sora',sans-serif;font-size:15px;font-weight:800;padding:18px 52px;border-radius:var(--r-full);border:none;cursor:pointer;text-decoration:none;letter-spacing:.3px;transition:all .2s ease;text-transform:uppercase}
+.cta-gold{background:linear-gradient(135deg,#6B5010,#C9A84C,#F0D88A);color:var(--dark);box-shadow:0 8px 40px rgba(201,168,76,.25)}
+.cta-gold:hover{transform:translateY(-2px);box-shadow:0 14px 50px rgba(201,168,76,.35)}
+.cta-ghost{background:transparent;color:var(--text2);border:1px solid #2e2e2e}
+.cta-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.cta-sub{font-size:11px;color:var(--text3);margin-top:14px;display:flex;align-items:center;justify-content:center;gap:20px}
+.cta-sub span{display:flex;align-items:center;gap:5px}
+
+/* VAGAS */
+.vagas-bar{background:var(--dark2);border:1px solid #1e1e1e;padding:12px 20px;display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;font-size:12px}
+.vagas-item{color:var(--text3)}
+.vagas-item strong{color:var(--gold)}
+.vagas-pill{background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.25);color:#fca5a5;font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 14px;border-radius:var(--r-full);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* ── SECTIONS ── */
+.section{padding:70px 24px;max-width:940px;margin:0 auto}
+.section-centered{text-align:center}
+.section-eyebrow{font-size:9px;font-weight:700;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:10px}
+.section-title{font-family:'DM Serif Display',serif;font-size:clamp(24px,4vw,40px);color:var(--text);line-height:1.2;margin-bottom:14px}
+.section-sub{font-size:14px;color:var(--text2);line-height:1.8;max-width:600px;margin:0 auto}
+.divider{height:1px;background:linear-gradient(90deg,transparent,#1e1e1e,transparent)}
+
+/* ── MENTOR ── */
+.mentor-block{display:flex;align-items:center;gap:40px;padding:40px;background:var(--dark2);border:1px solid #1e1e1e;border-radius:20px;margin-top:32px}
+.mentor-photo{width:160px;height:160px;border-radius:50%;background:linear-gradient(135deg,var(--gold-d),var(--gold));display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:700;color:var(--dark);flex-shrink:0;border:3px solid rgba(201,168,76,.3);text-transform:uppercase}
+.mentor-name{font-family:'DM Serif Display',serif;font-size:28px;color:var(--text);margin-bottom:6px}
+.mentor-title{font-size:13px;color:var(--gold);font-weight:600;margin-bottom:12px}
+.mentor-bio{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:16px}
+.mentor-stats{display:flex;gap:24px;flex-wrap:wrap}
+.ms-item{text-align:center}
+.ms-val{font-size:22px;font-weight:700;color:var(--gold)}
+.ms-label{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:1px}
+
+/* ── INCLUDES ── */
+.includes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:28px}
+.include-card{background:var(--dark2);border:1px solid #1e1e1e;border-radius:var(--r);padding:22px;position:relative;overflow:hidden;transition:all .2s}
+.include-card:hover{border-color:rgba(201,168,76,.2);transform:translateY(-2px)}
+.include-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-d),var(--gold))}
+.inc-icon{font-size:30px;margin-bottom:12px}
+.inc-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px}
+.inc-desc{font-size:12px;color:var(--text3);line-height:1.6;margin-bottom:10px}
+.inc-value{font-size:11px;font-weight:600;color:var(--gold)}
+
+/* ── TIMELINE ── */
+.timeline{margin-top:32px;position:relative;padding-left:30px}
+.timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,var(--gold-d),transparent)}
+.tl-item{position:relative;margin-bottom:28px;padding-left:24px}
+.tl-dot{position:absolute;left:-30px;top:4px;width:20px;height:20px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--dark)}
+.tl-month{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:4px}
+.tl-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.tl-desc{font-size:12px;color:var(--text3);line-height:1.6}
+
+/* ── RESULTS ── */
+.results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:28px}
+.result-card{background:linear-gradient(135deg,rgba(201,168,76,.05),rgba(201,168,76,.02));border:1px solid rgba(201,168,76,.12);border-radius:var(--r);padding:22px;text-align:center}
+.result-val{font-size:34px;font-weight:800;color:var(--gold);margin-bottom:4px}
+.result-label{font-size:12px;color:var(--text3)}
+.result-delta{font-size:11px;color:var(--green-l);margin-top:4px}
+
+/* ── COMPARISON ── */
+.compare-table{width:100%;border-collapse:collapse;margin-top:28px}
+.compare-table th{padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #222}
+.compare-table th:first-child{text-align:left;color:var(--text3)}
+.compare-table th:nth-child(2){color:var(--text3);text-align:center}
+.compare-table th:nth-child(3){color:var(--gold);text-align:center;background:rgba(201,168,76,.05)}
+.compare-table td{padding:12px 16px;font-size:12px;border-bottom:1px solid #1a1a1a;vertical-align:middle}
+.compare-table td:first-child{color:var(--text2)}
+.compare-table td:nth-child(2){text-align:center;color:var(--text3)}
+.compare-table td:nth-child(3){text-align:center;background:rgba(201,168,76,.03)}
+.compare-table tr:last-child td{border:none}
+
+/* ── TESTIMONIALS ── */
+.testi-hero{background:var(--dark2);border:1px solid rgba(201,168,76,.1);border-radius:20px;padding:32px;margin-top:28px;margin-bottom:20px;position:relative;overflow:hidden}
+.testi-hero::before{content:'"';position:absolute;top:-10px;left:20px;font-size:120px;color:rgba(201,168,76,.04);font-family:'DM Serif Display',serif;line-height:1}
+.testi-text-lg{font-family:'DM Serif Display',serif;font-size:clamp(18px,3vw,24px);color:var(--text);line-height:1.5;margin-bottom:20px;font-style:italic}
+.testi-author-row{display:flex;align-items:center;gap:14px}
+.testi-av-lg{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold-d),var(--gold));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--dark);text-transform:uppercase}
+.testi-name-lg{font-size:14px;font-weight:700;color:var(--text)}
+.testi-detail{font-size:12px;color:var(--text3);margin-top:3px}
+.testi-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.testi-mini{background:var(--dark2);border:1px solid #1e1e1e;border-radius:var(--r);padding:18px}
+.testi-mini .stars{color:var(--gold);font-size:11px;margin-bottom:8px}
+.testi-mini .text{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px;font-style:italic}
+.testi-mini .author{font-size:11px;color:var(--text3)}
+.testi-mini .author strong{color:var(--text2)}
+
+/* GUARANTEE */
+.guarantee-luxury{background:linear-gradient(135deg,#0e1a0f,#091209);border:1px solid rgba(82,183,136,.2);border-radius:20px;padding:40px;text-align:center;margin-top:28px;position:relative;overflow:hidden}
+.guarantee-luxury::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;background:radial-gradient(circle,rgba(82,183,136,.06),transparent)}
+.g-icon{font-size:56px;margin-bottom:16px}
+.g-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--green-l);margin-bottom:12px}
+.g-text{font-size:13px;color:#6B9E80;line-height:1.8;max-width:500px;margin:0 auto}
+
+/* FAQ */
+.faq-list{display:grid;gap:10px;margin-top:28px}
+.faq-item{background:var(--dark2);border:1px solid #1e1e1e;border-radius:var(--r);overflow:hidden}
+.faq-q{padding:16px 18px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.faq-q:hover{color:var(--gold)}
+.faq-q .arrow{transition:transform .2s;color:var(--text3)}
+.faq-item.open .faq-q .arrow{transform:rotate(180deg)}
+.faq-a{font-size:12px;color:var(--text3);line-height:1.7;padding:0 18px;max-height:0;overflow:hidden;transition:all .3s ease}
+.faq-item.open .faq-a{padding:0 18px 16px;max-height:300px}
+
+/* CTA FINAL */
+.cta-final{background:linear-gradient(180deg,var(--dark),#0d0d0d);border-top:1px solid #1a1a1a;padding:80px 24px;text-align:center}
+
+/* FOOTER */
+.footer{background:var(--dark2);border-top:1px solid #1a1a1a;padding:24px 20px;text-align:center;font-size:11px;color:var(--text3);line-height:2}
+.footer a{color:var(--text3);text-decoration:none}
+.footer a:hover{color:var(--gold)}
+
+/* STICKY */
+.sticky-cta{position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,10,.95);border-top:1px solid rgba(201,168,76,.15);padding:14px 24px;display:none;align-items:center;justify-content:space-between;z-index:100;backdrop-filter:blur(16px)}
+.sticky-info{font-size:13px;color:var(--text2)}
+.sticky-price{font-size:22px;font-weight:800;color:var(--gold);margin-left:8px}
+
+@media(max-width:700px){
+  .mentor-block{flex-direction:column;text-align:center}
+  .mentor-stats{justify-content:center}
+  .testi-mini-grid{grid-template-columns:1fr}
+  .sticky-cta{flex-direction:column;gap:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <span class="header-logo">4P Patrimonial</span>
+  <span class="header-badge">Mentoria Exclusiva</span>
+</div>
+
+<!-- VAGAS -->
+<div class="vagas-bar">
+  <div class="vagas-item">Próxima turma: <strong>Junho 2025</strong></div>
+  <div class="vagas-pill">⚡ APENAS 8 VAGAS RESTANTES</div>
+  <div class="vagas-item">Duração: <strong>6 meses</strong></div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-line"></div>
+  <div class="hero-eyebrow">Mentoria Individual Premium</div>
+  <h1 class="hero-title">Construa um patrimônio de <em>R$1 milhão</em> com acompanhamento direto do Pablo Angelys</h1>
+  <p class="hero-sub">O programa de mentoria mais exclusivo do Brasil para quem quer construir, proteger e perpetuar um patrimônio de verdade — com suporte individual, estratégia personalizada e sessões ao vivo toda semana.</p>
+
+  <div class="hero-price-block">
+    <div class="price-from">Valor normal: R$ 8.000</div>
+    <div class="price-tag">Investimento nesta turma</div>
+    <div class="price-val">R$5.000</div>
+    <div class="price-per">pagamento único · ou parcele</div>
+    <div class="price-install">10x de R$549 no cartão ou 5x de R$1.050</div>
+  </div>
+
+  <div><a class="cta-btn cta-gold" href="../auth.html">QUERO UMA VAGA NA MENTORIA →</a></div>
+  <div class="cta-sub">
+    <span>🔒 Pagamento seguro</span>
+    <span>✅ 15 dias de garantia</span>
+    <span>🎯 Vagas limitadas</span>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MENTOR -->
+<section class="section">
+  <div class="section-eyebrow">Seu mentor</div>
+  <h2 class="section-title">Conheça quem vai guiar sua jornada</h2>
+  <div class="mentor-block">
+    <div class="mentor-photo">PA</div>
+    <div>
+      <div class="mentor-name">Pablo Angelys</div>
+      <div class="mentor-title">Especialista em Patrimônio · Criador do Método 4P</div>
+      <div class="mentor-bio">Mais de 10 anos ajudando famílias e empreendedores a construir patrimônio sólido e duradouro. Criador do Método 4P — o sistema mais completo para quem quer proteger, preservar, perpetuar e prosperar. Já orientou a construção de mais de R$50 milhões em patrimônio entre seus alunos e clientes.</div>
+      <div class="mentor-stats">
+        <div class="ms-item"><div class="ms-val">+1.200</div><div class="ms-label">Alunos</div></div>
+        <div class="ms-item"><div class="ms-val">10+</div><div class="ms-label">Anos</div></div>
+        <div class="ms-item"><div class="ms-val">R$50M+</div><div class="ms-label">Patrimônio gerado</div></div>
+        <div class="ms-item"><div class="ms-val">4.9⭐</div><div class="ms-label">Avaliação</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- O QUE INCLUI -->
+<section class="section section-centered">
+  <div class="section-eyebrow">O programa completo</div>
+  <h2 class="section-title">Tudo que você vai receber</h2>
+  <p class="section-sub">Um ecossistema completo de suporte, estratégia e acompanhamento para os próximos 6 meses.</p>
+  <div class="includes-grid">
+    <div class="include-card">
+      <div class="inc-icon">📅</div>
+      <div class="inc-title">24 Sessões ao Vivo</div>
+      <div class="inc-desc">Encontros semanais ao vivo com Pablo, com análises de mercado, revisão de estratégias e Q&A exclusivo.</div>
+      <div class="inc-value">Valor: R$2.400</div>
+    </div>
+    <div class="include-card">
+      <div class="inc-icon">🎯</div>
+      <div class="inc-title">Diagnóstico Patrimonial</div>
+      <div class="inc-desc">Análise completa da sua situação atual e construção de um plano personalizado de 6 meses.</div>
+      <div class="inc-value">Valor: R$800</div>
+    </div>
+    <div class="include-card">
+      <div class="inc-icon">📊</div>
+      <div class="inc-title">Carteira Personalizada</div>
+      <div class="inc-desc">Sugestão de alocação de ativos totalmente personalizada para o seu perfil, objetivos e prazo.</div>
+      <div class="inc-value">Valor: R$600</div>
+    </div>
+    <div class="include-card">
+      <div class="inc-icon">🏛️</div>
+      <div class="inc-title">Estruturação de Holding</div>
+      <div class="inc-desc">Orientação completa para criar sua holding familiar, com checklist jurídico e modelo de contrato.</div>
+      <div class="inc-value">Valor: R$1.200</div>
+    </div>
+    <div class="include-card">
+      <div class="inc-icon">💬</div>
+      <div class="inc-title">Suporte no WhatsApp</div>
+      <div class="inc-desc">Acesso direto ao Pablo via grupo exclusivo de mentoria para dúvidas e suporte durante a semana.</div>
+      <div class="inc-value">Valor: R$500</div>
+    </div>
+    <div class="include-card">
+      <div class="inc-icon">🎓</div>
+      <div class="inc-title">Curso Completo 4P</div>
+      <div class="inc-desc">Acesso vitalício ao curso Método 4P Fundamentos com 7 aulas e materiais completos.</div>
+      <div class="inc-value">Valor: R$297</div>
+    </div>
+    <div class="include-card">
+      <div class="inc-icon">📋</div>
+      <div class="inc-title">Planilhas e Templates</div>
+      <div class="inc-desc">Kit completo com planilhas de controle patrimonial, calculadoras de FII, simulador de renda passiva e mais.</div>
+      <div class="inc-value">Valor: R$200</div>
+    </div>
+    <div class="include-card">
+      <div class="inc-icon">🏆</div>
+      <div class="inc-title">Comunidade Premium</div>
+      <div class="inc-desc">Acesso à comunidade exclusiva de mentores com oportunidades de networking, parcerias e co-investimentos.</div>
+      <div class="inc-value">Priceless</div>
+    </div>
+  </div>
+  <div style="background:var(--dark2);border:1px solid rgba(201,168,76,.15);border-radius:var(--r);padding:18px;margin-top:24px;text-align:center">
+    <div style="font-size:13px;color:var(--text3);margin-bottom:6px">Valor total dos módulos</div>
+    <div style="font-size:28px;font-weight:800;color:var(--text3);text-decoration:line-through">R$5.997</div>
+    <div style="font-size:32px;font-weight:800;color:var(--gold);margin-top:4px">Você investe apenas R$5.000</div>
+    <div style="font-size:12px;color:var(--green-l);margin-top:6px">Economia de R$997 nesta turma especial</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CRONOGRAMA -->
+<section class="section">
+  <div class="section-eyebrow">Cronograma</div>
+  <h2 class="section-title">Sua jornada de 6 meses</h2>
+  <div class="timeline">
+    <div class="tl-item"><div class="tl-dot">1</div><div class="tl-month">Mês 1 — Diagnóstico</div><div class="tl-title">Mapeamento e plano patrimonial</div><div class="tl-desc">Análise completa da sua situação, definição de metas e construção do plano estratégico personalizado.</div></div>
+    <div class="tl-item"><div class="tl-dot">2</div><div class="tl-month">Mês 2 — Proteção</div><div class="tl-title">Blindagem patrimonial e holding</div><div class="tl-desc">Estruturação jurídica, criação da holding familiar e proteção contra riscos externos.</div></div>
+    <div class="tl-item"><div class="tl-dot">3</div><div class="tl-month">Mês 3 — Preservação</div><div class="tl-title">Alocação estratégica de ativos</div><div class="tl-desc">Montagem da carteira personalizada com foco em preservação do poder de compra e diversificação.</div></div>
+    <div class="tl-item"><div class="tl-dot">4</div><div class="tl-month">Mês 4 — Renda</div><div class="tl-title">Construção de renda passiva</div><div class="tl-desc">Estruturação de fontes de renda passiva recorrente via FIIs, dividendos e outras estratégias.</div></div>
+    <div class="tl-item"><div class="tl-dot">5</div><div class="tl-month">Mês 5 — Multiplicação</div><div class="tl-title">Crescimento e aceleração</div><div class="tl-desc">Estratégias avançadas de alavancagem patrimonial e otimização tributária.</div></div>
+    <div class="tl-item"><div class="tl-dot">6</div><div class="tl-month">Mês 6 — Legado</div><div class="tl-title">Planejamento sucessório</div><div class="tl-desc">Estruturação da transmissão do patrimônio e planejamento do legado para as próximas gerações.</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- RESULTADOS -->
+<section class="section section-centered">
+  <div class="section-eyebrow">Resultados dos alunos</div>
+  <h2 class="section-title">Números que falam por si</h2>
+  <div class="results-grid">
+    <div class="result-card"><div class="result-val">+R$2,4M</div><div class="result-label">Patrimônio acumulado por alunos em 2024</div></div>
+    <div class="result-card"><div class="result-val">94%</div><div class="result-label">Dos alunos atingiram as metas do programa</div></div>
+    <div class="result-card"><div class="result-val">3.2x</div><div class="result-label">ROI médio do investimento na mentoria</div></div>
+    <div class="result-card"><div class="result-val">100%</div><div class="result-label">Satisfação com o acompanhamento individual</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- COMPARATIVO -->
+<section class="section">
+  <div class="section-eyebrow">Por que a mentoria?</div>
+  <h2 class="section-title">Mentoria vs. fazer sozinho</h2>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Critério</th>
+        <th>Sem mentoria</th>
+        <th>Com mentoria 4P</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Tempo para ver resultados</td><td>3–5 anos</td><td style="color:var(--green-l);font-weight:600">6–12 meses</td></tr>
+      <tr><td>Erros de alocação</td><td>Frequentes e caros</td><td style="color:var(--green-l);font-weight:600">Minimizados com suporte</td></tr>
+      <tr><td>Estrutura patrimonial</td><td>Informal ou nenhuma</td><td style="color:var(--green-l);font-weight:600">Holding + blindagem</td></tr>
+      <tr><td>Renda passiva</td><td>Esporádica</td><td style="color:var(--green-l);font-weight:600">Estruturada e crescente</td></tr>
+      <tr><td>Suporte personalizado</td><td>Nenhum</td><td style="color:var(--green-l);font-weight:600">Semanal + WhatsApp</td></tr>
+      <tr><td>Planejamento sucessório</td><td>Ignorado</td><td style="color:var(--green-l);font-weight:600">Completo e revisado</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="divider"></div>
+
+<!-- DEPOIMENTOS -->
+<section class="section">
+  <div class="section-eyebrow">Histórias reais</div>
+  <h2 class="section-title">O que dizem os mentoreados</h2>
+  <div class="testi-hero">
+    <div class="testi-text-lg">"Em 6 meses de mentoria com o Pablo, saí de zero estrutura para uma holding familiar montada, carteira diversificada com R$180k alocados e renda passiva mensal de R$2.200. Valeu cada centavo investido."</div>
+    <div class="testi-author-row">
+      <div class="testi-av-lg">R</div>
+      <div><div class="testi-name-lg">Rafael Lemos</div><div class="testi-detail">Empreendedor · São Paulo, SP · Turma 2024</div></div>
+    </div>
+  </div>
+  <div class="testi-mini-grid">
+    <div class="testi-mini">
+      <div class="stars">★★★★★</div>
+      <div class="text">"A mentoria transformou não só meu portfólio, mas minha mentalidade sobre dinheiro. Hoje penso e ajo como um verdadeiro patrimonialista."</div>
+      <div class="author"><strong>Ana Beatriz C.</strong> · Médica · Belo Horizonte</div>
+    </div>
+    <div class="testi-mini">
+      <div class="stars">★★★★★</div>
+      <div class="text">"O suporte do Pablo no WhatsApp durante momentos de volatilidade do mercado foi fundamental para eu não tomar decisões impulsivas. Salvou minha carteira."</div>
+      <div class="author"><strong>Fernando O.</strong> · Empresário · Curitiba</div>
+    </div>
+    <div class="testi-mini">
+      <div class="stars">★★★★★</div>
+      <div class="text">"Já tinha patrimônio mas não sabia como protegê-lo. A estruturação da holding e o planejamento sucessório foram o que eu precisava há anos."</div>
+      <div class="author"><strong>Juliana F.</strong> · Advogada · Rio de Janeiro</div>
+    </div>
+    <div class="testi-mini">
+      <div class="stars">★★★★★</div>
+      <div class="text">"ROI de 3x no primeiro ano. Investi R$5k na mentoria e isso me gerou R$15k de economia em impostos só com a reestruturação tributária."</div>
+      <div class="author"><strong>Carlos M.</strong> · Investidor · Porto Alegre</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- GARANTIA -->
+<section class="section">
+  <div class="section-eyebrow">Sem risco</div>
+  <h2 class="section-title" style="text-align:center">Garantia de 15 dias</h2>
+  <div class="guarantee-luxury">
+    <div class="g-icon">🛡️</div>
+    <div class="g-title">Risco zero para você</div>
+    <div class="g-text">Se nas primeiras duas semanas de mentoria você sentir que não é o que esperava — por qualquer motivo — devolvemos 100% do seu investimento. Sem burocracia, sem questionamentos. É o compromisso do Pablo com a sua satisfação total.</div>
+    <div style="margin-top:18px;font-size:12px;color:var(--green-l)">✅ Garantia válida nos primeiros 15 dias após o início do programa</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FAQ -->
+<section class="section">
+  <div class="section-eyebrow">Dúvidas</div>
+  <h2 class="section-title" style="margin-bottom:0">Perguntas frequentes</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Quanto patrimônio preciso ter para entrar? <span class="arrow">▼</span></div>
+      <div class="faq-a">Não há um mínimo. Aceitamos desde quem está começando a acumular até quem já tem R$1M+ e quer estruturar melhor. O plano é personalizado para a sua realidade.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Como funcionam as sessões ao vivo? <span class="arrow">▼</span></div>
+      <div class="faq-a">São encontros semanais via Zoom, toda terça-feira às 20h. Cada sessão tem análise de mercado, estudo de casos reais e Q&A exclusivo com Pablo. As gravações ficam disponíveis por 1 ano.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">O suporte no WhatsApp é direto com o Pablo? <span class="arrow">▼</span></div>
+      <div class="faq-a">Sim. Você tem acesso a um grupo exclusivo onde Pablo responde pessoalmente durante a semana. Não é equipe, não é chatbot — é acesso direto ao mentor.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Posso parcelar? <span class="arrow">▼</span></div>
+      <div class="faq-a">Sim. Você pode pagar R$5.000 à vista, em 5x de R$1.050 ou em 10x de R$549 no cartão de crédito.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Quantas vagas restam? <span class="arrow">▼</span></div>
+      <div class="faq-a">A turma é limitada a 12 pessoas para garantir qualidade no acompanhamento. Atualmente restam apenas 8 vagas para Junho 2025.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">O que acontece depois dos 6 meses? <span class="arrow">▼</span></div>
+      <div class="faq-a">Você mantém o acesso vitalício ao curso, às gravações e à comunidade premium. Alunos que concluem têm desconto especial para renovar ou ingressar no programa anual de acompanhamento.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<div class="cta-final">
+  <div style="max-width:680px;margin:0 auto">
+    <div class="section-eyebrow">Última chamada</div>
+    <h2 class="section-title">Restam apenas <span style="color:var(--gold)">8 vagas</span> para Junho 2025</h2>
+    <p style="font-size:14px;color:var(--text2);margin:0 auto 36px;line-height:1.8;max-width:520px">Este é o investimento mais importante que você vai fazer no seu patrimônio. Enquanto outros gastam R$5.000 em gadgets ou viagens, você investe no sistema que vai multiplicar esse valor 3x em 12 meses.</p>
+    <div class="hero-price-block" style="display:inline-block;margin-bottom:32px">
+      <div class="price-tag">Investimento total</div>
+      <div class="price-val">R$5.000</div>
+      <div class="price-per">ou 10x de R$549</div>
+    </div>
+    <div><a class="cta-btn cta-gold" href="../auth.html" style="font-size:15px">GARANTIR MINHA VAGA AGORA →</a></div>
+    <div class="cta-sub" style="margin-top:16px">
+      <span>🔒 Pagamento 100% seguro</span>
+      <span>✅ 15 dias de garantia</span>
+      <span>⚡ 8 vagas restantes</span>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div>&copy; 2025 4P Patrimonial · Todos os direitos reservados</div>
+  <div><a href="#">Termos de Uso</a> · <a href="#">Política de Privacidade</a> · <a href="#">Suporte</a></div>
+  <div style="margin-top:8px;max-width:520px;margin-left:auto;margin-right:auto">
+    Este programa é educacional e de desenvolvimento patrimonial. Não constitui recomendação de investimento conforme a Resolução CVM 20/2021. Resultados individuais podem variar.
+  </div>
+</footer>
+
+<!-- STICKY -->
+<div class="sticky-cta" id="sticky-cta">
+  <div class="sticky-info">Mentoria Premium: <span class="sticky-price">R$5.000</span> <span style="font-size:11px;color:var(--text3)">· 8 vagas</span></div>
+  <a class="cta-btn cta-gold" href="../auth.html" style="padding:12px 28px;font-size:13px">GARANTIR MINHA VAGA →</a>
+</div>
+
+<script>
+window.addEventListener('scroll', () => {
+  const sc = document.getElementById('sticky-cta');
+  sc.style.display = window.scrollY > 600 ? 'flex' : 'none';
+});
+function toggleFaq(el) {
+  el.closest('.faq-item').classList.toggle('open');
+}
+</script>
+<div style="height:70px"></div>
+</body>
+</html>

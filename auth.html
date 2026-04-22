@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4P Patrimonial — Acesso</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold-l:#F0D88A;--gold-d:#8B6914;
+  --dark:#0F0F0F;--dark2:#1A1A1A;--dark3:#242424;--dark4:#2E2E2E;
+  --text:#F0EDE6;--text2:#A89F8C;--text3:#6B6359;
+  --green:#2D6A4F;--green-l:#52B788;
+  --red:#E05252;--r:14px;--r-sm:8px;--r-full:999px;--trans:.18s ease;
+}
+body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+
+/* BG */
+.bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.12}
+.orb-1{width:500px;height:500px;background:var(--gold);top:-150px;right:-100px}
+.orb-2{width:400px;height:400px;background:var(--green);bottom:-100px;left:-100px}
+
+/* WRAP */
+.auth-wrap{position:relative;z-index:1;width:100%;max-width:420px;padding:20px}
+
+/* LOGO */
+.logo-block{text-align:center;margin-bottom:32px}
+.logo-text{font-family:'DM Serif Display',serif;font-size:30px;color:var(--gold);letter-spacing:-0.5px}
+.logo-badge{display:inline-block;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:9px;font-weight:700;letter-spacing:2px;padding:3px 12px;border-radius:var(--r-full);margin-top:6px;text-transform:uppercase}
+.logo-sub{font-size:12px;color:var(--text3);margin-top:8px}
+
+/* CARD */
+.auth-card{background:var(--dark2);border:1px solid #252525;border-radius:18px;padding:32px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+
+/* TABS */
+.tab-row{display:flex;background:var(--dark3);border-radius:var(--r-full);padding:4px;margin-bottom:28px}
+.tab-btn{flex:1;padding:9px;border:none;background:transparent;border-radius:var(--r-full);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;transition:all var(--trans)}
+.tab-btn.active{background:var(--dark4);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.4)}
+
+/* FORMS */
+.form-panel{display:none}
+.form-panel.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+.form-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px}
+.form-sub{font-size:12px;color:var(--text3);margin-bottom:22px;line-height:1.6}
+
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--text3);margin-bottom:6px;text-transform:uppercase}
+.field input{width:100%;background:var(--dark3);border:1px solid #2e2e2e;border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:13px;outline:none;transition:border-color var(--trans)}
+.field input::placeholder{color:var(--text3)}
+.field input:focus{border-color:var(--gold)}
+.field input.err{border-color:var(--red)}
+
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.input-wrap{position:relative}
+.input-wrap input{padding-right:44px}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:color var(--trans)}
+.eye-btn:hover{color:var(--gold)}
+
+.field-hint{font-size:11px;color:var(--text3);margin-top:4px}
+.field-err{font-size:11px;color:var(--red);margin-top:4px;display:none}
+
+/* CHECKBOX */
+.check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:20px}
+.check-row input[type=checkbox]{width:16px;height:16px;margin-top:2px;accent-color:var(--gold);flex-shrink:0;cursor:pointer}
+.check-label{font-size:12px;color:var(--text3);line-height:1.5}
+.check-label a{color:var(--gold);text-decoration:none}
+
+/* BTNS */
+.btn-submit{width:100%;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:var(--dark);border:none;border-radius:var(--r-full);padding:14px;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all var(--trans);margin-bottom:16px}
+.btn-submit:hover{opacity:.9;transform:translateY(-1px)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+.btn-link{display:block;text-align:center;font-size:12px;color:var(--text3);cursor:pointer;transition:color var(--trans);background:none;border:none;width:100%;font-family:'Sora',sans-serif;padding:4px}
+.btn-link:hover{color:var(--gold)}
+.btn-link span{color:var(--gold)}
+
+/* DIVIDER */
+.divider-or{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:11px}
+.divider-or::before,.divider-or::after{content:'';flex:1;height:1px;background:#2a2a2a}
+
+/* SOCIAL */
+.btn-social{width:100%;background:var(--dark3);border:1px solid #2e2e2e;border-radius:var(--r-sm);padding:12px;font-family:'Sora',sans-serif;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;transition:all var(--trans);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}
+.btn-social:hover{border-color:#444}
+
+/* ALERT */
+.alert{border-radius:var(--r-sm);padding:12px 16px;margin-bottom:18px;font-size:12px;line-height:1.5;display:none}
+.alert.show{display:block;animation:fadeIn .2s ease}
+.alert-success{background:rgba(82,183,136,.1);border:1px solid rgba(82,183,136,.3);color:var(--green-l)}
+.alert-error{background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);color:#fca5a5}
+.alert-info{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);color:var(--gold-l)}
+
+/* LOADER */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(15,15,15,.4);border-top-color:var(--dark);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* STRENGTH */
+.pwd-strength{margin-top:8px}
+.strength-bar{height:3px;border-radius:2px;background:var(--dark4);overflow:hidden;margin-bottom:4px}
+.strength-fill{height:100%;border-radius:2px;transition:all .3s ease;width:0}
+.strength-text{font-size:10px;color:var(--text3)}
+
+/* FOOTER */
+.auth-footer{text-align:center;margin-top:20px;font-size:11px;color:var(--text3)}
+.auth-footer a{color:var(--text3);text-decoration:none}
+.auth-footer a:hover{color:var(--gold)}
+</style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+</div>
+
+<div class="auth-wrap">
+  <div class="logo-block">
+    <div class="logo-text">4P Patrimonial</div>
+    <div class="logo-badge">Plataforma Exclusiva</div>
+    <div class="logo-sub">Proteger · Preservar · Perpetuar · Prosperar</div>
+  </div>
+
+  <div class="auth-card">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="showTab('login')">Entrar</button>
+      <button class="tab-btn" onclick="showTab('cadastro')">Cadastrar</button>
+      <button class="tab-btn" onclick="showTab('recuperar')">Recuperar</button>
+    </div>
+
+    <!-- ALERT GLOBAL -->
+    <div class="alert" id="globalAlert"></div>
+
+    <!-- ── LOGIN ── -->
+    <div class="form-panel active" id="panel-login">
+      <div class="form-title">Bem-vindo de volta</div>
+      <div class="form-sub">Acesse sua área de membro da 4P Patrimonial.</div>
+
+      <form id="form-login" onsubmit="handleLogin(event)">
+        <div class="field">
+          <label>E-mail</label>
+          <input type="email" id="login-email" placeholder="seu@email.com" required>
+        </div>
+        <div class="field">
+          <label>Senha</label>
+          <div class="input-wrap">
+            <input type="password" id="login-senha" placeholder="••••••••" required>
+            <button type="button" class="eye-btn" onclick="togglePwd('login-senha',this)">👁</button>
+          </div>
+        </div>
+        <div style="text-align:right;margin-bottom:18px">
+          <button type="button" class="btn-link" style="width:auto;font-size:12px;padding:0" onclick="showTab('recuperar')">Esqueci a senha</button>
+        </div>
+        <button type="submit" class="btn-submit" id="btn-login">Acessar plataforma</button>
+        <button type="button" class="btn-link" onclick="showTab('cadastro')">Não tem conta? <span>Cadastre-se grátis</span></button>
+      </form>
+    </div>
+
+    <!-- ── CADASTRO ── -->
+    <div class="form-panel" id="panel-cadastro">
+      <div class="form-title">Criar conta</div>
+      <div class="form-sub">Junte-se a centenas de investidores que já transformaram seu patrimônio.</div>
+
+      <form id="form-cadastro" onsubmit="handleCadastro(event)">
+        <div class="field-row">
+          <div class="field">
+            <label>Nome</label>
+            <input type="text" id="cad-nome" placeholder="João" required>
+          </div>
+          <div class="field">
+            <label>Sobrenome</label>
+            <input type="text" id="cad-sobrenome" placeholder="Silva" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>E-mail</label>
+          <input type="email" id="cad-email" placeholder="seu@email.com" required>
+        </div>
+        <div class="field">
+          <label>Senha</label>
+          <div class="input-wrap">
+            <input type="password" id="cad-senha" placeholder="Mín. 8 caracteres" required oninput="checkStrength(this.value)">
+            <button type="button" class="eye-btn" onclick="togglePwd('cad-senha',this)">👁</button>
+          </div>
+          <div class="pwd-strength" id="strengthWrap" style="display:none">
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <div class="strength-text" id="strengthText"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Confirmar senha</label>
+          <div class="input-wrap">
+            <input type="password" id="cad-confirm" placeholder="••••••••" required>
+            <button type="button" class="eye-btn" onclick="togglePwd('cad-confirm',this)">👁</button>
+          </div>
+          <div class="field-err" id="err-confirm">As senhas não coincidem.</div>
+        </div>
+        <div class="check-row">
+          <input type="checkbox" id="cad-termos" required>
+          <label class="check-label" for="cad-termos">Concordo com os <a href="#">Termos de Uso</a> e a <a href="#">Política de Privacidade</a> da 4P Patrimonial.</label>
+        </div>
+        <button type="submit" class="btn-submit" id="btn-cad">Criar minha conta</button>
+        <button type="button" class="btn-link" onclick="showTab('login')">Já tenho conta. <span>Entrar</span></button>
+      </form>
+    </div>
+
+    <!-- ── RECUPERAR ── -->
+    <div class="form-panel" id="panel-recuperar">
+      <div class="form-title">Recuperar acesso</div>
+      <div class="form-sub">Informe seu e-mail e enviaremos as instruções para redefinir sua senha.</div>
+
+      <form id="form-recuperar" onsubmit="handleRecuperar(event)">
+        <div class="field">
+          <label>E-mail cadastrado</label>
+          <input type="email" id="rec-email" placeholder="seu@email.com" required>
+        </div>
+        <button type="submit" class="btn-submit" id="btn-rec">Enviar instruções</button>
+        <button type="button" class="btn-link" onclick="showTab('login')">Lembrei a senha. <span>Voltar ao login</span></button>
+      </form>
+    </div>
+  </div>
+
+  <div class="auth-footer">
+    Ao acessar você concorda com nossos <a href="#">Termos</a> e <a href="#">Privacidade</a>.<br>
+    &copy; 2025 4P Patrimonial. Todos os direitos reservados.
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── TAB ──
+function showTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    const tabs = ['login','cadastro','recuperar'];
+    b.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  clearAlert();
+}
+
+// ── ALERT ──
+function showAlert(msg, type = 'error') {
+  const el = document.getElementById('globalAlert');
+  el.textContent = msg;
+  el.className = 'alert alert-' + type + ' show';
+}
+function clearAlert() {
+  const el = document.getElementById('globalAlert');
+  el.className = 'alert';
+}
+
+// ── PASSWORD TOGGLE ──
+function togglePwd(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+// ── PASSWORD STRENGTH ──
+function checkStrength(val) {
+  const wrap = document.getElementById('strengthWrap');
+  const fill = document.getElementById('strengthFill');
+  const text = document.getElementById('strengthText');
+  if (!val) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    { w: '25%', c: '#E05252', t: 'Senha fraca' },
+    { w: '50%', c: '#F59E0B', t: 'Senha regular' },
+    { w: '75%', c: '#3B82F6', t: 'Senha boa' },
+    { w: '100%', c: '#52B788', t: 'Senha forte' }
+  ];
+  const l = levels[score - 1] || levels[0];
+  fill.style.width = l.w;
+  fill.style.background = l.c;
+  text.textContent = l.t;
+  text.style.color = l.c;
+}
+
+// ── SET LOADING ──
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Aguarde...';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.orig || btn.textContent;
+  }
+}
+
+// Store original button texts
+window.addEventListener('DOMContentLoaded', () => {
+  ['btn-login','btn-cad','btn-rec'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.dataset.orig = el.textContent;
+  });
+
+  // Check if already logged in
+  sb.auth.getSession().then(({ data }) => {
+    if (data.session) window.location.href = 'plataforma/index.html';
+  });
+
+  // Handle auth state change (email confirmation etc)
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      window.location.href = 'plataforma/index.html';
+    }
+    if (event === 'PASSWORD_RECOVERY') {
+      showTab('recuperar');
+      showAlert('Defina sua nova senha abaixo.', 'info');
+    }
+  });
+});
+
+// ── LOGIN ──
+async function handleLogin(e) {
+  e.preventDefault();
+  clearAlert();
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  setLoading('btn-login', true);
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
+  setLoading('btn-login', false);
+  if (error) {
+    const msgs = {
+      'Invalid login credentials': 'E-mail ou senha incorretos.',
+      'Email not confirmed': 'Confirme seu e-mail antes de entrar.',
+      'Too many requests': 'Muitas tentativas. Aguarde alguns minutos.',
+    };
+    showAlert(msgs[error.message] || error.message, 'error');
+    return;
+  }
+  window.location.href = 'plataforma/index.html';
+}
+
+// ── CADASTRO ──
+async function handleCadastro(e) {
+  e.preventDefault();
+  clearAlert();
+  const nome = document.getElementById('cad-nome').value.trim();
+  const sobrenome = document.getElementById('cad-sobrenome').value.trim();
+  const email = document.getElementById('cad-email').value.trim();
+  const senha = document.getElementById('cad-senha').value;
+  const confirm = document.getElementById('cad-confirm').value;
+  const errEl = document.getElementById('err-confirm');
+
+  if (senha !== confirm) {
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  if (senha.length < 8) {
+    showAlert('A senha deve ter no mínimo 8 caracteres.', 'error');
+    return;
+  }
+
+  setLoading('btn-cad', true);
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password: senha,
+    options: {
+      data: { nome_completo: nome + ' ' + sobrenome, nome, sobrenome },
+      emailRedirectTo: window.location.origin + '/plataforma/index.html'
+    }
+  });
+  setLoading('btn-cad', false);
+
+  if (error) {
+    const msgs = {
+      'User already registered': 'Este e-mail já está cadastrado. Faça login.',
+      'Password should be at least 6 characters': 'A senha deve ter no mínimo 6 caracteres.',
+    };
+    showAlert(msgs[error.message] || error.message, 'error');
+    return;
+  }
+
+  // Upsert profile
+  if (data.user) {
+    await sb.from('profiles').upsert({
+      id: data.user.id, nome, sobrenome, email,
+      nome_completo: nome + ' ' + sobrenome,
+      created_at: new Date().toISOString()
+    });
+  }
+
+  if (data.user && !data.session) {
+    showAlert('Conta criada! Verifique seu e-mail para confirmar o cadastro.', 'success');
+  } else {
+    window.location.href = 'plataforma/index.html';
+  }
+}
+
+// ── RECUPERAR ──
+async function handleRecuperar(e) {
+  e.preventDefault();
+  clearAlert();
+  const email = document.getElementById('rec-email').value.trim();
+  setLoading('btn-rec', true);
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/auth.html'
+  });
+  setLoading('btn-rec', false);
+  if (error) {
+    showAlert(error.message, 'error');
+    return;
+  }
+  showAlert('E-mail enviado! Verifique sua caixa de entrada (e spam) para redefinir a senha.', 'success');
+  document.getElementById('form-recuperar').reset();
+}
+</script>
+</body>
+</html>

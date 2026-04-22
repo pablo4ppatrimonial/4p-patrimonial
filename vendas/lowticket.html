@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4P Patrimonial — Método 4P por R$97</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold-l:#F0D88A;--gold-d:#8B6914;
+  --dark:#0F0F0F;--dark2:#161616;--dark3:#1E1E1E;--dark4:#282828;
+  --text:#F0EDE6;--text2:#A89F8C;--text3:#6B6359;
+  --green:#2D6A4F;--green-l:#52B788;
+  --red:#E05252;--r:14px;--r-sm:8px;--r-full:999px;
+}
+body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);overflow-x:hidden}
+
+/* ── HEADER ── */
+.header{background:var(--dark2);border-bottom:1px solid #222;padding:14px 20px;text-align:center}
+.header-logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold)}
+.header-badge{display:inline-block;background:rgba(82,183,136,.12);border:1px solid rgba(82,183,136,.3);color:var(--green-l);font-size:10px;font-weight:700;letter-spacing:1.5px;padding:3px 12px;border-radius:var(--r-full);margin-left:10px;text-transform:uppercase;vertical-align:middle}
+
+/* ── HERO ── */
+.hero{padding:60px 20px 50px;text-align:center;background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,.06),transparent 60%);border-bottom:1px solid #1a1a1a}
+.hero-eyebrow{display:inline-block;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);color:var(--gold);font-size:10px;font-weight:700;letter-spacing:2px;padding:5px 16px;border-radius:var(--r-full);text-transform:uppercase;margin-bottom:20px}
+.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(28px,5vw,52px);color:var(--text);line-height:1.15;margin-bottom:16px;max-width:760px;margin-left:auto;margin-right:auto}
+.hero-title em{font-style:italic;color:var(--gold)}
+.hero-sub{font-size:clamp(14px,2vw,17px);color:var(--text2);line-height:1.7;max-width:580px;margin:0 auto 32px}
+.hero-price{margin-bottom:30px}
+.price-from{font-size:13px;color:var(--text3);text-decoration:line-through;margin-bottom:4px}
+.price-val{font-size:clamp(42px,6vw,64px);font-weight:800;color:var(--gold);line-height:1;letter-spacing:-2px}
+.price-per{font-size:14px;color:var(--text3);margin-top:4px}
+.price-installment{font-size:13px;color:var(--green-l);margin-top:6px}
+.cta-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#8B6914,#C9A84C,#F0D88A);color:var(--dark);font-family:'Sora',sans-serif;font-size:16px;font-weight:800;padding:18px 48px;border-radius:var(--r-full);border:none;cursor:pointer;text-decoration:none;letter-spacing:.3px;box-shadow:0 8px 32px rgba(201,168,76,.3);transition:all .2s ease;text-transform:uppercase}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(201,168,76,.4)}
+.cta-btn.green{background:linear-gradient(135deg,#1a5c3a,#2D6A4F,#52B788);color:#fff;box-shadow:0 8px 32px rgba(82,183,136,.3)}
+.cta-btn.green:hover{box-shadow:0 12px 40px rgba(82,183,136,.4)}
+.cta-sub{font-size:11px;color:var(--text3);margin-top:12px;display:flex;align-items:center;justify-content:center;gap:16px}
+.cta-sub span{display:flex;align-items:center;gap:4px}
+.hero-timer{background:var(--dark3);border:1px solid #282828;border-radius:var(--r);padding:14px 24px;display:inline-flex;align-items:center;gap:16px;margin-bottom:28px}
+.timer-block{text-align:center}
+.timer-num{font-size:28px;font-weight:800;color:var(--gold);line-height:1;min-width:36px}
+.timer-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.timer-sep{font-size:22px;font-weight:700;color:var(--text3);margin-bottom:14px}
+
+/* ── TRUST BAR ── */
+.trust-bar{background:var(--dark2);border-bottom:1px solid #1a1a1a;padding:14px 20px;display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)}
+.trust-item strong{color:var(--text2)}
+
+/* ── SECTIONS ── */
+.section{padding:60px 20px;max-width:900px;margin:0 auto}
+.section-centered{text-align:center}
+.section-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px}
+.section-title{font-family:'DM Serif Display',serif;font-size:clamp(24px,4vw,38px);color:var(--text);line-height:1.2;margin-bottom:12px}
+.section-sub{font-size:14px;color:var(--text2);line-height:1.8;max-width:600px;margin:0 auto}
+.divider{height:1px;background:linear-gradient(90deg,transparent,#2a2a2a,transparent);margin:0}
+
+/* ── PROBLEMS ── */
+.problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:32px}
+.problem-card{background:var(--dark2);border:1px solid rgba(224,82,82,.15);border-radius:var(--r);padding:20px}
+.problem-icon{font-size:24px;margin-bottom:10px}
+.problem-text{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* ── SOLUTION ── */
+.solution-list{display:grid;gap:14px;margin-top:28px}
+.solution-item{display:flex;align-items:flex-start;gap:14px;background:var(--dark2);border:1px solid #222;border-radius:var(--r);padding:18px;transition:border-color .2s}
+.solution-item:hover{border-color:rgba(201,168,76,.2)}
+.sol-icon{width:40px;height:40px;border-radius:var(--r-sm);background:var(--gold-bg, rgba(201,168,76,.1));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid rgba(201,168,76,.15)}
+.sol-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.sol-desc{font-size:12px;color:var(--text3);line-height:1.6}
+
+/* ── AULAS GRID ── */
+.aulas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:28px}
+.aula-card{background:var(--dark2);border:1px solid #222;border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
+.aula-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-d),var(--gold))}
+.aula-num{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+.aula-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
+.aula-dur{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
+
+/* ── FOR WHOM ── */
+.for-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px}
+.for-card{background:var(--dark2);border:1px solid #222;border-radius:var(--r);padding:20px}
+.for-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.for-list{list-style:none;display:grid;gap:8px}
+.for-list li{font-size:12px;color:var(--text2);display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.for-list li.yes::before{content:'✅';flex-shrink:0}
+.for-list li.no::before{content:'❌';flex-shrink:0}
+
+/* ── TESTIMONIALS ── */
+.testi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:28px}
+.testi-card{background:var(--dark2);border:1px solid #222;border-radius:var(--r);padding:20px;position:relative}
+.testi-stars{color:var(--gold);font-size:13px;margin-bottom:10px}
+.testi-text{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:14px;font-style:italic}
+.testi-author{display:flex;align-items:center;gap:10px}
+.testi-avatar{width:36px;height:36px;border-radius:var(--r-full);background:linear-gradient(135deg,var(--gold-d),var(--gold));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--dark);text-transform:uppercase}
+.testi-name{font-size:12px;font-weight:600;color:var(--text)}
+.testi-city{font-size:11px;color:var(--text3)}
+
+/* ── GUARANTEE ── */
+.guarantee-box{background:linear-gradient(135deg,var(--dark2),var(--dark3));border:2px solid rgba(82,183,136,.2);border-radius:18px;padding:32px;text-align:center;margin-top:20px}
+.guarantee-icon{font-size:52px;margin-bottom:12px}
+.guarantee-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--green-l);margin-bottom:10px}
+.guarantee-text{font-size:13px;color:var(--text2);line-height:1.8;max-width:520px;margin:0 auto}
+
+/* ── FAQ ── */
+.faq-list{display:grid;gap:10px;margin-top:28px}
+.faq-item{background:var(--dark2);border:1px solid #222;border-radius:var(--r);overflow:hidden}
+.faq-q{padding:16px 18px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:color .2s}
+.faq-q:hover{color:var(--gold)}
+.faq-q .arrow{transition:transform .2s;color:var(--text3)}
+.faq-item.open .faq-q .arrow{transform:rotate(180deg)}
+.faq-a{font-size:12px;color:var(--text3);line-height:1.7;padding:0 18px;max-height:0;overflow:hidden;transition:all .3s ease}
+.faq-item.open .faq-a{padding:0 18px 16px;max-height:200px}
+
+/* ── CTA FINAL ── */
+.cta-final{background:radial-gradient(ellipse at 50% 50%,rgba(201,168,76,.07),transparent 70%);border-top:1px solid #1a1a1a;padding:70px 20px;text-align:center}
+
+/* ── FOOTER ── */
+.footer{background:var(--dark2);border-top:1px solid #1a1a1a;padding:24px 20px;text-align:center;font-size:11px;color:var(--text3);line-height:2}
+.footer a{color:var(--text3);text-decoration:none}
+.footer a:hover{color:var(--gold)}
+
+/* STICKY CTA */
+.sticky-cta{position:fixed;bottom:0;left:0;right:0;background:var(--dark2);border-top:1px solid #282828;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;z-index:100;backdrop-filter:blur(10px)}
+.sticky-price{font-size:13px;color:var(--text2)}
+.sticky-price strong{font-size:20px;color:var(--gold);font-weight:800;margin-left:6px}
+
+@media(max-width:600px){
+  .for-grid{grid-template-columns:1fr}
+  .trust-bar{gap:14px}
+  .sticky-cta{flex-direction:column;gap:10px}
+  .hero-timer{gap:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <span class="header-logo">4P Patrimonial</span>
+  <span class="header-badge">Oferta por tempo limitado</span>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">Método 4P — Curso Fundamentos</div>
+  <h1 class="hero-title">Aprenda a <em>Proteger, Preservar, Perpetuar</em> e <em>Prosperar</em> seu patrimônio do zero</h1>
+  <p class="hero-sub">7 aulas práticas que vão transformar a forma como você enxerga dinheiro, investimentos e liberdade financeira — com o Método 4P comprovado por centenas de alunos.</p>
+
+  <div class="hero-timer" id="timer">
+    <div class="timer-block"><div class="timer-num" id="t-h">23</div><div class="timer-label">horas</div></div>
+    <div class="timer-sep">:</div>
+    <div class="timer-block"><div class="timer-num" id="t-m">59</div><div class="timer-label">min</div></div>
+    <div class="timer-sep">:</div>
+    <div class="timer-block"><div class="timer-num" id="t-s">47</div><div class="timer-label">seg</div></div>
+  </div>
+
+  <div class="hero-price">
+    <div class="price-from">De R$ 297,00</div>
+    <div style="font-size:14px;color:var(--text3);margin-bottom:4px">por apenas</div>
+    <div class="price-val">R$ 97</div>
+    <div class="price-per">pagamento único</div>
+    <div class="price-installment">ou 3x de R$ 34,90 sem juros</div>
+  </div>
+
+  <a class="cta-btn" href="../auth.html">QUERO COMEÇAR AGORA →</a>
+  <div class="cta-sub">
+    <span>🔒 Pagamento 100% seguro</span>
+    <span>✅ 7 dias de garantia</span>
+    <span>📱 Acesso imediato</span>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="trust-item">⭐ <strong>4.9/5</strong> de avaliação</div>
+  <div class="trust-item">👥 <strong>+1.200</strong> alunos</div>
+  <div class="trust-item">🏆 <strong>#1</strong> em patrimônio pessoal</div>
+  <div class="trust-item">🔒 <strong>Garantia</strong> 7 dias</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PROBLEMA -->
+<section class="section">
+  <div class="section-eyebrow">Você se identifica com isso?</div>
+  <h2 class="section-title">A maioria das pessoas comete estes erros com o patrimônio</h2>
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="problem-icon">😰</div>
+      <div class="problem-text">Trabalha muito mas não consegue acumular patrimônio de verdade</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">📉</div>
+      <div class="problem-text">Investe sem estratégia e perde dinheiro sem entender por quê</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">🤷</div>
+      <div class="problem-text">Não sabe como proteger o que construiu de dívidas e imprevistos</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">⏰</div>
+      <div class="problem-text">Adia a construção do seu legado sem saber por onde começar</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SOLUÇÃO -->
+<section class="section">
+  <div class="section-eyebrow">A solução</div>
+  <h2 class="section-title">O Método 4P é o mapa que você precisava</h2>
+  <p class="section-sub" style="margin:0 0 8px">Um sistema completo e sequencial para construir, proteger e multiplicar seu patrimônio — independente do quanto você já tem.</p>
+  <div class="solution-list">
+    <div class="solution-item">
+      <div class="sol-icon">🛡️</div>
+      <div><div class="sol-title">Proteger — Blindagem patrimonial</div><div class="sol-desc">Aprenda a estruturar seu patrimônio para que credores, processos e imprevistos não destruam o que você construiu.</div></div>
+    </div>
+    <div class="solution-item">
+      <div class="sol-icon">🏛️</div>
+      <div><div class="sol-title">Preservar — Conservação inteligente</div><div class="sol-desc">Entenda como manter o poder de compra do seu patrimônio contra a inflação e a perda de valor ao longo dos anos.</div></div>
+    </div>
+    <div class="solution-item">
+      <div class="sol-icon">♾️</div>
+      <div><div class="sol-title">Perpetuar — Legado e sucessão</div><div class="sol-desc">Planeje a transmissão do seu patrimônio para as próximas gerações de forma eficiente, econômica e segura.</div></div>
+    </div>
+    <div class="solution-item">
+      <div class="sol-icon">📈</div>
+      <div><div class="sol-title">Prosperar — Crescimento consistente</div><div class="sol-desc">Use estratégias de alocação inteligente de ativos para fazer seu patrimônio crescer de forma consistente e sustentável.</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- AULAS -->
+<section class="section section-centered">
+  <div class="section-eyebrow">O que você vai aprender</div>
+  <h2 class="section-title">7 aulas que vão mudar sua visão sobre patrimônio</h2>
+  <div class="aulas-grid">
+    <div class="aula-card">
+      <div class="aula-num">Aula 01</div>
+      <div class="aula-title">Fundamentos do Patrimônio</div>
+      <div class="aula-dur">⏱ 38 min</div>
+    </div>
+    <div class="aula-card">
+      <div class="aula-num">Aula 02</div>
+      <div class="aula-title">Os 4 P's — Método Completo</div>
+      <div class="aula-dur">⏱ 45 min</div>
+    </div>
+    <div class="aula-card">
+      <div class="aula-num">Aula 03</div>
+      <div class="aula-title">Blindagem e Holding Familiar</div>
+      <div class="aula-dur">⏱ 52 min</div>
+    </div>
+    <div class="aula-card">
+      <div class="aula-num">Aula 04</div>
+      <div class="aula-title">Diversificação Inteligente</div>
+      <div class="aula-dur">⏱ 41 min</div>
+    </div>
+    <div class="aula-card">
+      <div class="aula-num">Aula 05</div>
+      <div class="aula-title">FIIs de Alto Rendimento</div>
+      <div class="aula-dur">⏱ 48 min</div>
+    </div>
+    <div class="aula-card">
+      <div class="aula-num">Aula 06</div>
+      <div class="aula-title">Renda Passiva Perpétua</div>
+      <div class="aula-dur">⏱ 36 min</div>
+    </div>
+    <div class="aula-card">
+      <div class="aula-num">Aula 07</div>
+      <div class="aula-title">Legado e Planejamento Sucessório</div>
+      <div class="aula-dur">⏱ 44 min</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:32px">
+    <a class="cta-btn" href="../auth.html">ACESSAR AS 7 AULAS POR R$97 →</a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PARA QUEM É -->
+<section class="section">
+  <div class="section-eyebrow">Para quem é?</div>
+  <h2 class="section-title">O curso certo para o momento certo</h2>
+  <div class="for-grid">
+    <div class="for-card" style="border-color:rgba(82,183,136,.2)">
+      <div class="for-title" style="color:var(--green-l)">✅ É para você se...</div>
+      <ul class="for-list">
+        <li class="yes">Quer começar a investir com estratégia</li>
+        <li class="yes">Tem patrimônio e quer protegê-lo</li>
+        <li class="yes">Busca renda passiva consistente</li>
+        <li class="yes">Quer construir um legado para a família</li>
+        <li class="yes">É assalariado ou empreendedor</li>
+      </ul>
+    </div>
+    <div class="for-card" style="border-color:rgba(224,82,82,.15)">
+      <div class="for-title" style="color:#fca5a5">❌ Não é para você se...</div>
+      <ul class="for-list">
+        <li class="no">Quer enriquecer rápido sem esforço</li>
+        <li class="no">Busca dicas de day trade</li>
+        <li class="no">Não quer aplicar o conhecimento</li>
+        <li class="no">Está endividado e sem reservas</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DEPOIMENTOS -->
+<section class="section section-centered">
+  <div class="section-eyebrow">Resultados reais</div>
+  <h2 class="section-title">O que dizem nossos alunos</h2>
+  <div class="testi-grid">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"O Método 4P mudou completamente a forma como vejo meu patrimônio. Em 6 meses apliquei tudo e hoje tenho renda passiva real."</div>
+      <div class="testi-author"><div class="testi-avatar">M</div><div><div class="testi-name">Mariana S.</div><div class="testi-city">São Paulo, SP</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Comprei pensando que era mais um curso. Mas o conteúdo é denso, prático e transformador. Valia muito mais do que paguei."</div>
+      <div class="testi-author"><div class="testi-avatar">C</div><div><div class="testi-name">Carlos M.</div><div class="testi-city">Belo Horizonte, MG</div></div></div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"Finalmente entendi como montar uma holding e proteger minha empresa. Recomendo para todo empreendedor que ainda não fez isso."</div>
+      <div class="testi-author"><div class="testi-avatar">A</div><div><div class="testi-name">Ana B.</div><div class="testi-city">Rio de Janeiro, RJ</div></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- GARANTIA -->
+<section class="section">
+  <div class="guarantee-box">
+    <div class="guarantee-icon">🛡️</div>
+    <div class="guarantee-title">Garantia incondicional de 7 dias</div>
+    <div class="guarantee-text">Se por qualquer motivo você não ficar 100% satisfeito com o curso, basta enviar um e-mail em até 7 dias após a compra e devolvemos 100% do seu dinheiro. Sem perguntas, sem burocracia.</div>
+    <div style="margin-top:18px">
+      <span style="font-size:12px;color:var(--text3)">Isso porque temos certeza que vai superar suas expectativas.</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FAQ -->
+<section class="section">
+  <div class="section-eyebrow">Dúvidas frequentes</div>
+  <h2 class="section-title" style="margin-bottom:0">Respostas rápidas</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Preciso ter muito dinheiro para começar? <span class="arrow">▼</span></div>
+      <div class="faq-a">Não. O Método 4P é aplicável para quem está começando do zero ou já tem um patrimônio consolidado. O mais importante é ter a estratégia certa.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Por quanto tempo tenho acesso? <span class="arrow">▼</span></div>
+      <div class="faq-a">Você tem acesso vitalício ao curso. Pode assistir quantas vezes quiser, no seu ritmo, de qualquer dispositivo.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">É diferente de outros cursos de investimento? <span class="arrow">▼</span></div>
+      <div class="faq-a">Sim. A maioria dos cursos ensina apenas como investir. O Método 4P ensina como construir e proteger um patrimônio sólido e duradouro — que passe de geração para geração.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Posso pagar parcelado? <span class="arrow">▼</span></div>
+      <div class="faq-a">Sim! Você pode parcelar em até 3x de R$34,90 sem juros no cartão de crédito, ou pagar R$97 à vista com desconto.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">E se eu não gostar? <span class="arrow">▼</span></div>
+      <div class="faq-a">Você tem 7 dias de garantia incondicional. Se não gostar por qualquer motivo, devolvemos 100% do valor pago.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<div class="cta-final">
+  <div style="max-width:600px;margin:0 auto">
+    <div class="section-eyebrow">Oferta especial</div>
+    <h2 class="section-title">Comece hoje por apenas R$97</h2>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:28px;line-height:1.7">Invista R$97 hoje e tenha acesso a um método que pode transformar sua visão sobre patrimônio para sempre. Com garantia de 7 dias sem risco.</p>
+    <div class="hero-price" style="margin-bottom:24px">
+      <div class="price-from">De R$ 297,00</div>
+      <div class="price-val">R$ 97</div>
+      <div class="price-per">pagamento único · acesso vitalício</div>
+    </div>
+    <a class="cta-btn" href="../auth.html" style="font-size:15px">QUERO O MÉTODO 4P POR R$97 →</a>
+    <div class="cta-sub" style="margin-top:14px">
+      <span>🔒 SSL seguro</span>
+      <span>✅ 7 dias garantia</span>
+      <span>📱 Acesso imediato</span>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div>&copy; 2025 4P Patrimonial · Todos os direitos reservados</div>
+  <div><a href="#">Termos de Uso</a> · <a href="#">Política de Privacidade</a> · <a href="#">Suporte</a></div>
+  <div style="margin-top:8px;max-width:500px;margin-left:auto;margin-right:auto">
+    Este curso é educacional e não constitui recomendação de investimento. Rentabilidades passadas não garantem resultados futuros.
+  </div>
+</footer>
+
+<!-- STICKY CTA -->
+<div class="sticky-cta" id="sticky-cta" style="display:none">
+  <div class="sticky-price">Oferta especial: <strong>R$97</strong> <span style="font-size:11px;color:var(--text3)">à vista</span></div>
+  <a class="cta-btn" href="../auth.html" style="padding:12px 28px;font-size:13px">GARANTIR MINHA VAGA →</a>
+</div>
+
+<script>
+// Timer
+let h = 23, m = 47, s = 51;
+setInterval(() => {
+  s--; if (s < 0) { s = 59; m--; }
+  if (m < 0) { m = 59; h--; }
+  if (h < 0) { h = 0; m = 0; s = 0; }
+  document.getElementById('t-h').textContent = String(h).padStart(2,'0');
+  document.getElementById('t-m').textContent = String(m).padStart(2,'0');
+  document.getElementById('t-s').textContent = String(s).padStart(2,'0');
+}, 1000);
+
+// Sticky CTA
+window.addEventListener('scroll', () => {
+  const sc = document.getElementById('sticky-cta');
+  sc.style.display = window.scrollY > 600 ? 'flex' : 'none';
+});
+
+// FAQ
+function toggleFaq(el) {
+  el.closest('.faq-item').classList.toggle('open');
+}
+</script>
+
+<div style="height:70px"></div>
+</body>
+</html>
