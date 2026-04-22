@@ -808,7 +808,7 @@
     </div>
     <div class="modal-lg-body">
       <div class="form-row-3">
-        <div class="fg"><label>Número da aula</label><input class="fi" id="f-numero" type="number" min="1" placeholder="1"></div>
+        <div class="fg"><label>Número da aula</label><input class="fi" id="f-aula-num" type="number" min="1" placeholder="1"></div>
         <div class="fg"><label>Duração</label><input class="fi" id="f-duracao" type="text" placeholder="38 min"></div>
         <div class="fg">
           <label>Status</label>
@@ -1322,7 +1322,7 @@
            ondragend="onDragEnd(event)">
         <div class="aula-card-head">
           <span class="drag-handle" title="Arrastar">⠿</span>
-          <div class="aula-num-badge">${a.numero}</div>
+          <div class="aula-num-badge">${a.aula_num}</div>
           <div class="aula-card-title" title="${a.titulo}">${a.titulo}</div>
           <span class="badge ${a.status === 'publicada' ? 'badge-green' : 'badge-gray'}" style="flex-shrink:0">
             ${a.status === 'publicada' ? '● Pub' : '○ Draft'}
@@ -1351,7 +1351,7 @@
     editingId = id || null;
     const a = id ? cmsAulas.find(x => x.id === id) : null;
     document.getElementById('form-modal-title').textContent = a ? 'Editar Aula' : 'Nova Aula';
-    document.getElementById('f-numero').value     = a?.numero    ?? (cmsAulas.length + 1);
+    document.getElementById('f-aula-num').value   = a?.aula_num  ?? (cmsAulas.length + 1);
     document.getElementById('f-titulo').value     = a?.titulo    ?? '';
     document.getElementById('f-duracao').value    = a?.duracao   ?? '';
     document.getElementById('f-url-video').value  = a?.url_video ?? '';
@@ -1374,7 +1374,7 @@
     const titulo = document.getElementById('f-titulo').value.trim();
     if (!titulo) { toast('O título é obrigatório.', 'error'); document.getElementById('f-titulo').focus(); return; }
     const payload = {
-      numero:       parseInt(document.getElementById('f-numero').value)  || 1,
+      aula_num:     parseInt(document.getElementById('f-aula-num').value) || 1,
       titulo,
       duracao:      document.getElementById('f-duracao').value.trim()    || null,
       url_video:    document.getElementById('f-url-video').value.trim()  || null,
@@ -1434,7 +1434,7 @@
     if (!a) return;
     const embed = cmsVideoEmbed(a.url_video);
     document.getElementById('preview-content').innerHTML = `
-      <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:8px">AULA ${a.numero}</div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:8px">AULA ${a.aula_num}</div>
       <div class="prev-player">
         ${embed
           ? `<iframe src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
