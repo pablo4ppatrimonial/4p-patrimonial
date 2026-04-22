@@ -811,10 +811,11 @@
     const cls = map[plano] || 'badge-gray';
     return `<span class="badge ${cls}">${(plano||'—').toUpperCase()}</span>`;
   }
-  function statusBadge(blocked) {
-    return blocked
-      ? '<span class="badge badge-red">Bloqueado</span>'
-      : '<span class="badge badge-green">Ativo</span>';
+  function statusBadge(blocked, status) {
+    const isBlocked = blocked || status === 'bloqueado';
+    if (isBlocked) return '<span class="badge badge-red">Bloqueado</span>';
+    if (status === 'pendente') return '<span class="badge badge-gray">Pendente</span>';
+    return '<span class="badge badge-green">Ativo</span>';
   }
 
   // ── DASHBOARD ──
@@ -822,16 +823,25 @@
     document.getElementById('dash-updated').textContent = 'Carregando...';
     document.getElementById('recent-tbody').innerHTML = '<tr class="loading-row"><td colspan="5"><span class="spinner"></span>Carregando...</td></tr>';
 
-    const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-    if (error) { toast('Erro: ' + error.message, 'error'); return; }
+    let data, error;
+    try {
+      ({ data, error } = await sb
+        .from('profiles')
+        .select('id, email, nome, plano, status, blocked, created_at')
+        .order('created_at', { ascending: false }));
+    } catch (e) {
+      toast('Erro de rede ao carregar dashboard.', 'error');
+      document.getElementById('dash-updated').textContent = 'Falha ao carregar';
+      return;
+    }
+    if (error) { toast('Erro: ' + error.message, 'error'); document.getElementById('dash-updated').textContent = 'Falha ao carregar'; return; }
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const novosDoMes = data.filter(a => a.created_at >= monthStart);
-    const ativos = data.filter(a => !a.blocked);
-    const bloqueados = data.filter(a => a.blocked);
+    const ativos = data.filter(a => !a.blocked && a.status !== 'bloqueado');
+    const bloqueados = data.filter(a => a.blocked || a.status === 'bloqueado');
 
-    // Revenue estimate
     const receita = novosDoMes.reduce((acc, a) => acc + (PLAN_PRICES[a.plano] || 0), 0);
     const conversao = data.length ? ((novosDoMes.length / data.length) * 100).toFixed(1) + '%' : '0%';
 
@@ -843,16 +853,15 @@
     document.getElementById('m-conversao').textContent = conversao;
     document.getElementById('dash-updated').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
 
-    // Recent 8
     const recent = data.slice(0, 8);
     document.getElementById('recent-tbody').innerHTML = recent.length
       ? recent.map(a => `
         <tr>
-          <td>${a.full_name || '—'}</td>
+          <td>${a.nome || '—'}</td>
           <td style="color:var(--text-muted)">${a.email || '—'}</td>
           <td>${planBadge(a.plano)}</td>
           <td style="color:var(--text-muted)">${fmtDate(a.created_at)}</td>
-          <td>${statusBadge(a.blocked)}</td>
+          <td>${statusBadge(a.blocked, a.status)}</td>
         </tr>`).join('')
       : '<tr class="loading-row"><td colspan="5" style="color:var(--text-dim)">Nenhum aluno cadastrado.</td></tr>';
   }
@@ -860,8 +869,22 @@
   // ── ALUNOS ──
   async function loadAlunos() {
     document.getElementById('alunos-tbody').innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span>Carregando...</td></tr>';
-    const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-    if (error) { toast('Erro ao carregar alunos: ' + error.message, 'error'); return; }
+    let data, error;
+    try {
+      ({ data, error } = await sb
+        .from('profiles')
+        .select('id, email, nome, plano, status, blocked, created_at')
+        .order('created_at', { ascending: false }));
+    } catch (e) {
+      toast('Erro de rede ao carregar alunos.', 'error');
+      document.getElementById('alunos-tbody').innerHTML = '<tr class="loading-row"><td colspan="6" style="color:var(--danger)">Falha na conexão com o servidor.</td></tr>';
+      return;
+    }
+    if (error) {
+      toast('Erro ao carregar alunos: ' + error.message, 'error');
+      document.getElementById('alunos-tbody').innerHTML = `<tr class="loading-row"><td colspan="6" style="color:var(--danger)">${error.message}</td></tr>`;
+      return;
+    }
     allAlunos = data || [];
     renderAlunos(allAlunos);
   }
@@ -872,26 +895,31 @@
       tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:var(--text-dim)">Nenhum aluno encontrado.</td></tr>';
       return;
     }
-    tbody.innerHTML = list.map(a => `
+    tbody.innerHTML = list.map(a => {
+      const isBlocked = a.blocked || a.status === 'bloqueado';
+      const safeName = (a.nome || 'Aluno').replace(/'/g, "\\'");
+      const safeEmail = (a.email || '').replace(/'/g, "\\'");
+      return `
       <tr>
-        <td><strong>${a.full_name || '—'}</strong></td>
+        <td><strong>${a.nome || '—'}</strong></td>
         <td style="color:var(--text-muted);font-size:12px">${a.email || '—'}</td>
         <td>${planBadge(a.plano)}</td>
         <td style="color:var(--text-muted)">${fmtDate(a.created_at)}</td>
-        <td>${statusBadge(a.blocked)}</td>
+        <td>${statusBadge(a.blocked, a.status)}</td>
         <td>
-          ${a.blocked
-            ? `<button class="btn btn-sm btn-success" onclick="toggleBlock('${a.id}','${(a.email||'').replace(/'/g,"\\'")}',false,'${(a.full_name||'Aluno').replace(/'/g,"\\'")}')">✓ Liberar</button>`
-            : `<button class="btn btn-sm btn-danger" onclick="toggleBlock('${a.id}','${(a.email||'').replace(/'/g,"\\'")}',true,'${(a.full_name||'Aluno').replace(/'/g,"\\'")}')">✕ Bloquear</button>`}
+          ${isBlocked
+            ? `<button class="btn btn-sm btn-success" onclick="toggleBlock('${a.id}','${safeEmail}',false,'${safeName}')">✓ Liberar</button>`
+            : `<button class="btn btn-sm btn-danger" onclick="toggleBlock('${a.id}','${safeEmail}',true,'${safeName}')">✕ Bloquear</button>`}
         </td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
   }
 
   function filterAlunos(q) {
     const term = q.toLowerCase().trim();
     if (!term) { renderAlunos(allAlunos); return; }
     renderAlunos(allAlunos.filter(a =>
-      (a.full_name||'').toLowerCase().includes(term) ||
+      (a.nome||'').toLowerCase().includes(term) ||
       (a.email||'').toLowerCase().includes(term)
     ));
   }
@@ -904,18 +932,25 @@
       block ? 'Bloquear' : 'Liberar',
       block ? 'btn-danger' : 'btn-success',
       async () => {
-        const { error: pe } = await sb.from('profiles').update({ blocked: block }).eq('id', userId);
-        if (pe) { toast('Erro ao atualizar perfil: ' + pe.message, 'error'); return; }
+        try {
+          const newStatus = block ? 'bloqueado' : 'ativo';
+          const { error: pe } = await sb
+            .from('profiles')
+            .update({ blocked: block, status: newStatus })
+            .eq('id', userId);
+          if (pe) { toast('Erro ao atualizar perfil: ' + pe.message, 'error'); return; }
 
-        const { error: ae } = block
-          ? await sb.auth.admin.updateUserById(userId, { ban_duration: '876600h' })
-          : await sb.auth.admin.updateUserById(userId, { ban_duration: 'none' });
+          const { error: ae } = block
+            ? await sb.auth.admin.updateUserById(userId, { ban_duration: '876600h' })
+            : await sb.auth.admin.updateUserById(userId, { ban_duration: 'none' });
+          if (ae) { toast('Erro no Auth: ' + ae.message, 'error'); return; }
 
-        if (ae) { toast('Erro no Auth: ' + ae.message, 'error'); return; }
-
-        toast(`Acesso de ${name} ${block ? 'bloqueado' : 'liberado'} com sucesso.`, block ? 'error' : 'success');
-        loadAlunos();
-        loadDashboard();
+          toast(`Acesso de ${name} ${block ? 'bloqueado' : 'liberado'} com sucesso.`, block ? 'error' : 'success');
+          loadAlunos();
+          loadDashboard();
+        } catch (e) {
+          toast('Erro inesperado: ' + (e.message || e), 'error');
+        }
       }
     );
   }
@@ -925,11 +960,11 @@
     if (!allAlunos.length) { toast('Nenhum dado para exportar.', 'error'); return; }
     const header = ['Nome', 'Email', 'Plano', 'Cadastro', 'Status'];
     const rows = allAlunos.map(a => [
-      `"${(a.full_name||'').replace(/"/g,'""')}"`,
+      `"${(a.nome||'').replace(/"/g,'""')}"`,
       `"${(a.email||'').replace(/"/g,'""')}"`,
       a.plano || '',
       fmtDate(a.created_at),
-      a.blocked ? 'Bloqueado' : 'Ativo'
+      a.status || (a.blocked ? 'bloqueado' : 'ativo')
     ]);
     const csv = [header, ...rows].map(r => r.join(',')).join('\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -944,65 +979,72 @@
 
   // ── LIBERAR ACESSO ──
   async function liberarAcesso() {
-    const nome   = document.getElementById('ac-nome').value.trim();
-    const email  = document.getElementById('ac-email').value.trim().toLowerCase();
-    const plano  = document.getElementById('ac-plano').value;
+    const nome    = document.getElementById('ac-nome').value.trim();
+    const email   = document.getElementById('ac-email').value.trim().toLowerCase();
+    const plano   = document.getElementById('ac-plano').value;
     const produto = document.getElementById('ac-produto').value.trim();
-    const result = document.getElementById('ac-result');
+    const result  = document.getElementById('ac-result');
 
     if (!email) { toast('Informe o e-mail.', 'error'); return; }
 
     result.style.display = 'none';
 
-    // Check existing
-    let userId;
-    const { data: users } = await sb.auth.admin.listUsers();
-    const existing = users?.users?.find(u => u.email === email);
+    try {
+      // Check existing user
+      let userId;
+      const { data: users, error: le } = await sb.auth.admin.listUsers();
+      if (le) { toast('Erro ao consultar usuários: ' + le.message, 'error'); return; }
 
-    if (existing) {
-      userId = existing.id;
-    } else {
-      const { data: created, error: ce } = await sb.auth.admin.createUser({
+      const existing = users?.users?.find(u => u.email === email);
+
+      if (existing) {
+        userId = existing.id;
+      } else {
+        const { data: created, error: ce } = await sb.auth.admin.createUser({
+          email,
+          email_confirm: true,
+          user_metadata: { nome }
+        });
+        if (ce) { toast('Erro ao criar usuário: ' + ce.message, 'error'); return; }
+        userId = created.user.id;
+      }
+
+      // Upsert profile with correct column names
+      const profileData = {
+        id: userId,
         email,
-        email_confirm: true,
-        user_metadata: { full_name: nome }
+        nome: nome || null,
+        plano,
+        status: 'ativo',
+        blocked: false,
+        updated_at: new Date().toISOString()
+      };
+      if (produto) profileData.produto_id = produto;
+
+      const { error: pe } = await sb.from('profiles').upsert(profileData, { onConflict: 'id' });
+      if (pe) { toast('Erro ao salvar perfil: ' + pe.message, 'error'); return; }
+
+      // Magic link
+      const { data: link, error: mle } = await sb.auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+        options: { redirectTo: 'https://4p-patrimonial.vercel.app/plataforma' }
       });
-      if (ce) { toast('Erro ao criar usuário: ' + ce.message, 'error'); return; }
-      userId = created.user.id;
+      if (mle) { toast('Usuário criado, mas erro no magic link: ' + mle.message, 'error'); return; }
+
+      result.innerHTML = `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <div style="color:var(--success);font-weight:600;margin-bottom:6px;">✅ Acesso liberado com sucesso!</div>
+          <div style="color:var(--text-muted);font-size:12px;">Magic link gerado para <strong style="color:var(--text)">${email}</strong></div>
+          ${link?.properties?.action_link ? `<div style="margin-top:10px;word-break:break-all;font-size:11px;color:var(--gold-dim)">${link.properties.action_link}</div>` : ''}
+        </div>`;
+      result.style.display = 'block';
+      toast('Acesso liberado e magic link enviado!');
+      loadAlunos();
+      loadDashboard();
+    } catch (e) {
+      toast('Erro inesperado: ' + (e.message || e), 'error');
     }
-
-    // Upsert profile
-    const profileData = {
-      id: userId,
-      email,
-      full_name: nome || null,
-      plano,
-      blocked: false,
-      updated_at: new Date().toISOString()
-    };
-    if (produto) profileData.produto_id = produto;
-
-    const { error: pe } = await sb.from('profiles').upsert(profileData, { onConflict: 'id' });
-    if (pe) { toast('Erro ao salvar perfil: ' + pe.message, 'error'); return; }
-
-    // Magic link
-    const { data: link, error: le } = await sb.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: { redirectTo: SUPABASE_URL.replace('supabase.co', 'vercel.app') + '/plataforma' }
-    });
-    if (le) { toast('Usuário criado, mas erro no magic link: ' + le.message, 'error'); return; }
-
-    result.innerHTML = `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;">
-        <div style="color:var(--success);font-weight:600;margin-bottom:6px;">✅ Acesso liberado com sucesso!</div>
-        <div style="color:var(--text-muted);font-size:12px;">Magic link gerado para <strong style="color:var(--text)">${email}</strong></div>
-        ${link?.properties?.action_link ? `<div style="margin-top:10px;word-break:break-all;font-size:11px;color:var(--gold-dim)">${link.properties.action_link}</div>` : ''}
-      </div>`;
-    result.style.display = 'block';
-    toast('Acesso liberado e magic link enviado!');
-    loadAlunos();
-    loadDashboard();
   }
 
   // ── AULAS ──
@@ -1010,10 +1052,16 @@
     const container = document.getElementById('aulas-list');
     container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim);"><span class="spinner"></span>Carregando...</div>';
 
-    const { data, error } = await sb
-      .from('video_views')
-      .select('video_id, video_title')
-      .order('created_at', { ascending: false });
+    let data, error;
+    try {
+      ({ data, error } = await sb
+        .from('video_views')
+        .select('video_id, video_title')
+        .order('created_at', { ascending: false }));
+    } catch (e) {
+      container.innerHTML = '<div style="padding:32px 20px;color:var(--danger);font-size:13px;">Erro de rede ao carregar aulas.</div>';
+      return;
+    }
 
     if (error) {
       container.innerHTML = '<div style="padding:32px 20px;color:var(--text-dim);font-size:13px;">Tabela <code>video_views</code> não encontrada ou sem dados.</div>';
