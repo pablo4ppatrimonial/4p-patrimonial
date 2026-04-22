@@ -500,6 +500,49 @@
       .sidebar { display: none; }
       .main { margin-left: 0; padding: 16px; }
     }
+
+    /* ─── CMS ─── */
+    .badge-blue { background: rgba(59,130,246,.15); color: #93c5fd; }
+    .aula-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .aula-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color .2s, box-shadow .2s; position: relative; cursor: default; }
+    .aula-card:hover { border-color: var(--gold-dim); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+    .aula-card.dragging { opacity: .35; border: 2px dashed var(--gold-dim); }
+    .aula-card.drag-over { border-color: var(--gold); background: rgba(201,168,76,.04); }
+    .aula-card-head { display: flex; align-items: center; gap: 10px; padding: 13px 14px 10px; border-bottom: 1px solid var(--border); }
+    .drag-handle { color: var(--text-dim); font-size: 15px; cursor: grab; padding: 2px 4px; border-radius: 4px; line-height: 1; user-select: none; flex-shrink: 0; transition: color .15s; }
+    .drag-handle:hover { color: var(--gold-dim); }
+    .aula-num-badge { width: 26px; height: 26px; border-radius: 50%; background: rgba(201,168,76,.1); border: 1px solid rgba(201,168,76,.2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--gold); flex-shrink: 0; }
+    .aula-card-title { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .aula-card-body { padding: 11px 14px; }
+    .aula-card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 38px; }
+    .aula-card-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 0; align-items: center; }
+    .aula-card-actions { display: flex; gap: 6px; padding: 9px 14px; border-top: 1px solid var(--border); background: rgba(0,0,0,.12); }
+
+    /* Form Modal Large */
+    .modal-lg-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.78); z-index: 600; display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal-lg-overlay.open { display: flex; }
+    .modal-lg { background: var(--card); border: 1px solid var(--border-gold); border-radius: 14px; width: min(860px, 100%); max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 24px 64px rgba(0,0,0,.7); }
+    .modal-lg-head { padding: 18px 24px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .modal-lg-head h3 { font-size: 16px; color: var(--gold); font-weight: 700; }
+    .modal-lg-body { padding: 22px 24px; overflow-y: auto; flex: 1; }
+    .modal-lg-foot { padding: 14px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0; }
+    .fg { display: flex; flex-direction: column; gap: 6px; }
+    .fg label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; }
+    .fi { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 9px 12px; font-size: 13px; outline: none; transition: border-color .2s; width: 100%; font-family: inherit; }
+    .fi:focus { border-color: var(--gold-dim); }
+    .fi-ta { min-height: 78px; resize: vertical; }
+    .fi-sel option { background: var(--surface); }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-row-1 { margin-bottom: 14px; }
+    .x-btn { width: 30px; height: 30px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+    .x-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* Preview Modal */
+    .prev-player { background: #000; border-radius: 10px; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; overflow: hidden; position: relative; }
+    .prev-player iframe { width: 100%; height: 100%; border: none; }
+    .prev-play-btn { width: 52px; height: 52px; border-radius: 50%; background: #c9a84c; border: none; display: flex; align-items: center; justify-content: center; cursor: default; }
+    .prev-tri { width: 0; height: 0; border-style: solid; border-width: 8px 0 8px 14px; border-color: transparent transparent transparent #000; margin-left: 3px; }
   </style>
 </head>
 <body>
@@ -535,8 +578,11 @@
       <div class="nav-item" onclick="showSection('acesso', this)">
         <span class="nav-icon">🔑</span> Liberar Acesso
       </div>
+      <div class="nav-item" onclick="showSection('cms', this)">
+        <span class="nav-icon">📝</span> Gerenciar Aulas
+      </div>
       <div class="nav-item" onclick="showSection('aulas', this)">
-        <span class="nav-icon">🎬</span> Aulas Assistidas
+        <span class="nav-icon">📊</span> Métricas de Aulas
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -686,7 +732,49 @@
       </div>
     </div>
 
-    <!-- ── AULAS ── -->
+    <!-- ── CMS GERENCIAR AULAS ── -->
+    <div id="section-cms" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Gerenciar <span>Aulas</span></div>
+          <div class="page-sub">CMS — crie, edite, reordene e publique aulas</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" onclick="loadCMS()">↻</button>
+          <button class="btn btn-gold" onclick="openAulaForm(null)">+ Nova Aula</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
+        <div class="metric-card" style="padding:16px 18px">
+          <div class="metric-label">Total de Aulas</div>
+          <div class="metric-value" id="cms-total">—</div>
+          <div class="metric-icon">🎓</div>
+        </div>
+        <div class="metric-card" style="padding:16px 18px">
+          <div class="metric-label">Publicadas</div>
+          <div class="metric-value" id="cms-pub" style="color:#2ecc71">—</div>
+          <div class="metric-icon">✅</div>
+        </div>
+        <div class="metric-card" style="padding:16px 18px">
+          <div class="metric-label">Rascunhos</div>
+          <div class="metric-value" id="cms-draft" style="color:var(--text-muted)">—</div>
+          <div class="metric-icon">✏️</div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:14px">
+        ⠿ Arraste os cards para reordenar — a ordem é salva automaticamente.
+      </div>
+
+      <div id="cms-cards" class="aula-cards-grid">
+        <div style="grid-column:1/-1;padding:48px;text-align:center;color:var(--text-dim)">
+          <span class="spinner"></span>Carregando aulas...
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MÉTRICAS AULAS ── -->
     <div id="section-aulas" class="section">
       <div class="page-header">
         <div>
@@ -709,6 +797,66 @@
     </div>
 
   </main>
+</div>
+
+<!-- ── FORM MODAL ── -->
+<div class="modal-lg-overlay" id="form-overlay">
+  <div class="modal-lg">
+    <div class="modal-lg-head">
+      <h3 id="form-modal-title">Nova Aula</h3>
+      <button class="x-btn" onclick="closeFormModal()">✕</button>
+    </div>
+    <div class="modal-lg-body">
+      <div class="form-row-3">
+        <div class="fg"><label>Número da aula</label><input class="fi" id="f-numero" type="number" min="1" placeholder="1"></div>
+        <div class="fg"><label>Duração</label><input class="fi" id="f-duracao" type="text" placeholder="38 min"></div>
+        <div class="fg">
+          <label>Status</label>
+          <select class="fi fi-sel" id="f-status">
+            <option value="rascunho">○ Rascunho</option>
+            <option value="publicada">● Publicada</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="fg" style="grid-column:1/-1"><label>Título da aula *</label><input class="fi" id="f-titulo" type="text" placeholder="Ex: Fundamentos do Patrimônio"></div>
+      </div>
+      <div class="form-row-1">
+        <div class="fg"><label>Descrição</label><textarea class="fi fi-ta" id="f-descricao" placeholder="Descrição detalhada para o aluno ver na plataforma..."></textarea></div>
+      </div>
+      <div class="form-row-1">
+        <div class="fg"><label>URL do Vídeo (YouTube ou Vimeo)</label><input class="fi" id="f-url-video" type="url" placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/..."></div>
+      </div>
+      <div class="form-row-2">
+        <div class="fg"><label>Link do PDF (material)</label><input class="fi" id="f-url-pdf" type="url" placeholder="https://drive.google.com/..."></div>
+        <div class="fg"><label>Link da Planilha</label><input class="fi" id="f-url-planilha" type="url" placeholder="https://docs.google.com/..."></div>
+      </div>
+      <div class="form-row-1">
+        <div class="fg"><label>Tarefa prática</label><textarea class="fi fi-ta" id="f-tarefa" placeholder="Descreva a tarefa que o aluno deve realizar após assistir a aula..."></textarea></div>
+      </div>
+      <div class="form-row-1">
+        <div class="fg"><label>Ordem de exibição</label><input class="fi" id="f-ordem" type="number" min="1" placeholder="1" style="max-width:140px"></div>
+      </div>
+    </div>
+    <div class="modal-lg-foot">
+      <button class="btn btn-outline" onclick="closeFormModal()">Cancelar</button>
+      <button class="btn btn-gold" id="save-aula-btn" onclick="saveAula()">💾 Salvar Aula</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PREVIEW MODAL ── -->
+<div class="modal-lg-overlay" id="preview-overlay">
+  <div class="modal-lg" style="max-width:640px">
+    <div class="modal-lg-head">
+      <h3>👁 Preview — como o aluno vê</h3>
+      <button class="x-btn" onclick="closePreview()">✕</button>
+    </div>
+    <div class="modal-lg-body" id="preview-content"></div>
+    <div class="modal-lg-foot">
+      <button class="btn btn-outline" onclick="closePreview()">Fechar</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL CONFIRM -->
@@ -771,6 +919,8 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('section-' + id).classList.add('active');
     el.classList.add('active');
+    if (id === 'cms')   loadCMS();
+    if (id === 'aulas') loadAulas();
   }
 
   // ── TOAST ──
@@ -1115,10 +1265,249 @@
   }
 
   // ── INIT ──
-  // Close modal on overlay click
   document.getElementById('modal-overlay').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeModal();
   });
+  document.getElementById('form-overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeFormModal();
+  });
+  document.getElementById('preview-overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closePreview();
+  });
+
+  // ── CMS ──
+  let cmsAulas = [];
+  let editingId = null;
+  let dragSrcIdx = null;
+
+  async function loadCMS() {
+    document.getElementById('cms-cards').innerHTML =
+      '<div style="grid-column:1/-1;padding:48px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
+    let data, error;
+    try {
+      ({ data, error } = await sb.from('aulas_config').select('*').order('ordem', { ascending: true }));
+    } catch (e) {
+      document.getElementById('cms-cards').innerHTML =
+        `<div style="grid-column:1/-1;padding:24px;color:var(--danger);font-size:13px">Erro de rede: ${e.message}</div>`;
+      return;
+    }
+    if (error) {
+      document.getElementById('cms-cards').innerHTML =
+        `<div style="grid-column:1/-1;padding:24px;color:var(--danger);font-size:13px">Erro: ${error.message}</div>`;
+      return;
+    }
+    cmsAulas = data || [];
+    document.getElementById('cms-total').textContent = cmsAulas.length;
+    document.getElementById('cms-pub').textContent   = cmsAulas.filter(a => a.status === 'publicada').length;
+    document.getElementById('cms-draft').textContent = cmsAulas.filter(a => a.status === 'rascunho').length;
+    renderAulaCards();
+  }
+
+  function renderAulaCards() {
+    const grid = document.getElementById('cms-cards');
+    if (!cmsAulas.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;padding:60px;text-align:center;color:var(--text-dim)">
+        Nenhuma aula cadastrada ainda.<br>
+        <button class="btn btn-gold" style="margin-top:16px" onclick="openAulaForm(null)">+ Criar primeira aula</button>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = cmsAulas.map((a, idx) => `
+      <div class="aula-card" id="ac-${idx}"
+           draggable="true"
+           ondragstart="onDragStart(event,${idx})"
+           ondragover="onDragOver(event,${idx})"
+           ondragleave="onDragLeave(event)"
+           ondrop="onDrop(event,${idx})"
+           ondragend="onDragEnd(event)">
+        <div class="aula-card-head">
+          <span class="drag-handle" title="Arrastar">⠿</span>
+          <div class="aula-num-badge">${a.numero}</div>
+          <div class="aula-card-title" title="${a.titulo}">${a.titulo}</div>
+          <span class="badge ${a.status === 'publicada' ? 'badge-green' : 'badge-gray'}" style="flex-shrink:0">
+            ${a.status === 'publicada' ? '● Pub' : '○ Draft'}
+          </span>
+        </div>
+        <div class="aula-card-body">
+          <div class="aula-card-desc">${a.descricao || '<em style="color:var(--text-dim)">Sem descrição</em>'}</div>
+          <div class="aula-card-chips">
+            ${a.duracao       ? `<span class="badge badge-gray">⏱ ${a.duracao}</span>` : ''}
+            ${a.url_video     ? `<span class="badge badge-blue">▶ Vídeo</span>` : ''}
+            ${a.url_pdf       ? `<span class="badge badge-gray">📄 PDF</span>` : ''}
+            ${a.url_planilha  ? `<span class="badge badge-gray">📊 Plan.</span>` : ''}
+            ${a.tarefa        ? `<span class="badge badge-gray">📝 Tarefa</span>` : ''}
+            <span class="badge badge-gray" style="margin-left:auto">#${a.ordem}</span>
+          </div>
+        </div>
+        <div class="aula-card-actions">
+          <button class="btn btn-sm btn-outline" onclick="previewAula('${a.id}')">👁 Preview</button>
+          <button class="btn btn-sm btn-gold"    onclick="openAulaForm('${a.id}')">✎ Editar</button>
+          <button class="btn btn-sm btn-danger"  onclick="confirmDeleteAula('${a.id}','${(a.titulo||'').replace(/'/g,"\\'")}')">✕</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function openAulaForm(id) {
+    editingId = id || null;
+    const a = id ? cmsAulas.find(x => x.id === id) : null;
+    document.getElementById('form-modal-title').textContent = a ? 'Editar Aula' : 'Nova Aula';
+    document.getElementById('f-numero').value     = a?.numero    ?? (cmsAulas.length + 1);
+    document.getElementById('f-titulo').value     = a?.titulo    ?? '';
+    document.getElementById('f-duracao').value    = a?.duracao   ?? '';
+    document.getElementById('f-url-video').value  = a?.url_video ?? '';
+    document.getElementById('f-status').value     = a?.status    ?? 'rascunho';
+    document.getElementById('f-ordem').value      = a?.ordem     ?? (cmsAulas.length + 1);
+    document.getElementById('f-descricao').value  = a?.descricao ?? '';
+    document.getElementById('f-tarefa').value     = a?.tarefa    ?? '';
+    document.getElementById('f-url-pdf').value    = a?.url_pdf   ?? '';
+    document.getElementById('f-url-planilha').value = a?.url_planilha ?? '';
+    document.getElementById('form-overlay').classList.add('open');
+    document.getElementById('f-titulo').focus();
+  }
+
+  function closeFormModal() {
+    document.getElementById('form-overlay').classList.remove('open');
+    editingId = null;
+  }
+
+  async function saveAula() {
+    const titulo = document.getElementById('f-titulo').value.trim();
+    if (!titulo) { toast('O título é obrigatório.', 'error'); document.getElementById('f-titulo').focus(); return; }
+    const payload = {
+      numero:       parseInt(document.getElementById('f-numero').value)  || 1,
+      titulo,
+      duracao:      document.getElementById('f-duracao').value.trim()    || null,
+      url_video:    document.getElementById('f-url-video').value.trim()  || null,
+      status:       document.getElementById('f-status').value,
+      ordem:        parseInt(document.getElementById('f-ordem').value)   || 1,
+      descricao:    document.getElementById('f-descricao').value.trim()  || null,
+      tarefa:       document.getElementById('f-tarefa').value.trim()     || null,
+      url_pdf:      document.getElementById('f-url-pdf').value.trim()    || null,
+      url_planilha: document.getElementById('f-url-planilha').value.trim() || null,
+      updated_at:   new Date().toISOString(),
+    };
+    const btn = document.getElementById('save-aula-btn');
+    btn.textContent = 'Salvando...'; btn.disabled = true;
+    try {
+      const { error } = editingId
+        ? await sb.from('aulas_config').update(payload).eq('id', editingId)
+        : await sb.from('aulas_config').insert(payload);
+      if (error) { toast('Erro: ' + error.message, 'error'); return; }
+      toast(editingId ? '✅ Aula atualizada!' : '✅ Aula criada!', 'success');
+      closeFormModal();
+      loadCMS();
+    } catch (e) {
+      toast('Erro inesperado: ' + (e.message || e), 'error');
+    } finally {
+      btn.textContent = '💾 Salvar Aula'; btn.disabled = false;
+    }
+  }
+
+  function confirmDeleteAula(id, titulo) {
+    openModal('🗑 Deletar Aula',
+      `Confirma a exclusão de "${titulo}"? Esta ação não pode ser desfeita.`,
+      'Deletar', 'btn-danger',
+      () => deleteAula(id));
+  }
+
+  async function deleteAula(id) {
+    try {
+      const { error } = await sb.from('aulas_config').delete().eq('id', id);
+      if (error) { toast('Erro ao deletar: ' + error.message, 'error'); return; }
+      toast('Aula deletada.', 'success');
+      loadCMS();
+    } catch (e) { toast('Erro: ' + (e.message || e), 'error'); }
+  }
+
+  // ── PREVIEW ──
+  function cmsVideoEmbed(url) {
+    if (!url) return null;
+    const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0`;
+    const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (vm) return `https://player.vimeo.com/video/${vm[1]}?color=C9A84C&title=0&byline=0`;
+    return null;
+  }
+
+  function previewAula(id) {
+    const a = cmsAulas.find(x => x.id === id);
+    if (!a) return;
+    const embed = cmsVideoEmbed(a.url_video);
+    document.getElementById('preview-content').innerHTML = `
+      <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:8px">AULA ${a.numero}</div>
+      <div class="prev-player">
+        ${embed
+          ? `<iframe src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+          : `<div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+               <div class="prev-play-btn"><div class="prev-tri"></div></div>
+               <span style="font-size:11px;color:var(--text-dim)">${a.url_video ? '⚠ URL inválida' : 'Sem vídeo configurado'}</span>
+             </div>`}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div style="font-size:19px;font-weight:700;margin-bottom:3px">${a.titulo}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${a.duracao || '—'} · Módulo 1 — Fundamentos</div>
+        </div>
+        <span class="badge badge-gold">✓ Concluir aula</span>
+      </div>
+      ${a.descricao ? `<p style="font-size:13px;color:var(--text-muted);line-height:1.8;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px">${a.descricao}</p>` : ''}
+      ${(a.url_pdf || a.url_planilha) ? `
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;margin-bottom:10px">Materiais de apoio</div>
+        <div style="display:grid;grid-template-columns:${a.url_pdf && a.url_planilha ? '1fr 1fr' : '1fr'};gap:10px;margin-bottom:16px">
+          ${a.url_pdf      ? `<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px"><span>📄</span><div><div style="font-size:12px;font-weight:500">Apostila da aula</div><div style="font-size:10px;color:var(--text-dim)">PDF</div></div></div>` : ''}
+          ${a.url_planilha ? `<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px"><span>📊</span><div><div style="font-size:12px;font-weight:500">Planilha prática</div><div style="font-size:10px;color:var(--text-dim)">XLSX</div></div></div>` : ''}
+        </div>` : ''}
+      ${a.tarefa ? `
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;margin-bottom:8px">Tarefa prática</div>
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px">
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.7">${a.tarefa}</div>
+        </div>` : ''}`;
+    document.getElementById('preview-overlay').classList.add('open');
+  }
+
+  function closePreview() {
+    document.getElementById('preview-overlay').classList.remove('open');
+  }
+
+  // ── DRAG & DROP ──
+  function onDragStart(e, idx) {
+    dragSrcIdx = idx;
+    setTimeout(() => { const el = document.getElementById(`ac-${idx}`); if (el) el.classList.add('dragging'); }, 0);
+    e.dataTransfer.effectAllowed = 'move';
+  }
+  function onDragOver(e, idx) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.aula-card').forEach(c => c.classList.remove('drag-over'));
+    if (idx !== dragSrcIdx) e.currentTarget.classList.add('drag-over');
+  }
+  function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+  async function onDrop(e, dropIdx) {
+    e.preventDefault();
+    document.querySelectorAll('.aula-card').forEach(c => c.classList.remove('drag-over', 'dragging'));
+    if (dragSrcIdx === null || dragSrcIdx === dropIdx) return;
+    const moved = cmsAulas.splice(dragSrcIdx, 1)[0];
+    cmsAulas.splice(dropIdx, 0, moved);
+    cmsAulas.forEach((a, i) => { a.ordem = i + 1; });
+    dragSrcIdx = null;
+    renderAulaCards();
+    document.getElementById('cms-cards').style.opacity = '.6';
+    try {
+      await Promise.all(cmsAulas.map(a =>
+        sb.from('aulas_config').update({ ordem: a.ordem }).eq('id', a.id)
+      ));
+      toast('✅ Ordem salva!', 'success');
+    } catch (err) {
+      toast('Erro ao salvar ordem.', 'error');
+    } finally {
+      document.getElementById('cms-cards').style.opacity = '1';
+    }
+  }
+  function onDragEnd(e) {
+    e.currentTarget.classList.remove('dragging');
+    document.querySelectorAll('.aula-card').forEach(c => c.classList.remove('drag-over'));
+    dragSrcIdx = null;
+  }
 </script>
 </body>
 </html>

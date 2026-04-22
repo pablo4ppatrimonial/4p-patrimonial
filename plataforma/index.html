@@ -604,9 +604,10 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
 
 // ── AUTH GUARD ──
-sb.auth.getSession().then(({ data }) => {
+sb.auth.getSession().then(async ({ data }) => {
   if (!data.session) { window.location.href = '../auth.html'; return; }
   currentUser = data.session.user;
+  await loadAulasFromDB();
   loadUserData();
 });
 sb.auth.onAuthStateChange((event, session) => {
@@ -726,21 +727,51 @@ function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('collapsed');
 }
 
-// ── AULAS DATA ──
-const AULAS = [
-  { id:1, titulo:'Fundamentos do Patrimônio', dur:'38 min', status:'done', desc:'Construa a base sólida do seu entendimento patrimonial com os 4 pilares fundamentais do método.' },
-  { id:2, titulo:'Os 4 P\'s — Método completo', dur:'45 min', status:'done', desc:'Mergulhe fundo no Método 4P: Proteger, Preservar, Perpetuar e Prosperar.' },
-  { id:3, titulo:'Blindagem patrimonial e holding', dur:'52 min', status:'done', desc:'Aprenda a estruturar uma holding familiar para proteger seu patrimônio com eficiência.' },
-  { id:4, titulo:'Diversificação inteligente de ativos', dur:'41 min', status:'active', desc:'Como alocar ativos de forma estratégica para maximizar retorno e minimizar risco.' },
-  { id:5, titulo:'FIIs de alto rendimento', dur:'48 min', status:'locked', desc:'Selecione os melhores Fundos Imobiliários e construa renda passiva real.' },
-  { id:6, titulo:'Renda passiva perpétua', dur:'36 min', status:'locked', desc:'Monte uma máquina de renda passiva que trabalha para você 24 horas por dia.' },
-  { id:7, titulo:'Legado e planejamento sucessório', dur:'44 min', status:'locked', desc:'Planeje a transmissão do seu patrimônio de forma eficiente e segura para as próximas gerações.' },
-];
+// ── AULAS DATA (carregado do Supabase) ──
+let AULAS = [];
+let aulaAtiva = 1;
 
-let aulaAtiva = 4;
+function getVideoEmbed(url) {
+  if (!url) return null;
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1`;
+  const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}?color=c9a84c&title=0&byline=0`;
+  return null;
+}
+
+async function loadAulasFromDB() {
+  try {
+    const { data, error } = await sb
+      .from('aulas_config')
+      .select('*')
+      .eq('status', 'publicada')
+      .order('ordem', { ascending: true });
+    if (error) { console.error('Erro aulas:', error.message); return; }
+    if (!data || !data.length) return;
+    AULAS = data.map(row => ({
+      id:          row.numero,
+      titulo:      row.titulo,
+      dur:         row.duracao      || '—',
+      desc:        row.descricao    || '',
+      status:      'locked',
+      url_video:   row.url_video    || null,
+      url_pdf:     row.url_pdf      || null,
+      url_planilha:row.url_planilha || null,
+      tarefa:      row.tarefa       || null,
+      db_id:       row.id,
+    }));
+    if (AULAS.length) { AULAS[0].status = 'active'; aulaAtiva = AULAS[0].id; }
+  } catch (e) { console.error('Erro ao carregar aulas:', e); }
+}
 
 function renderAulas() {
   const list = document.getElementById('aula-list');
+  if (!AULAS.length) {
+    list.innerHTML = '<div style="padding:24px 16px;text-align:center;color:var(--text3);font-size:12px;">Nenhuma aula publicada.</div>';
+    document.getElementById('player-main').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:13px;">Nenhuma aula disponível.</div>';
+    return;
+  }
   list.innerHTML = AULAS.map(a => `
     <div class="aula-item ${a.status === 'locked' ? 'locked' : ''} ${a.id === aulaAtiva ? 'active' : ''} ${a.status === 'done' ? 'done' : ''}"
          onclick="${a.status !== 'locked' ? `selectAula(${a.id})` : `toast('Complete as aulas anteriores para desbloquear.','error')`}">
@@ -769,46 +800,75 @@ function selectAula(id) {
 function renderPlayerMain() {
   const a = AULAS.find(x => x.id === aulaAtiva);
   if (!a) return;
+  const total = AULAS.length;
+  const curIdx = AULAS.findIndex(x => x.id === aulaAtiva);
+  const next = AULAS[curIdx + 1] || null;
+  const embed = getVideoEmbed(a.url_video);
+
+  const playerInner = embed
+    ? `<iframe src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="width:100%;height:100%;border:none;border-radius:var(--r)"></iframe>`
+    : `<div style="display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer" onclick="toast('Vídeo não disponível para esta aula.','error')">
+         <button class="play-btn" style="pointer-events:none"><div class="play-tri"></div></button>
+         <span style="font-size:11px;color:var(--text3)">Vídeo não configurado</span>
+       </div>`;
+
   document.getElementById('player-main').innerHTML = `
-    <div class="player-box" onclick="toast('Reprodução do vídeo. Integre com Vimeo/YouTube!','success')">
-      <span class="player-tag">AULA ${a.id} DE 7</span>
-      <button class="play-btn"><div class="play-tri"></div></button>
+    <div class="player-box" style="${embed ? 'padding:0;background:#000;cursor:default' : ''}">
+      ${!embed ? `<span class="player-tag">AULA ${a.id} DE ${total}</span>` : ''}
+      ${playerInner}
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:10px">
       <div>
         <div class="page-title" style="font-size:20px;margin-bottom:4px">${a.titulo}</div>
-        <div style="font-size:12px;color:var(--text3)">${a.dur} · Módulo 1 — Fundamentos</div>
+        <div style="font-size:12px;color:var(--text3)">${a.dur} · Aula ${a.id} de ${total}</div>
       </div>
-      <button class="btn btn-gold btn-sm" onclick="marcarConcluida(${a.id})">Marcar como concluída</button>
+      ${a.status !== 'done'
+        ? `<button class="btn btn-gold btn-sm" onclick="marcarConcluida(${a.id})">✓ Concluir aula</button>`
+        : `<span class="badge badge-green" style="padding:7px 16px">✓ Concluída</span>`}
     </div>
-    <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:20px">${a.desc}</p>
+
+    ${a.desc ? `<p style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:20px">${a.desc}</p>` : ''}
+
     <div class="divider"></div>
+
+    ${(a.url_pdf || a.url_planilha) ? `
     <div class="section-label">Materiais de apoio</div>
-    <div class="mat-grid">
-      <div class="mat-card" onclick="toast('Baixando PDF...','success')">
+    <div class="mat-grid" style="margin-bottom:20px">
+      ${a.url_pdf ? `
+      <div class="mat-card" onclick="window.open('${a.url_pdf}','_blank')">
         <div class="mat-icon" style="background:rgba(224,82,82,.12);color:#fca5a5">📄</div>
-        <div><div class="mat-label">Apostila da aula</div><div class="mat-sub">PDF · 2.4 MB</div></div>
-      </div>
-      <div class="mat-card" onclick="toast('Baixando planilha...','success')">
+        <div><div class="mat-label">Apostila da aula</div><div class="mat-sub">Clique para abrir PDF</div></div>
+      </div>` : ''}
+      ${a.url_planilha ? `
+      <div class="mat-card" onclick="window.open('${a.url_planilha}','_blank')">
         <div class="mat-icon" style="background:rgba(82,183,136,.12);color:var(--green-l)">📊</div>
-        <div><div class="mat-label">Planilha prática</div><div class="mat-sub">XLSX · 340 KB</div></div>
-      </div>
-    </div>
+        <div><div class="mat-label">Planilha prática</div><div class="mat-sub">Clique para abrir</div></div>
+      </div>` : ''}
+    </div>` : ''}
+
+    ${a.tarefa ? `
     <div class="section-label">Tarefa desta aula</div>
     <div style="background:var(--dark4);border:1px solid #252525;border-radius:var(--r);padding:16px;margin-bottom:20px">
       <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px">Tarefa prática</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">
-        Analise sua carteira atual e identifique os ativos que se enquadram em cada um dos 4 pilares. Compartilhe sua análise na comunidade.
-      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">${a.tarefa}</div>
       <button class="btn btn-ghost btn-sm" onclick="navigate('comunidade')">Ir para a comunidade</button>
-    </div>
-    ${a.id < 7 ? `
+    </div>` : ''}
+
+    ${next ? `
     <div style="background:linear-gradient(135deg,#111f18,#0a1510);border:1px solid rgba(82,183,136,.2);border-radius:var(--r);padding:18px">
       <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--green-l);text-transform:uppercase;margin-bottom:6px">Próxima aula</div>
-      <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text);margin-bottom:4px">${AULAS[a.id].titulo}</div>
-      <div style="font-size:11px;color:#6B9E80;margin-bottom:12px">${AULAS[a.id].dur}</div>
-      <button class="btn btn-green btn-sm" onclick="selectAula(${a.id + 1})">${AULAS[a.id].status === 'locked' ? '🔒 Bloqueada' : 'Próxima aula →'}</button>
-    </div>` : ''}
+      <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text);margin-bottom:4px">${next.titulo}</div>
+      <div style="font-size:11px;color:#6B9E80;margin-bottom:12px">${next.dur}</div>
+      <button class="btn btn-green btn-sm" onclick="${next.status === 'locked' ? `toast('Complete esta aula primeiro.','error')` : `selectAula(${next.id})`}">
+        ${next.status === 'locked' ? '🔒 Bloqueada' : 'Próxima aula →'}
+      </button>
+    </div>` : `
+    <div style="background:linear-gradient(135deg,#1a1200,#0d0a00);border:1px solid rgba(201,168,76,.2);border-radius:var(--r);padding:18px;text-align:center">
+      <div style="font-size:22px;margin-bottom:8px">🏆</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--gold);margin-bottom:4px">Curso concluído!</div>
+      <div style="font-size:13px;color:var(--text3)">Parabéns por completar todas as aulas do Método 4P.</div>
+    </div>`}
   `;
 }
 
@@ -828,7 +888,8 @@ async function marcarConcluida(id) {
     if (error) { toast('Erro ao salvar progresso: ' + error.message, 'error'); return; }
 
     a.status = 'done';
-    const next = AULAS.find(x => x.id === id + 1);
+    const curIdx = AULAS.findIndex(x => x.id === id);
+    const next = AULAS[curIdx + 1];
     if (next) { next.status = 'active'; aulaAtiva = next.id; }
 
     const totalDone = AULAS.filter(x => x.status === 'done').length;
