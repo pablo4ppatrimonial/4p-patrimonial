@@ -990,15 +990,17 @@
     result.style.display = 'none';
 
     try {
-      // Check existing user
+      // Check existing user via profiles.email
       let userId;
-      const { data: users, error: le } = await sb.auth.admin.listUsers();
-      if (le) { toast('Erro ao consultar usuários: ' + le.message, 'error'); return; }
+      const { data: existingProfile, error: lookupError } = await sb
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+      if (lookupError) { toast('Erro ao consultar perfil: ' + lookupError.message, 'error'); return; }
 
-      const existing = users?.users?.find(u => u.email === email);
-
-      if (existing) {
-        userId = existing.id;
+      if (existingProfile) {
+        userId = existingProfile.id;
       } else {
         const { data: created, error: ce } = await sb.auth.admin.createUser({
           email,
