@@ -256,10 +256,10 @@ textarea.input-field{border-radius:var(--r);resize:vertical;min-height:80px}
       <label class="input-label">Senha</label>
       <input class="input-field" type="password" placeholder="••••••••" id="login-pass" value="12345678">
     </div>
-    <button class="btn btn-gold btn-full" style="margin-top:8px" onclick="doLogin()">Entrar na plataforma</button>
+    <button class="btn btn-gold btn-full" style="margin-top:8px" onclick="window.location.href='/auth.html'">Entrar na plataforma</button>
     <div class="login-divider"><span>ou</span></div>
-    <button class="btn btn-ghost btn-full" onclick="doLogin()">Continuar como visitante</button>
-    <div style="margin-top:16px;font-size:11px;color:var(--text3)">Ainda não tem acesso? <span style="color:var(--gold);cursor:pointer" onclick="showToast('Em breve — acesse via link de compra')">Adquira aqui</span></div>
+    <button class="btn btn-ghost btn-full" onclick="window.location.href='/auth.html'">Continuar como visitante</button>
+    <div style="margin-top:16px;font-size:11px;color:var(--text3)">Ainda não tem acesso? <a href="/vendas/lowticket.html" style="color:var(--gold)">Adquira aqui</a></div>
   </div>
 </div>
 
