@@ -15,7 +15,12 @@
   --green:#2D6A4F;--green-l:#52B788;
   --red:#E05252;--r:14px;--r-sm:8px;--r-full:999px;--trans:.18s ease;
 }
-body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;overflow-x:hidden;padding:32px 0}
+body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;overflow-x:hidden;padding:32px 16px}
+@media(max-width:480px){
+  body{padding:20px 12px}
+  .auth-card{padding:24px 18px}
+  .logo-text{font-size:24px}
+}
 
 /* BG */
 .bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0}
@@ -256,19 +261,12 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-const ALLOWED_EMAIL = 'pabloangelyscamila2@gmail.com';
-
 // ── LOGIN ──
 async function handleLogin(e) {
   e.preventDefault();
   clearAlert();
   const email = document.getElementById('login-email').value.trim().toLowerCase();
   const senha = document.getElementById('login-senha').value;
-
-  if (email !== ALLOWED_EMAIL) {
-    showAlert('Acesso não autorizado. Adquira o programa para ter acesso.', 'error');
-    return;
-  }
 
   setLoading('btn-login', true);
   const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
