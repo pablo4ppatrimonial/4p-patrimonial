@@ -573,7 +573,7 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
             <div style="font-size:13px;font-weight:600;color:var(--text)" id="rank-me-name">Você</div>
             <div style="font-size:11px;color:var(--text3)" id="rank-me-info">carregando...</div>
           </div>
-          <div class="badge badge-gold">Investidor</div>
+          <div class="badge badge-gold" id="rank-me-badge">Investidor</div>
         </div>
 
         <div class="section-label">Top 20</div>
@@ -703,6 +703,9 @@ async function loadUserData() {
   document.getElementById('perfil-nome-display').textContent = nome + ' ' + sobrenome;
   document.getElementById('perfil-email-display').textContent = email;
   document.getElementById('rank-me-name').textContent = nome + ' ' + sobrenome;
+  const plano = meta.produto || meta.plano || 'lowticket';
+  const badgeEl = document.getElementById('rank-me-badge');
+  if (badgeEl) badgeEl.textContent = plano === 'mentoria' ? 'Mentorado' : 'Investidor';
   document.getElementById('p-nome').value = nome;
   document.getElementById('p-sobrenome').value = sobrenome;
   document.getElementById('p-email').value = email;
@@ -1090,6 +1093,10 @@ async function loadRanking() {
       const el = document.getElementById('rank-me-info');
       if (el) el.textContent = `Posição #${myPos} · ${Number(myRow.pontos).toLocaleString('pt-BR')} pts`;
     }
+    const aulasMeta = (pts) => {
+      const n = Math.round(Number(pts) / 100);
+      return n === 1 ? '1 aula concluída' : `${n} aulas concluídas`;
+    };
     container.innerHTML = rows.map((r, i) => {
       const pos = i + 1;
       const isMe = currentUser && r.user_id === currentUser.id;
@@ -1099,7 +1106,7 @@ async function loadRanking() {
           <div class="rank-avatar ${isMe ? 'me' : ''}">${(r.nome || 'I')[0].toUpperCase()}</div>
           <div class="rank-info">
             <div class="rank-name">${r.nome || 'Investidor'}${isMe ? ' (você)' : ''}</div>
-            <div class="rank-meta">${r.aulas_concluidas} aula(s) concluída(s)</div>
+            <div class="rank-meta">${aulasMeta(r.pontos)}</div>
           </div>
           <div class="rank-pts">${Number(r.pontos).toLocaleString('pt-BR')} pts</div>
         </div>`;
