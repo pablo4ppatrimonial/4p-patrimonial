@@ -2049,18 +2049,30 @@
     const container = document.getElementById('posts-list');
     container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
     try {
+      // Join nativo via FK posts.user_id → profiles.id (migration posts_profiles_fk.sql)
       const { data, error } = await sb.from('posts')
-        .select('id, user_id, conteudo, likes, fixado, deletado, created_at, imagem_url, parent_id, is_admin_reply')
+        .select('id, user_id, conteudo, likes, fixado, deletado, created_at, imagem_url, parent_id, is_admin_reply, profiles(nome, email)')
         .order('fixado', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) throw error;
       cmsPosts = data || [];
 
-      const uids = [...new Set(cmsPosts.map(p => p.user_id).filter(Boolean))];
-      if (uids.length) {
-        const { data: profs } = await sb.from('profiles').select('id, nome, full_name, email').in('id', uids);
-        cmsProfiles = Object.fromEntries((profs || []).map(pr => [pr.id, pr.nome || pr.full_name || pr.email || 'Aluno']));
+      // Monta mapa de nomes a partir do join; fallback: query separada se join não disponível
+      cmsProfiles = {};
+      const needFallback = [];
+      cmsPosts.forEach(p => {
+        if (p.profiles) {
+          cmsProfiles[p.user_id] = p.profiles.nome || p.profiles.email || 'Aluno';
+        } else {
+          needFallback.push(p.user_id);
+        }
+      });
+      if (needFallback.length) {
+        const uids = [...new Set(needFallback.filter(Boolean))];
+        const { data: profs } = await sb.from('profiles').select('id, nome, email').in('id', uids);
+        (profs || []).forEach(pr => { cmsProfiles[pr.id] = pr.nome || pr.email || 'Aluno'; });
       }
+
       renderComunidade();
     } catch (e) {
       container.innerHTML = `<div style="padding:24px;color:var(--danger)">${e.message}</div>`;
