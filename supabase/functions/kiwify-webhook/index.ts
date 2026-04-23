@@ -96,7 +96,7 @@ Deno.serve(async (req: Request) => {
     type: "magiclink",
     email,
     options: {
-      redirectTo: `${SUPABASE_URL.replace("supabase.co", "vercel.app")}/plataforma`,
+      redirectTo: "https://4ppatrimonial.com.br/auth.html",
     },
   });
 
