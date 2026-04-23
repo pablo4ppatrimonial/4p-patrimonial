@@ -772,7 +772,6 @@ async function loadAulasFromDB() {
       .from('aulas_config')
       .select('*')
       .eq('status', 'publicada')
-      .eq('produto', 'lowticket')
       .order('ordem', { ascending: true });
     if (error) { console.error('Erro aulas:', error.message); return; }
     if (!data || !data.length) return;
