@@ -2031,7 +2031,7 @@
     try {
       const { data, error } = await sb.from('posts').select('*')
         .order('fixado', { ascending: false })
-        .order('criado_em', { ascending: false });
+        .order('created_at', { ascending: false });
       if (error) throw error;
       cmsPosts = data || [];
       renderComunidade();
@@ -2056,7 +2056,7 @@
       <div class="post-mod-row">
         <div class="post-mod-author">
           ${p.fixado ? '📌 ' : ''}${p.autor_nome || 'Anônimo'}
-          <span style="font-weight:400;color:var(--text-dim);margin-left:8px">${fmtDate(p.criado_em)}</span>
+          <span style="font-weight:400;color:var(--text-dim);margin-left:8px">${fmtDate(p.created_at)}</span>
           ${p.likes ? `<span style="margin-left:8px;color:var(--text-dim)">❤️ ${p.likes}</span>` : ''}
         </div>
         <div class="post-mod-text">${p.conteudo}</div>
@@ -2073,7 +2073,7 @@
         <div style="font-size:11px;color:var(--text-dim);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Posts deletados (${deletados.length})</div>
         ${deletados.map(p => `
           <div class="post-mod-row" style="opacity:.45">
-            <div class="post-mod-author">${p.autor_nome || 'Anônimo'} <span style="font-weight:400;color:var(--text-dim)">${fmtDate(p.criado_em)}</span></div>
+            <div class="post-mod-author">${p.autor_nome || 'Anônimo'} <span style="font-weight:400;color:var(--text-dim)">${fmtDate(p.created_at)}</span></div>
             <div class="post-mod-text" style="text-decoration:line-through">${p.conteudo}</div>
             <div class="post-mod-actions">
               <button class="btn btn-sm btn-outline" onclick="restaurarPost('${p.id}')">↩ Restaurar</button>

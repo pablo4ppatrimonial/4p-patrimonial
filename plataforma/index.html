@@ -1188,7 +1188,7 @@ async function loadDashboardPosts() {
       .select('*')
       .eq('deletado', false)
       .order('fixado', { ascending: false })
-      .order('criado_em', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(2);
     const posts = data || [];
     if (!posts.length) {
@@ -1201,7 +1201,7 @@ async function loadDashboardPosts() {
           <div class="post-avatar">${(p.autor_nome||'A')[0].toUpperCase()}</div>
           <div>
             <div class="post-author">${p.autor_nome || 'Anônimo'}</div>
-            <div class="post-time">${timeAgo(new Date(p.criado_em))}</div>
+            <div class="post-time">${timeAgo(new Date(p.created_at))}</div>
           </div>
         </div>
         <div class="post-text" style="font-size:12px">${p.conteudo.length > 140 ? p.conteudo.slice(0,140)+'…' : p.conteudo}</div>
@@ -1356,7 +1356,7 @@ async function loadPosts() {
       .select('*')
       .eq('deletado', false)
       .order('fixado', { ascending: false })
-      .order('criado_em', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(50);
     if (error) throw error;
     dbPosts = data || [];
@@ -1379,7 +1379,7 @@ function renderPosts() {
         <div class="post-avatar">${(p.autor_nome||'A')[0].toUpperCase()}</div>
         <div>
           <div class="post-author">${p.autor_nome || 'Anônimo'}</div>
-          <div class="post-time">${timeAgo(new Date(p.criado_em))}</div>
+          <div class="post-time">${timeAgo(new Date(p.created_at))}</div>
         </div>
       </div>
       <div class="post-text">${p.conteudo}</div>
