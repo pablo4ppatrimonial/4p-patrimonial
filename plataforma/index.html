@@ -243,6 +243,14 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 .ment-cta-btn{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:var(--dark);font-family:'Sora',sans-serif;font-size:15px;font-weight:700;padding:16px 36px;border-radius:var(--r-full);border:none;cursor:pointer;text-decoration:none;transition:all .2s ease;box-shadow:0 4px 24px rgba(201,168,76,.2)}
 .ment-cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(201,168,76,.35)}
 .ment-cta-note{font-size:11px;color:var(--text3)}
+.ment-award{background:linear-gradient(135deg,#111008,#1a1500,#0e0d04);border:1px solid var(--gold-d);border-radius:var(--r);padding:32px 28px;margin-bottom:20px;text-align:center;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(201,168,76,.06)}
+.ment-award::before{content:'';position:absolute;inset:-1px;border-radius:var(--r);background:linear-gradient(135deg,rgba(201,168,76,.25),transparent 40%,transparent 60%,rgba(201,168,76,.12));pointer-events:none}
+.ment-award-trophy{font-size:48px;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(201,168,76,.4))}
+.ment-award-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--gold);margin-bottom:6px}
+.ment-award-sub{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gold-d);text-transform:uppercase;margin-bottom:14px}
+.ment-award-text{font-size:13px;color:var(--text2);line-height:1.7;max-width:480px;margin:0 auto 20px}
+.ment-award-btn{display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--gold-d);color:var(--gold);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;padding:10px 22px;border-radius:var(--r-full);text-decoration:none;letter-spacing:.5px;transition:all .2s ease}
+.ment-award-btn:hover{background:rgba(201,168,76,.08);border-color:var(--gold);box-shadow:0 0 20px rgba(201,168,76,.15)}
 @media(max-width:800px){
   .ment-pilar-grid{grid-template-columns:1fr 1fr}
   .ment-hero{padding:24px 18px}
@@ -494,9 +502,9 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
             <div class="ment-pilar-detail">1× por ano · Novembro<br>Exclusivo para mentorados</div>
           </div>
           <div class="ment-pilar">
-            <div class="ment-pilar-icon">📊</div>
-            <div class="ment-pilar-title">Ranking com Placas</div>
-            <div class="ment-pilar-detail">Bronze → Prata → Ouro → Diamante<br>Reconhecimento real de evolução</div>
+            <div class="ment-pilar-icon">🏆</div>
+            <div class="ment-pilar-title">Sistema de Premiação</div>
+            <div class="ment-pilar-detail">Placas físicas entregues por Pablo<br>no Evento Presencial de Novembro</div>
           </div>
           <div class="ment-pilar">
             <div class="ment-pilar-icon">💬</div>
@@ -510,13 +518,22 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
           </div>
         </div>
 
+        <!-- Card misterioso de premiação -->
+        <div class="ment-award">
+          <div class="ment-award-trophy">🏆</div>
+          <div class="ment-award-title">Sistema de Premiação com Placas</div>
+          <div class="ment-award-sub">Só mentorados sobem ao palco</div>
+          <div class="ment-award-text">Conforme você avança no patrimônio, sobe de nível. Sua placa é entregue pessoalmente por Pablo Dantas no Evento Presencial de Novembro.</div>
+          <a href="https://wa.me/5513992097189" target="_blank" class="ment-award-btn">Descubra seu nível → Falar com Pablo</a>
+        </div>
+
         <!-- Bônus -->
         <div class="ment-bonus">
           <div class="ment-bonus-title">🎁 Bônus Exclusivo — Primeiros 100 Mentorados</div>
           <div class="ment-bonus-item"><span>✅</span><span>Evento presencial de novembro <strong style="color:var(--gold)">incluso sem custo adicional</strong></span></div>
-          <div class="ment-bonus-item"><span>✅</span><span>Recebimento das <strong style="color:var(--gold)">Placas de Ranking</strong> físicas</span></div>
+          <div class="ment-bonus-item"><span>✅</span><span>Recebimento da sua <strong style="color:var(--gold)">Placa de Reconhecimento</strong> física</span></div>
           <div class="ment-bonus-item"><span>✅</span><span>Acesso <strong style="color:var(--gold)">vitalício</strong> à turma no grupo privado</span></div>
-          <div class="ment-bonus-note">Quem entrar depois pode comprar o ingresso do evento presencial à parte, mas não recebe as placas de ranking.</div>
+          <div class="ment-bonus-note">Quem entrar depois pode comprar o ingresso do evento presencial à parte, mas não recebe a placa de reconhecimento.</div>
         </div>
 
         <!-- Checklist completo -->
@@ -528,8 +545,8 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
           <div class="ment-check"><span class="ment-check-icon">✦</span><span>Diagnóstico patrimonial personalizado</span></div>
           <div class="ment-check"><span class="ment-check-icon">✦</span><span>Grupo exclusivo da sua turma no WhatsApp</span></div>
           <div class="ment-check"><span class="ment-check-icon">✦</span><span>Contato direto com Pablo Dantas</span></div>
-          <div class="ment-check"><span class="ment-check-icon">✦</span><span>Sistema de ranking com progressão real</span></div>
-          <div class="ment-check"><span class="ment-check-icon">✦</span><span>Placas físicas Bronze, Prata, Ouro e Diamante</span></div>
+          <div class="ment-check"><span class="ment-check-icon">✦</span><span>Sistema de premiação com progressão por níveis</span></div>
+          <div class="ment-check"><span class="ment-check-icon">✦</span><span>Placa física entregue no evento presencial</span></div>
           <div class="ment-check"><span class="ment-check-icon">✦</span><span>Evento presencial anual em novembro</span></div>
           <div class="ment-check"><span class="ment-check-icon">✦</span><span>Estruturação de holding e proteção patrimonial</span></div>
           <div class="ment-check"><span class="ment-check-icon">✦</span><span>Alocação de ativos e revisão de carteira</span></div>
