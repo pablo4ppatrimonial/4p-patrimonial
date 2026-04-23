@@ -653,6 +653,9 @@
       <div class="nav-item" onclick="showSection('encontros', this)">
         <span class="nav-icon">📅</span> Encontros
       </div>
+      <div class="nav-item" onclick="showSection('modulos', this)">
+        <span class="nav-icon">📚</span> Módulos
+      </div>
       <div class="sidebar-sep"></div>
       <div class="nav-label">COMUNIDADE</div>
       <div class="nav-item" onclick="showSection('comunidade', this)">
@@ -939,6 +942,26 @@
       </div>
     </div>
 
+    <!-- ── MÓDULOS ── -->
+    <div id="section-modulos" class="section">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Módulos da <span>Mentoria</span></div>
+          <div class="page-sub">Lista de módulos exibida no Hub de Mentoria do aluno</div>
+        </div>
+        <button class="btn btn-gold" onclick="openModuloForm(null)">+ Novo Módulo</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📚 Módulos cadastrados</div>
+          <button class="btn btn-sm btn-outline" onclick="loadModulosAdmin()">↻ Atualizar</button>
+        </div>
+        <div id="modulos-admin-list" style="padding:0 20px 20px">
+          <div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── COMUNIDADE ── -->
     <div id="section-comunidade" class="section">
       <div class="page-header">
@@ -1136,6 +1159,44 @@
   </div>
 </div>
 
+<!-- ── MÓDULO MODAL ── -->
+<div class="modal-lg-overlay" id="modulo-overlay">
+  <div class="modal-lg" style="max-width:560px">
+    <div class="modal-lg-head">
+      <h3 id="modulo-modal-title">Novo Módulo</h3>
+      <button class="x-btn" onclick="closeModuloModal()">✕</button>
+    </div>
+    <div class="modal-lg-body">
+      <input type="hidden" id="m-id">
+      <div class="form-row-3" style="margin-bottom:14px">
+        <div class="fg"><label>Número *</label><input class="fi" id="m-numero" type="number" min="1" placeholder="1"></div>
+        <div class="fg"><label>Ordem de exibição</label><input class="fi" id="m-ordem" type="number" min="0" placeholder="0"></div>
+        <div class="fg"><label>Status</label>
+          <select class="fi fi-sel" id="m-status">
+            <option value="disponivel">✓ Disponível</option>
+            <option value="bloqueado">🔒 Bloqueado</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:14px"><label>Título *</label><input class="fi" id="m-titulo" placeholder="Ex: Diagnóstico patrimonial"></div>
+      <div class="fg" style="margin-bottom:14px">
+        <label>Tags (separadas por vírgula)</label>
+        <input class="fi" id="m-tags" placeholder="Ex: 4 sessões, Diagnóstico completo, Planilha personalizada">
+      </div>
+      <div class="fg" style="margin-bottom:4px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="m-ativo" checked style="accent-color:var(--gold)">
+          <span style="font-size:12px;color:var(--text-muted)">Ativo (visível para alunos)</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-lg-foot">
+      <button class="btn btn-outline" onclick="closeModuloModal()">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveModulo()">Salvar Módulo</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── CASO MODAL ── -->
 <div class="modal-lg-overlay" id="caso-overlay">
   <div class="modal-lg" style="max-width:600px">
@@ -1260,6 +1321,7 @@
     if (id === 'cms')          loadCMS();
     if (id === 'aulas')        loadAulas();
     if (id === 'encontros')    loadEncontros();
+    if (id === 'modulos')      loadModulosAdmin();
     if (id === 'comunidade')   loadComunidade();
     if (id === 'casos')        loadCasosReais();
     if (id === 'portal')       loadPortal();
@@ -2049,6 +2111,103 @@
     } catch (e) { toast('Erro: ' + e.message, 'error'); }
   }
 
+  // ── MÓDULOS MENTORIA ──
+  let modulosData = [];
+  let moduloEditId = null;
+
+  async function loadModulosAdmin() {
+    const container = document.getElementById('modulos-admin-list');
+    container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
+    try {
+      const { data, error } = await sb.from('modulos_mentoria').select('*').order('ordem', { ascending: true });
+      if (error) throw error;
+      modulosData = data || [];
+      renderModulosAdmin();
+    } catch (e) {
+      container.innerHTML = `<div style="padding:24px;color:var(--text-muted)">Erro: ${e.message}</div>`;
+    }
+  }
+
+  function renderModulosAdmin() {
+    const container = document.getElementById('modulos-admin-list');
+    if (!modulosData.length) {
+      container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-dim)">Nenhum módulo. Clique em "+ Novo Módulo".</div>';
+      return;
+    }
+    container.innerHTML = modulosData.map(m => `
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+        <div style="width:28px;height:28px;border-radius:50%;background:${m.status === 'bloqueado' ? 'var(--card2)' : 'var(--gold-dim)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--text)">
+          ${m.status === 'bloqueado' ? '🔒' : m.numero}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">${m.titulo}</div>
+          ${m.tags ? `<div style="font-size:11px;color:var(--text-dim)">${m.tags}</div>` : ''}
+          <div style="font-size:11px;margin-top:4px;color:${m.ativo ? 'var(--success)' : 'var(--text-dim)'}">${m.ativo ? '✓ Ativo' : '○ Inativo'} · ${m.status === 'bloqueado' ? '🔒 Bloqueado' : '✓ Disponível'}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button class="btn btn-sm btn-outline" onclick="openModuloForm('${m.id}')">Editar</button>
+          <button class="btn btn-sm btn-danger-outline" onclick="deleteModulo('${m.id}','${m.titulo.replace(/'/g,"\\'")}')">✕</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function openModuloForm(id) {
+    moduloEditId = id;
+    const m = id ? modulosData.find(x => x.id === id) : null;
+    document.getElementById('modulo-modal-title').textContent = m ? 'Editar Módulo' : 'Novo Módulo';
+    document.getElementById('m-id').value      = m?.id ?? '';
+    document.getElementById('m-numero').value  = m?.numero ?? '';
+    document.getElementById('m-titulo').value  = m?.titulo ?? '';
+    document.getElementById('m-tags').value    = m?.tags ?? '';
+    document.getElementById('m-status').value  = m?.status ?? 'disponivel';
+    document.getElementById('m-ordem').value   = m?.ordem ?? '0';
+    document.getElementById('m-ativo').checked = m ? m.ativo : true;
+    document.getElementById('modulo-overlay').classList.add('open');
+  }
+
+  function closeModuloModal() {
+    document.getElementById('modulo-overlay').classList.remove('open');
+    moduloEditId = null;
+  }
+
+  async function saveModulo() {
+    const titulo = document.getElementById('m-titulo').value.trim();
+    const numero = parseInt(document.getElementById('m-numero').value);
+    if (!titulo || !numero) { toast('Número e título são obrigatórios.', 'error'); return; }
+    const payload = {
+      numero,
+      titulo,
+      tags:   document.getElementById('m-tags').value.trim() || null,
+      status: document.getElementById('m-status').value,
+      ordem:  parseInt(document.getElementById('m-ordem').value) || 0,
+      ativo:  document.getElementById('m-ativo').checked,
+    };
+    try {
+      if (moduloEditId) {
+        const { error } = await sb.from('modulos_mentoria').update(payload).eq('id', moduloEditId);
+        if (error) throw error;
+        toast('Módulo atualizado!');
+      } else {
+        const { error } = await sb.from('modulos_mentoria').insert(payload);
+        if (error) throw error;
+        toast('Módulo criado!');
+      }
+      closeModuloModal();
+      loadModulosAdmin();
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
+  }
+
+  async function deleteModulo(id, titulo) {
+    openModal('Excluir módulo', `Deseja excluir "${titulo}"?`, 'Excluir', 'btn-danger', async () => {
+      try {
+        const { error } = await sb.from('modulos_mentoria').delete().eq('id', id);
+        if (error) throw error;
+        toast('Módulo excluído.');
+        loadModulosAdmin();
+      } catch (e) { toast('Erro: ' + e.message, 'error'); }
+    });
+  }
+
   // ── CASES REAIS ──
   let casosData = [];
   let casoEditId = null;
@@ -2243,13 +2402,17 @@
 
   // ── CONFIGURAÇÕES ──
   const CONFIG_KEYS = [
-    { chave: 'plataforma_nome',  label: 'Nome da Plataforma',    type: 'text' },
-    { chave: 'mentor_nome',      label: 'Nome do Mentor',         type: 'text' },
-    { chave: 'mentor_bio',       label: 'Bio do Mentor',          type: 'textarea' },
-    { chave: 'mentor_foto',      label: 'URL da Foto do Mentor',  type: 'text' },
-    { chave: 'upsell_titulo',    label: 'Título do Upsell',       type: 'text' },
-    { chave: 'upsell_descricao', label: 'Descrição do Upsell',    type: 'textarea' },
-    { chave: 'whatsapp_link',    label: 'Link do WhatsApp',       type: 'text' },
+    { chave: 'plataforma_nome',  label: 'Nome da Plataforma',               type: 'text',     group: 'Geral' },
+    { chave: 'mentor_nome',      label: 'Nome do Mentor',                    type: 'text',     group: 'Geral' },
+    { chave: 'mentor_bio',       label: 'Bio do Mentor',                     type: 'textarea', group: 'Geral' },
+    { chave: 'mentor_foto',      label: 'URL da Foto do Mentor',             type: 'text',     group: 'Geral' },
+    { chave: 'upsell_titulo',    label: 'Título do Upsell (sidebar)',        type: 'text',     group: 'Geral' },
+    { chave: 'upsell_descricao', label: 'Descrição do Upsell (sidebar)',     type: 'textarea', group: 'Geral' },
+    { chave: 'whatsapp_link',    label: 'WhatsApp geral (suporte)',          type: 'text',     group: 'Geral' },
+    { chave: 'hub_titulo',       label: 'Hub Mentoria — Título',             type: 'text',     group: 'Hub de Mentoria' },
+    { chave: 'hub_descricao',    label: 'Hub Mentoria — Descrição',          type: 'textarea', group: 'Hub de Mentoria' },
+    { chave: 'hub_link_sessao',  label: 'Hub Mentoria — Link da próxima sessão (WhatsApp/Zoom)', type: 'text', group: 'Hub de Mentoria' },
+    { chave: 'hub_num_modulos',  label: 'Hub Mentoria — Nº de módulos do programa', type: 'text', group: 'Hub de Mentoria' },
   ];
   let cmsConfig = {};
 
@@ -2268,15 +2431,26 @@
   }
 
   function renderConfig() {
-    document.getElementById('config-list').innerHTML = CONFIG_KEYS.map(k => `
-      <div class="config-row">
-        <div class="config-key">${k.label}</div>
-        <div class="config-val">
-          ${k.type === 'textarea'
-            ? `<textarea class="fi fi-ta" id="cfg-${k.chave}" style="min-height:72px">${(cmsConfig[k.chave] || '').replace(/</g,'&lt;')}</textarea>`
-            : `<input class="fi" type="text" id="cfg-${k.chave}" value="${(cmsConfig[k.chave] || '').replace(/"/g,'&quot;')}">`}
-        </div>
-      </div>`).join('');
+    let html = '';
+    let lastGroup = null;
+    CONFIG_KEYS.forEach(k => {
+      if (k.group !== lastGroup) {
+        if (lastGroup !== null) html += '</div>';
+        html += `<div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding:18px 0 8px;border-top:${lastGroup !== null ? '1px solid var(--border)' : 'none'}">${k.group}</div><div>`;
+        lastGroup = k.group;
+      }
+      html += `
+        <div class="config-row">
+          <div class="config-key">${k.label}</div>
+          <div class="config-val">
+            ${k.type === 'textarea'
+              ? `<textarea class="fi fi-ta" id="cfg-${k.chave}" style="min-height:72px">${(cmsConfig[k.chave] || '').replace(/</g,'&lt;')}</textarea>`
+              : `<input class="fi" type="text" id="cfg-${k.chave}" value="${(cmsConfig[k.chave] || '').replace(/"/g,'&quot;')}">`}
+          </div>
+        </div>`;
+    });
+    if (lastGroup !== null) html += '</div>';
+    document.getElementById('config-list').innerHTML = html;
   }
 
   async function saveConfig() {

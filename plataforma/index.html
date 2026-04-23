@@ -704,7 +704,7 @@ function navigate(screen) {
   if (screen === 'ranking') loadRanking();
   if (screen === 'portal') loadPortal();
   if (screen === 'comunidade') loadPosts();
-  if (screen === 'mentoria') { renderModulos(); loadEncontros(); }
+  if (screen === 'mentoria') { loadModulos(); loadEncontros(); }
 }
 
 function toggleSidebar() {
@@ -743,14 +743,18 @@ function applyConfiguracoes() {
   const mentorBio   = cfgVal('bio_mentor','mentor_bio') || 'Investidor imobiliário com método próprio de multiplicação patrimonial.';
   const upsellTit   = cfgVal('titulo_upsell','upsell_titulo') || 'Mentoria 4P Patrimonial';
   const upsellDesc  = cfgVal('descricao_upsell','upsell_descricao') || 'Acompanhamento direto com ' + mentorNome + '. Sessões ao vivo quinzenais.';
-  const waLink      = cfgVal('whatsapp_link') || 'https://wa.me/5511999999999';
+  const hubTitulo   = cfgVal('hub_titulo')    || 'Mentoria ' + mentorNome;
+  const hubDesc     = cfgVal('hub_descricao') || upsellDesc || mentorBio;
+  const hubLink     = cfgVal('hub_link_sessao','whatsapp_link') || 'https://wa.me/5511999999999';
+  const hubModulos  = cfgVal('hub_num_modulos');
 
   const el = id => document.getElementById(id);
-  if (el('upgrade-label'))  el('upgrade-label').textContent  = upsellTit;
-  if (el('upgrade-text'))   el('upgrade-text').textContent   = upsellDesc.length > 80 ? upsellDesc.slice(0,80)+'…' : upsellDesc;
-  if (el('mentoria-title')) el('mentoria-title').textContent = 'Mentoria ' + mentorNome;
-  if (el('mentoria-desc'))  el('mentoria-desc').textContent  = upsellDesc || mentorBio;
-  if (el('mentoria-wa-btn')) el('mentoria-wa-btn').href      = waLink;
+  if (el('upgrade-label'))   el('upgrade-label').textContent  = upsellTit;
+  if (el('upgrade-text'))    el('upgrade-text').textContent   = upsellDesc.length > 80 ? upsellDesc.slice(0,80)+'…' : upsellDesc;
+  if (el('mentoria-title'))  el('mentoria-title').textContent = hubTitulo;
+  if (el('mentoria-desc'))   el('mentoria-desc').textContent  = hubDesc;
+  if (el('mentoria-wa-btn')) el('mentoria-wa-btn').href       = hubLink;
+  if (el('met-modulos') && hubModulos) el('met-modulos').textContent = hubModulos;
 }
 
 // ── AULAS DATA (carregado do Supabase) ──
@@ -929,31 +933,42 @@ async function marcarConcluida(id) {
   }
 }
 
-// ── MODULOS MENTORIA ──
-const MODULOS = [
-  { n:1, titulo:'Diagnóstico patrimonial', items:['4 sessões','Diagnóstico completo','Planilha personalizada'], locked:false },
-  { n:2, titulo:'Estruturação de holding', items:['3 sessões','Template jurídico','Q&A exclusivo'], locked:false },
-  { n:3, titulo:'Alocação de ativos', items:['4 sessões','Carteira modelo','Análise ao vivo'], locked:false },
-  { n:4, titulo:'Blindagem e proteção', items:['3 sessões','Consulta jurídica','Checklist'], locked:false },
-  { n:5, titulo:'FIIs e renda variável', items:['4 sessões','Relatórios premium','Watchlist'], locked:true },
-  { n:6, titulo:'Previdência e PGBL/VGBL', items:['2 sessões','Simulações','Comparativo'], locked:true },
-  { n:7, titulo:'Planejamento sucessório', items:['3 sessões','Modelo testamentário','Consultoria'], locked:true },
-  { n:8, titulo:'Legado e perpetuação', items:['2 sessões','Plano estratégico','Mentoria vitalícia'], locked:true },
-];
-
-function renderModulos() {
-  document.getElementById('modulos-list').innerHTML = MODULOS.map(m => `
-    <div class="modulo-card">
-      <div class="modulo-header">
-        <div class="modulo-num ${m.locked ? 'locked' : ''}">${m.locked ? '🔒' : m.n}</div>
-        <div class="modulo-title">${m.titulo}</div>
-        <span class="badge ${m.locked ? 'badge-gray' : 'badge-green'}">${m.locked ? 'Bloqueado' : 'Disponível'}</span>
-      </div>
-      <div class="modulo-items">
-        ${m.items.map(i => `<div class="modulo-item">✦ ${i}</div>`).join('')}
-      </div>
-    </div>
-  `).join('');
+// ── MÓDULOS MENTORIA (dinâmico do Supabase) ──
+async function loadModulos() {
+  const container = document.getElementById('modulos-list');
+  if (!container) return;
+  container.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:12px">Carregando módulos...</div>';
+  try {
+    const { data, error } = await sb.from('modulos_mentoria')
+      .select('*')
+      .eq('ativo', true)
+      .order('ordem', { ascending: true });
+    if (error) throw error;
+    const mods = data || [];
+    if (!mods.length) {
+      container.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:12px">Nenhum módulo cadastrado.</div>';
+      return;
+    }
+    const numModulos = cfgVal('hub_num_modulos') || mods.length;
+    const el = document.getElementById('met-modulos');
+    if (el) el.textContent = numModulos;
+    container.innerHTML = mods.map(m => {
+      const locked = m.status === 'bloqueado';
+      const tags = (m.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+      return `
+        <div class="modulo-card">
+          <div class="modulo-header">
+            <div class="modulo-num ${locked ? 'locked' : ''}">${locked ? '🔒' : m.numero}</div>
+            <div class="modulo-title">${m.titulo}</div>
+            <span class="badge ${locked ? 'badge-gray' : 'badge-green'}">${locked ? 'Bloqueado' : 'Disponível'}</span>
+          </div>
+          ${tags.length ? `<div class="modulo-items">${tags.map(t => `<div class="modulo-item">✦ ${t}</div>`).join('')}</div>` : ''}
+        </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:12px">Erro ao carregar módulos.</div>';
+    console.error('Módulos error:', e);
+  }
 }
 
 // ── RANKING (real via RPC) ──
@@ -1012,7 +1027,7 @@ function updateMentoriaStats() {
   set('met-total', total || '0');
   set('met-past', past || '0');
   set('met-next', nextLabel);
-  set('met-modulos', MODULOS.length);
+  // met-modulos é preenchido por applyConfiguracoes() e loadModulos()
   set('stat-proxima-val', nextLabel);
   set('stat-proxima-delta', nextEnc ? 'próxima sessão confirmada' : 'sem sessões agendadas');
 }
