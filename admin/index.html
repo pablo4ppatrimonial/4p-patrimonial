@@ -1290,6 +1290,7 @@
         <div id="pu-imagem-preview" style="display:none;margin-top:8px"><img id="pu-thumb" src="" style="max-height:100px;border-radius:6px"></div>
       </div>
       <div class="fg" style="margin-bottom:14px"><label>Link WhatsApp</label><input class="fi" id="pu-whatsapp" placeholder="https://wa.me/5511999999999?text=..."></div>
+      <div class="fg" style="margin-bottom:14px"><label>Link de Redirecionamento (ao clicar no popup)</label><input class="fi" id="pu-redirect" placeholder="https://... (deixe vazio para não redirecionar)"></div>
       <div class="form-row-3" style="margin-bottom:14px">
         <div class="fg">
           <label>Frequência</label>
@@ -2535,6 +2536,7 @@
     document.getElementById('pu-mensagem').value = p?.mensagem ?? '';
     document.getElementById('pu-imagem-url').value = p?.imagem_url ?? '';
     document.getElementById('pu-whatsapp').value = p?.link_whatsapp ?? '';
+    document.getElementById('pu-redirect').value = p?.link_redirect ?? '';
     document.getElementById('pu-frequencia').value = p?.frequencia ?? '2dias';
     document.getElementById('pu-delay').value = String(p?.delay_segundos ?? 30);
     document.getElementById('pu-publico').value = p?.publico ?? 'todos';
@@ -2574,6 +2576,7 @@
       mensagem:        document.getElementById('pu-mensagem').value.trim() || null,
       imagem_url:      imgUrl,
       link_whatsapp:   document.getElementById('pu-whatsapp').value.trim() || null,
+      link_redirect:   document.getElementById('pu-redirect').value.trim() || null,
       frequencia:      document.getElementById('pu-frequencia').value,
       delay_segundos:  parseInt(document.getElementById('pu-delay').value) || 30,
       publico:         document.getElementById('pu-publico').value,
