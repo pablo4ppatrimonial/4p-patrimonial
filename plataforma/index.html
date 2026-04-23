@@ -1204,6 +1204,8 @@ async function loadDashboardPosts() {
   try {
     const { data } = await sb.from('posts')
       .select('id, user_id, conteudo, likes, fixado, created_at')
+      .eq('deletado', false)
+      .is('parent_id', null)
       .order('fixado', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(2);
@@ -1377,6 +1379,8 @@ async function loadPosts() {
   try {
     const { data, error } = await sb.from('posts')
       .select('id, user_id, conteudo, likes, fixado, created_at, imagem_url')
+      .eq('deletado', false)
+      .is('parent_id', null)
       .order('fixado', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(50);

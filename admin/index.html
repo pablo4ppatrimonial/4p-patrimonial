@@ -584,11 +584,21 @@
     .config-row { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
     .config-key { width: 180px; flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--text-muted); padding-top: 10px; }
     .config-val { flex: 1; }
-    .post-mod-row { padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .post-mod-row { padding: 16px 0; border-bottom: 1px solid var(--border); }
     .post-mod-row:last-child { border-bottom: none; }
     .post-mod-author { font-size: 11px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
     .post-mod-text { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
-    .post-mod-actions { display: flex; gap: 8px; align-items: center; }
+    .post-mod-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .post-mod-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+    .filter-btn { padding: 5px 13px; font-size: 11px; border-radius: 6px; border: 1px solid var(--border); background: none; color: var(--text-muted); cursor: pointer; transition: all .2s; }
+    .filter-btn.active { border-color: var(--gold-dim); color: var(--gold); background: rgba(201,168,76,.08); }
+    .reply-form { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 10px; display: none; }
+    .reply-form.open { display: block; }
+    .reply-form textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; color: var(--text); font-family: inherit; font-size: 12px; resize: vertical; outline: none; box-sizing: border-box; }
+    .reply-form textarea:focus { border-color: var(--gold-dim); }
+    .post-mod-reply { background: rgba(201,168,76,.04); border-left: 3px solid var(--gold-dim); border-radius: 0 6px 6px 0; padding: 8px 12px; margin-top: 6px; margin-bottom: 8px; }
+    .post-mod-reply-author { font-size: 10px; font-weight: 700; color: var(--gold); margin-bottom: 3px; }
+    .post-mod-reply-text { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
     .notif-dest { display: flex; gap: 10px; margin-bottom: 14px; }
     .radio-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 12px; color: var(--text-muted); transition: all .2s; }
     .radio-btn.selected { border-color: var(--gold-dim); color: var(--gold); background: rgba(201,168,76,.06); }
@@ -967,7 +977,7 @@
       <div class="page-header">
         <div>
           <div class="page-title">Moderação da <span>Comunidade</span></div>
-          <div class="page-sub">Fixe e remova posts dos alunos</div>
+          <div class="page-sub">Visualize, fixe, responda e remova posts dos alunos</div>
         </div>
         <button class="btn btn-outline" onclick="loadComunidade()">↻ Atualizar</button>
       </div>
@@ -975,6 +985,14 @@
         <div class="card-header">
           <div class="card-title">💬 Posts da Comunidade</div>
           <div id="posts-count" style="font-size:12px;color:var(--text-muted)"></div>
+        </div>
+        <div style="padding:14px 20px 0">
+          <div class="post-mod-filter">
+            <button class="filter-btn active" onclick="setCmsFilter('todos',this)">Todos</button>
+            <button class="filter-btn" onclick="setCmsFilter('fixados',this)">📌 Fixados</button>
+            <button class="filter-btn" onclick="setCmsFilter('respondidos',this)">💬 Com resposta</button>
+            <button class="filter-btn" onclick="setCmsFilter('deletados',this)">🗑 Deletados</button>
+          </div>
         </div>
         <div id="posts-list" style="padding:0 20px">
           <div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>
@@ -2024,64 +2042,128 @@
 
   // ── COMUNIDADE ──
   let cmsPosts = [];
+  let cmsProfiles = {};
+  let cmsFilter = 'todos';
 
   async function loadComunidade() {
     const container = document.getElementById('posts-list');
     container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
     try {
-      const { data, error } = await sb.from('posts').select('*')
+      const { data, error } = await sb.from('posts')
+        .select('id, user_id, conteudo, likes, fixado, deletado, created_at, imagem_url, parent_id, is_admin_reply')
         .order('fixado', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) throw error;
       cmsPosts = data || [];
+
+      const uids = [...new Set(cmsPosts.map(p => p.user_id).filter(Boolean))];
+      if (uids.length) {
+        const { data: profs } = await sb.from('profiles').select('id, nome, full_name, email').in('id', uids);
+        cmsProfiles = Object.fromEntries((profs || []).map(pr => [pr.id, pr.nome || pr.full_name || pr.email || 'Aluno']));
+      }
       renderComunidade();
     } catch (e) {
       container.innerHTML = `<div style="padding:24px;color:var(--danger)">${e.message}</div>`;
     }
   }
 
+  function setCmsFilter(filter, btn) {
+    cmsFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderComunidade();
+  }
+
   function renderComunidade() {
     const container = document.getElementById('posts-list');
-    const ativos    = cmsPosts.filter(p => !p.deletado);
-    const deletados = cmsPosts.filter(p => p.deletado);
-    document.getElementById('posts-count').textContent =
-      `${ativos.length} ativos · ${deletados.length} deletados`;
 
-    if (!cmsPosts.length) {
-      container.innerHTML = '<div style="padding:32px;color:var(--text-dim)">Nenhum post encontrado.</div>';
+    const topPosts = cmsPosts.filter(p => !p.parent_id);
+    const replies  = cmsPosts.filter(p => p.parent_id && p.is_admin_reply);
+    const replyMap = {};
+    replies.forEach(r => { replyMap[r.parent_id] = r; });
+
+    let visible = topPosts;
+    if (cmsFilter === 'todos')       visible = topPosts.filter(p => !p.deletado);
+    if (cmsFilter === 'fixados')     visible = topPosts.filter(p => p.fixado && !p.deletado);
+    if (cmsFilter === 'respondidos') visible = topPosts.filter(p => replyMap[p.id] && !p.deletado);
+    if (cmsFilter === 'deletados')   visible = topPosts.filter(p => p.deletado);
+
+    const totalAtivos   = topPosts.filter(p => !p.deletado).length;
+    const totalDeletados = topPosts.filter(p => p.deletado).length;
+    document.getElementById('posts-count').textContent =
+      `${totalAtivos} ativo${totalAtivos !== 1 ? 's' : ''} · ${totalDeletados} deletado${totalDeletados !== 1 ? 's' : ''}`;
+
+    if (!visible.length) {
+      container.innerHTML = '<div style="padding:32px;color:var(--text-dim)">Nenhum post encontrado para este filtro.</div>';
       return;
     }
 
-    let html = ativos.map(p => `
-      <div class="post-mod-row">
-        <div class="post-mod-author">
-          ${p.fixado ? '📌 ' : ''}${p.autor_nome || 'Anônimo'}
-          <span style="font-weight:400;color:var(--text-dim);margin-left:8px">${fmtDate(p.created_at)}</span>
-          ${p.likes ? `<span style="margin-left:8px;color:var(--text-dim)">❤️ ${p.likes}</span>` : ''}
-        </div>
-        <div class="post-mod-text">${p.conteudo}</div>
-        <div class="post-mod-actions">
-          <button class="btn btn-sm ${p.fixado ? 'btn-gold' : 'btn-outline'}" onclick="toggleFixar('${p.id}',${!p.fixado})">
-            ${p.fixado ? '📌 Fixado' : '📌 Fixar'}
-          </button>
-          <button class="btn btn-sm btn-danger" onclick="deletarPost('${p.id}')">🗑 Deletar</button>
-        </div>
-      </div>`).join('');
-
-    if (deletados.length) {
-      html += `<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-        <div style="font-size:11px;color:var(--text-dim);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Posts deletados (${deletados.length})</div>
-        ${deletados.map(p => `
-          <div class="post-mod-row" style="opacity:.45">
-            <div class="post-mod-author">${p.autor_nome || 'Anônimo'} <span style="font-weight:400;color:var(--text-dim)">${fmtDate(p.created_at)}</span></div>
-            <div class="post-mod-text" style="text-decoration:line-through">${p.conteudo}</div>
-            <div class="post-mod-actions">
-              <button class="btn btn-sm btn-outline" onclick="restaurarPost('${p.id}')">↩ Restaurar</button>
+    container.innerHTML = visible.map(p => {
+      const autor   = cmsProfiles[p.user_id] || 'Aluno';
+      const reply   = replyMap[p.id];
+      const isDel   = p.deletado;
+      return `
+        <div class="post-mod-row" ${isDel ? 'style="opacity:.45"' : ''}>
+          <div class="post-mod-author">
+            ${p.fixado ? '📌 ' : ''}${autor}
+            <span style="font-weight:400;color:var(--text-dim);margin-left:8px">${fmtDate(p.created_at)}</span>
+            ${p.likes ? `<span style="margin-left:8px;color:var(--text-dim)">👍 ${p.likes}</span>` : ''}
+          </div>
+          <div class="post-mod-text" ${isDel ? 'style="text-decoration:line-through"' : ''}>${p.conteudo}</div>
+          ${p.imagem_url ? `<div style="margin-bottom:8px"><img src="${p.imagem_url}" style="max-height:120px;border-radius:6px" loading="lazy"></div>` : ''}
+          ${reply ? `
+            <div class="post-mod-reply">
+              <div class="post-mod-reply-author">💬 Pablo Dantas · ${fmtDate(reply.created_at)}</div>
+              <div class="post-mod-reply-text">${reply.conteudo}</div>
+            </div>` : ''}
+          <div id="reply-form-${p.id}" class="reply-form">
+            <textarea id="reply-txt-${p.id}" rows="3" placeholder="Digite sua resposta como Pablo Dantas..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+              <button class="btn btn-sm btn-outline" onclick="closeReplyForm('${p.id}')">Cancelar</button>
+              <button class="btn btn-sm btn-gold" onclick="submitReply('${p.id}')">Publicar resposta</button>
             </div>
-          </div>`).join('')}
-      </div>`;
-    }
-    container.innerHTML = html;
+          </div>
+          <div class="post-mod-actions">
+            ${!isDel ? `
+              <button class="btn btn-sm ${p.fixado ? 'btn-gold' : 'btn-outline'}" onclick="toggleFixar('${p.id}',${!p.fixado})">
+                ${p.fixado ? '📌 Fixado' : '📌 Fixar'}
+              </button>
+              <button class="btn btn-sm btn-outline" onclick="openReplyForm('${p.id}')">💬 Responder</button>
+              <button class="btn btn-sm btn-danger" onclick="deletarPost('${p.id}')">🗑 Excluir</button>
+            ` : `
+              <button class="btn btn-sm btn-outline" onclick="restaurarPost('${p.id}')">↩ Restaurar</button>
+            `}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function openReplyForm(id) {
+    document.getElementById(`reply-form-${id}`)?.classList.add('open');
+    document.getElementById(`reply-txt-${id}`)?.focus();
+  }
+
+  function closeReplyForm(id) {
+    const form = document.getElementById(`reply-form-${id}`);
+    if (form) { form.classList.remove('open'); }
+  }
+
+  async function submitReply(postId) {
+    const txt = document.getElementById(`reply-txt-${postId}`)?.value.trim();
+    if (!txt) { toast('Digite uma resposta antes de publicar.', 'error'); return; }
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      const { error } = await sb.from('posts').insert({
+        user_id: user.id,
+        conteudo: txt,
+        parent_id: postId,
+        is_admin_reply: true,
+      });
+      if (error) throw error;
+      toast('Resposta publicada com sucesso!');
+      closeReplyForm(postId);
+      loadComunidade();
+    } catch (e) { toast('Erro ao publicar resposta: ' + e.message, 'error'); }
   }
 
   async function toggleFixar(id, fixar) {
@@ -2097,7 +2179,7 @@
     try {
       const { error } = await sb.from('posts').update({ deletado: true }).eq('id', id);
       if (error) throw error;
-      toast('Post deletado.');
+      toast('Post excluído.');
       loadComunidade();
     } catch (e) { toast('Erro: ' + e.message, 'error'); }
   }
