@@ -136,6 +136,10 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 .play-tri{width:0;height:0;border-style:solid;border-width:9px 0 9px 16px;border-color:transparent transparent transparent var(--dark);margin-left:3px}
 .player-tag{position:absolute;top:12px;left:12px;background:var(--gold);color:var(--dark);font-size:9px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:var(--r-full)}
 
+/* ── MOBILE BACK BUTTON ── */
+.mob-back{display:none;align-items:center;gap:6px;background:none;border:none;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;padding:0 0 14px;letter-spacing:.3px;transition:color var(--trans)}
+.mob-back:hover{color:var(--gold)}
+
 /* ── MATERIALS ── */
 .mat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
 .mat-card{background:var(--dark4);border:1px solid #252525;border-radius:var(--r-sm);padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all var(--trans)}
@@ -308,8 +312,12 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
   .grid-2{grid-template-columns:1fr!important}
   .mat-grid{grid-template-columns:1fr!important}
   .player-wrap{flex-direction:column!important}
-  .aula-sidebar{width:100%!important;height:auto;max-height:200px;border-right:none!important;border-bottom:1px solid #252525}
+  .aula-sidebar{width:100%!important;height:auto;max-height:none;border-right:none!important;border-bottom:1px solid #252525}
   .player-main{padding:16px!important}
+  /* Mobile: mostra lista OU player, nunca os dois ao mesmo tempo */
+  #aulas-layout.mob-player .aula-sidebar{display:none!important}
+  #aulas-layout:not(.mob-player) .player-main{display:none!important}
+  .mob-back{display:flex!important}
   .casos-grid{grid-template-columns:1fr 1fr!important}
   .perfil-hero{flex-direction:column;text-align:center}
   .form-row{grid-template-columns:1fr!important}
@@ -483,7 +491,7 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 
       <!-- ── AULAS ── -->
       <div class="screen" id="screen-aulas">
-        <div style="display:flex;height:100%;margin:-24px -28px">
+        <div id="aulas-layout" style="display:flex;height:100%;margin:-24px -28px">
           <div class="aula-sidebar">
             <div style="padding:16px 14px 8px;border-bottom:1px solid #1e1e1e">
               <div class="section-label" style="margin:0 0 4px">Módulo 1 — Fundamentos</div>
@@ -977,6 +985,14 @@ function selectAula(id) {
     el.querySelector('.aula-num').className = 'aula-num ' + (a.status === 'done' ? 'num-done' : a.id === id ? 'num-active' : 'num-lock');
   });
   renderPlayerMain();
+  // Mobile: alterna para a view do player
+  if (window.innerWidth <= 800) {
+    document.getElementById('aulas-layout').classList.add('mob-player');
+  }
+}
+
+function voltarListaAulas() {
+  document.getElementById('aulas-layout').classList.remove('mob-player');
 }
 
 function renderPlayerMain() {
@@ -995,6 +1011,7 @@ function renderPlayerMain() {
        </div>`;
 
   document.getElementById('player-main').innerHTML = `
+    <button class="mob-back" onclick="voltarListaAulas()">← Voltar para lista</button>
     <div class="player-box" style="${embed ? 'padding:0;background:#000;cursor:default' : ''}">
       ${!embed ? `<span class="player-tag">AULA ${a.id} DE ${total}</span>` : ''}
       ${playerInner}
