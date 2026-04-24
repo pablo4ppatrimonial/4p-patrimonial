@@ -104,12 +104,13 @@
       transition: opacity .2s;
     }
     .btn-login:hover { opacity: .88; }
-    #login-error {
-      color: #e74c3c;
+    #login-error, #login-lockout {
       font-size: 12px;
       margin-top: 12px;
       display: none;
     }
+    #login-error   { color: #e74c3c; }
+    #login-lockout { color: #e67e22; line-height: 1.5; }
 
     /* ─── LAYOUT ─── */
     #admin-panel { display: none; min-height: 100vh; }
@@ -621,8 +622,9 @@
     <div class="login-sub">Painel Administrativo</div>
     <label>Senha master</label>
     <input type="password" id="login-password" placeholder="••••••••••••" autocomplete="current-password" />
-    <button class="btn-login" onclick="doLogin()">Entrar</button>
+    <button class="btn-login" id="login-btn" onclick="doLogin()">Entrar</button>
     <div id="login-error">Senha incorreta. Tente novamente.</div>
+    <div id="login-lockout">🔒 Acesso bloqueado por 15 minutos após 5 tentativas incorretas.<br>Tente novamente em <span id="lockout-timer"></span>.</div>
   </div>
 </div>
 
@@ -1376,21 +1378,93 @@
 
   let allAlunos = [];
 
-  // ── LOGIN ──
+  // ── LOGIN + RATE LIMITING ──
+  const MAX_ATTEMPTS  = 5;
+  const LOCKOUT_MS    = 15 * 60 * 1000; // 15 minutos
+  const LS_ATTEMPTS   = 'adm_fa';   // failed attempts count
+  const LS_LOCK_UNTIL = 'adm_lu';   // lock expiry timestamp
+
+  function getLoginState() {
+    return {
+      attempts:  parseInt(localStorage.getItem(LS_ATTEMPTS)  || '0', 10),
+      lockUntil: parseInt(localStorage.getItem(LS_LOCK_UNTIL) || '0', 10),
+    };
+  }
+
+  function isLockedOut() {
+    return getLoginState().lockUntil > Date.now();
+  }
+
+  function recordFailure() {
+    const { attempts } = getLoginState();
+    const next = attempts + 1;
+    localStorage.setItem(LS_ATTEMPTS, String(next));
+    if (next >= MAX_ATTEMPTS) {
+      localStorage.setItem(LS_LOCK_UNTIL, String(Date.now() + LOCKOUT_MS));
+    }
+  }
+
+  function clearLockout() {
+    localStorage.removeItem(LS_ATTEMPTS);
+    localStorage.removeItem(LS_LOCK_UNTIL);
+  }
+
+  let lockTimerInterval = null;
+
+  function startLockoutTimer() {
+    const timerEl = document.getElementById('lockout-timer');
+    const lockout = document.getElementById('login-lockout');
+    const btn     = document.getElementById('login-btn');
+    lockout.style.display = 'block';
+    document.getElementById('login-error').style.display = 'none';
+    btn.disabled = true;
+    clearInterval(lockTimerInterval);
+    lockTimerInterval = setInterval(() => {
+      const remaining = getLoginState().lockUntil - Date.now();
+      if (remaining <= 0) {
+        clearInterval(lockTimerInterval);
+        clearLockout();
+        lockout.style.display = 'none';
+        btn.disabled = false;
+        if (timerEl) timerEl.textContent = '';
+        return;
+      }
+      const m = Math.floor(remaining / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      if (timerEl) timerEl.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    }, 1000);
+  }
+
+  // Verifica lockout ao carregar a página
+  if (isLockedOut()) startLockoutTimer();
+
   function doLogin() {
+    const errEl = document.getElementById('login-error');
+    if (isLockedOut()) { startLockoutTimer(); return; }
+
     const pw = document.getElementById('login-password').value;
-    const err = document.getElementById('login-error');
     if (pw === ADMIN_PASS) {
+      clearLockout();
+      clearInterval(lockTimerInterval);
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('admin-panel').style.display = 'block';
       loadDashboard();
       loadAlunos();
       loadAulas();
     } else {
-      err.style.display = 'block';
+      recordFailure();
       document.getElementById('login-password').value = '';
+      if (isLockedOut()) {
+        startLockoutTimer();
+      } else {
+        const { attempts } = getLoginState();
+        const remaining = MAX_ATTEMPTS - attempts;
+        errEl.textContent = `Senha incorreta. ${remaining} tentativa${remaining !== 1 ? 's' : ''} restante${remaining !== 1 ? 's' : ''}.`;
+        errEl.style.display = 'block';
+      }
     }
   }
+
   document.getElementById('login-password').addEventListener('keydown', e => {
     if (e.key === 'Enter') doLogin();
   });
@@ -1400,6 +1474,7 @@
     document.getElementById('admin-panel').style.display = 'none';
     document.getElementById('login-password').value = '';
     document.getElementById('login-error').style.display = 'none';
+    document.getElementById('login-lockout').style.display = 'none';
   }
 
   // ── MOBILE SIDEBAR ──
