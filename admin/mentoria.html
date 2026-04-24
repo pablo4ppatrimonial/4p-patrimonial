@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>4P Mentoria — Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#c9a84c;--gold-light:#e2c47a;--gold-dim:#8a6e2f;
+  --bg:#080808;--surface:#111111;--card:#181818;--card2:#1f1f1f;
+  --border:#2a2a2a;--border-gold:#3a2e10;
+  --text:#e8e8e8;--text-muted:#888;--text-dim:#555;
+  --danger:#c0392b;--danger-dim:#7b241c;
+  --success:#27ae60;--success-dim:#1a6b3c;
+  --radius:10px;--sidebar:240px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+/* ─── LOGIN ─── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at center,#1a1200 0%,#080808 70%)}
+.login-box{width:380px;background:var(--card);border:1px solid var(--border-gold);border-radius:16px;padding:48px 40px;text-align:center;box-shadow:0 0 60px rgba(201,168,76,.08)}
+.login-logo{font-size:26px;font-weight:800;letter-spacing:2px;color:var(--gold);margin-bottom:4px}
+.login-sub{color:var(--text-muted);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:32px}
+.login-box label{display:block;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.login-box input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:12px 14px;font-size:14px;margin-bottom:20px;outline:none;transition:border-color .2s}
+.login-box input:focus{border-color:var(--gold-dim)}
+.btn-login{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:#000;font-weight:700;font-size:14px;border:none;border-radius:var(--radius);cursor:pointer;letter-spacing:.5px;transition:opacity .2s}
+.btn-login:hover{opacity:.88}
+#login-error,#login-lockout{font-size:12px;margin-top:12px;display:none}
+#login-error{color:#e74c3c}
+#login-lockout{color:#e67e22;line-height:1.5}
+/* ─── LAYOUT ─── */
+#admin-panel{display:none;min-height:100vh}
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar);height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid var(--border)}
+.sidebar-logo span{font-size:17px;font-weight:800;color:var(--gold);letter-spacing:1.5px}
+.sidebar-logo small{display:block;font-size:9px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.sidebar nav{flex:1;padding:12px 0;overflow-y:auto;min-height:0}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 20px;color:var(--text-muted);cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;user-select:none}
+.nav-item:hover{color:var(--text);background:rgba(201,168,76,.04)}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(201,168,76,.06)}
+.nav-icon{font-size:15px;width:20px;text-align:center}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--border)}
+.btn-logout{width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);cursor:pointer;font-size:12px;transition:all .2s}
+.btn-logout:hover{border-color:var(--danger);color:var(--danger)}
+.main{margin-left:var(--sidebar);padding:32px;min-height:100vh}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:20px;font-weight:700;color:var(--text)}
+.page-title span{color:var(--gold)}
+.page-sub{font-size:12px;color:var(--text-muted);margin-top:3px}
+/* SECTIONS */
+.section{display:none}
+.section.active{display:block}
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-dim),var(--gold))}
+.metric-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.metric-value{font-size:28px;font-weight:800;color:var(--gold-light);line-height:1}
+.metric-sub{font-size:11px;color:var(--text-dim);margin-top:6px}
+.metric-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:30px;opacity:.07}
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+/* SEARCH */
+.search-input{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;width:240px;outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--gold-dim)}
+.search-input::placeholder{color:var(--text-dim)}
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--card2);padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+tbody td{padding:11px 14px;font-size:13px;color:var(--text);vertical-align:middle}
+/* BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-gold{background:rgba(201,168,76,.15);color:var(--gold)}
+.badge-green{background:rgba(39,174,96,.15);color:#2ecc71}
+.badge-red{background:rgba(192,57,43,.15);color:#e74c3c}
+.badge-gray{background:rgba(100,100,100,.15);color:#888}
+.badge-blue{background:rgba(59,130,246,.15);color:#93c5fd}
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:opacity .2s;white-space:nowrap}
+.btn:hover{opacity:.82}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-gold{background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:#000}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-muted)}
+.btn-outline:hover{border-color:var(--gold-dim);color:var(--gold)}
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;color:var(--text);z-index:9999;display:none;max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+#toast.show{display:block;animation:slideIn .25s ease}
+#toast.success{border-left:3px solid var(--success)}
+#toast.error{border-left:3px solid var(--danger)}
+@keyframes slideIn{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+/* SPINNER */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal-lg{background:var(--card);border:1px solid var(--border-gold);border-radius:14px;width:min(680px,100%);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)}
+.modal-head{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-head h3{font-size:16px;color:var(--gold);font-weight:700}
+.modal-body{padding:20px 22px;overflow-y:auto;flex:1}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0}
+.x-btn{width:30px;height:30px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.x-btn:hover{border-color:var(--danger);color:var(--danger)}
+/* FORM */
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.fg label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.fi{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:13px;outline:none;transition:border-color .2s;width:100%;font-family:inherit}
+.fi:focus{border-color:var(--gold-dim)}
+.fi-ta{min-height:72px;resize:vertical}
+.fi-sel option{background:var(--surface)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+/* POST MOD */
+.post-row{padding:14px 0;border-bottom:1px solid var(--border)}
+.post-row:last-child{border-bottom:none}
+.post-author{font-size:11px;font-weight:700;color:var(--gold);margin-bottom:3px}
+.post-txt{font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:8px}
+.post-acts{display:flex;gap:8px;flex-wrap:wrap}
+.reply-form{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:8px;display:none}
+.reply-form.open{display:block}
+.reply-form textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:inherit;font-size:12px;resize:vertical;outline:none}
+.reply-form textarea:focus{border-color:var(--gold-dim)}
+/* MÓDULOS */
+.modulo-block{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+.modulo-head{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border-bottom:1px solid transparent;transition:background .15s}
+.modulo-head:hover{background:rgba(255,255,255,.02)}
+.modulo-head.open{border-bottom-color:var(--border)}
+.modulo-title{font-size:14px;font-weight:600;color:var(--gold)}
+.modulo-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.modulo-body{display:none;padding:12px}
+.modulo-body.open{display:block}
+.aula-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:var(--card2)}
+.aula-row:last-child{margin-bottom:0}
+.aula-id{font-size:11px;color:var(--gold);font-weight:700;width:36px;flex-shrink:0}
+.aula-title{flex:1;font-size:12px;color:var(--text)}
+/* CONFIGS */
+.cfg-row{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+.cfg-row:last-child{border-bottom:none}
+.cfg-key{width:200px;flex-shrink:0;font-size:12px;font-weight:600;color:var(--text-muted);padding-top:10px}
+.cfg-val{flex:1}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold-dim)}
+/* MOBILE */
+.admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99;cursor:pointer}
+.admin-overlay.show{display:block}
+.mob-hamburger{display:none;position:fixed;top:14px;left:14px;z-index:200;width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:8px;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--text-muted)}
+.mob-hamburger:hover{border-color:var(--gold);color:var(--gold)}
+@media(max-width:768px){
+  :root{--sidebar:0px}
+  .sidebar{position:fixed!important;width:240px!important;transform:translateX(-100%);transition:transform .25s ease;z-index:150;display:flex!important}
+  .sidebar.mob-open{transform:translateX(0)}
+  .main{margin-left:0!important;padding:16px;padding-top:62px}
+  .mob-hamburger{display:flex}
+  .metrics-grid{grid-template-columns:1fr 1fr}
+  .row2,.row3{grid-template-columns:1fr!important}
+  .page-header{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:480px){.metrics-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">4P</div>
+    <div class="login-sub">Mentoria — Painel Admin</div>
+    <label for="login-password">Senha de acesso</label>
+    <input type="password" id="login-password" placeholder="••••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="btn-login" id="login-btn" onclick="doLogin()">Entrar</button>
+    <div id="login-error"></div>
+    <div id="login-lockout">Acesso bloqueado. Tente novamente em <strong id="lockout-timer"></strong></div>
+  </div>
+</div>
+
+<!-- ═══ PAINEL ═══ -->
+<div id="admin-panel">
+  <div class="admin-overlay" id="overlay" onclick="closeMob()"></div>
+  <button class="mob-hamburger" id="hamburger" onclick="toggleMob()">☰</button>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span>4P MENTORIA</span>
+      <small>Admin Panel</small>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="nav('mapa')" id="n-mapa"><span class="nav-icon">🗺</span> Mapa de Oportunidades</div>
+      <div class="nav-item" onclick="nav('modulos')" id="n-modulos"><span class="nav-icon">📚</span> Módulos e Aulas</div>
+      <div class="nav-item" onclick="nav('encontros')" id="n-encontros"><span class="nav-icon">🎯</span> Encontros Ao Vivo</div>
+      <div class="nav-item" onclick="nav('alunos')" id="n-alunos"><span class="nav-icon">👥</span> Alunos da Mentoria</div>
+      <div class="nav-item" onclick="nav('comunidade')" id="n-comunidade"><span class="nav-icon">💬</span> Comunidade Elite</div>
+      <div class="nav-item" onclick="nav('ranking')" id="n-ranking"><span class="nav-icon">🏆</span> Ranking</div>
+      <div class="nav-item" onclick="nav('evento')" id="n-evento"><span class="nav-icon">📅</span> Evento Presencial</div>
+      <div class="nav-item" onclick="nav('config')" id="n-config"><span class="nav-icon">⚙️</span> Configurações</div>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="index.html" style="display:block;text-align:center;font-size:11px;color:var(--text-dim);margin-bottom:8px;text-decoration:none">← Admin principal</a>
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ═══ 1. MAPA ═══ -->
+    <div class="section active" id="s-mapa">
+      <div class="page-header">
+        <div><div class="page-title">🗺 <span>Mapa</span> de Oportunidades</div><div class="page-sub">Pontos e empreendimentos cadastrados na plataforma</div></div>
+        <button class="btn btn-gold" onclick="openMapaModal()">+ Adicionar Ponto</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" id="mapa-count">Carregando...</span>
+          <input class="search-input" placeholder="Buscar ponto..." oninput="filterMapa(this.value)"/>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th>Nome</th><th>Bairro</th><th>Pilar</th><th>Nível</th><th>Status</th><th>Ações</th>
+          </tr></thead>
+          <tbody id="mapa-tbody"><tr class="loading-row"><td colspan="6"><span class="spinner"></span>Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 2. MÓDULOS ═══ -->
+    <div class="section" id="s-modulos">
+      <div class="page-header">
+        <div><div class="page-title">📚 <span>Módulos</span> e Aulas</div><div class="page-sub">Gerencie vídeos, PDFs, planilhas e tarefas de cada aula</div></div>
+      </div>
+      <div id="modulos-wrap">
+        <div style="text-align:center;padding:40px;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>
+      </div>
+    </div>
+
+    <!-- ═══ 3. ENCONTROS ═══ -->
+    <div class="section" id="s-encontros">
+      <div class="page-header">
+        <div><div class="page-title">🎯 <span>Encontros</span> Ao Vivo</div><div class="page-sub">Agenda, links e gravações dos 24 encontros</div></div>
+      </div>
+      <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="metric-card"><div class="metric-label">Total</div><div class="metric-value" id="enc-total">—</div><div class="metric-icon">🎯</div></div>
+        <div class="metric-card"><div class="metric-label">Realizados</div><div class="metric-value" id="enc-done">—</div><div class="metric-icon">✅</div></div>
+        <div class="metric-card"><div class="metric-label">Agendados</div><div class="metric-value" id="enc-future">—</div><div class="metric-icon">📅</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Lista de Encontros</span></div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th>#</th><th>Tema</th><th>Data</th><th>Hora</th><th>Status</th><th>Link Sala</th><th>Ações</th>
+          </tr></thead>
+          <tbody id="enc-tbody"><tr class="loading-row"><td colspan="7"><span class="spinner"></span>Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 4. ALUNOS ═══ -->
+    <div class="section" id="s-alunos">
+      <div class="page-header">
+        <div><div class="page-title">👥 <span>Alunos</span> da Mentoria</div><div class="page-sub">Usuários com plano = mentoria</div></div>
+      </div>
+      <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="metric-card"><div class="metric-label">Total Alunos</div><div class="metric-value" id="al-total">—</div><div class="metric-icon">👥</div></div>
+        <div class="metric-card"><div class="metric-label">Ativos</div><div class="metric-value" id="al-ativos">—</div><div class="metric-icon">✅</div></div>
+        <div class="metric-card"><div class="metric-label">Bloqueados</div><div class="metric-value" id="al-bloq">—</div><div class="metric-icon">🚫</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Mentorados</span>
+          <input class="search-input" placeholder="Buscar aluno..." oninput="filterAlunos(this.value)"/>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th>Nome</th><th>Email</th><th>Entrada</th><th>Nível Ranking</th><th>Progresso</th><th>Status</th><th>Ações</th>
+          </tr></thead>
+          <tbody id="alunos-tbody"><tr class="loading-row"><td colspan="7"><span class="spinner"></span>Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 5. COMUNIDADE ═══ -->
+    <div class="section" id="s-comunidade">
+      <div class="page-header">
+        <div><div class="page-title">💬 <span>Comunidade</span> Elite</div><div class="page-sub">Posts com grupo = mentoria</div></div>
+        <button class="btn btn-gold" onclick="loadPosts()">↻ Atualizar</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Feed da Comunidade</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-outline" onclick="filterPosts('all')" id="pf-all">Todos</button>
+            <button class="btn btn-sm btn-outline" onclick="filterPosts('fixed')" id="pf-fixed">Fixados</button>
+          </div>
+        </div>
+        <div id="posts-wrap" style="padding:8px 16px">
+          <div style="text-align:center;padding:32px;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 6. RANKING ═══ -->
+    <div class="section" id="s-ranking">
+      <div class="page-header">
+        <div><div class="page-title">🏆 <span>Ranking</span> Patrimonial</div><div class="page-sub">Leaderboard dos mentorados por aulas concluídas</div></div>
+        <button class="btn btn-outline" onclick="exportCSV()">⬇ Exportar CSV</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Classificação</span></div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th>#</th><th>Nome</th><th>Aulas Concluídas</th><th>Pontos</th><th>Nível</th>
+          </tr></thead>
+          <tbody id="ranking-tbody"><tr class="loading-row"><td colspan="5"><span class="spinner"></span>Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 7. EVENTO ═══ -->
+    <div class="section" id="s-evento">
+      <div class="page-header">
+        <div><div class="page-title">📅 <span>Evento</span> Presencial 2026</div><div class="page-sub">Configurações do encontro presencial</div></div>
+        <button class="btn btn-gold" onclick="saveEvento()">Salvar Evento</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Detalhes do Evento</span></div>
+        <div style="padding:22px">
+          <div class="row2" style="margin-bottom:14px">
+            <div class="fg"><label>Data do Evento</label><input class="fi" type="date" id="ev-data"/></div>
+            <div class="fg"><label>Local / Cidade</label><input class="fi" type="text" id="ev-local" placeholder="Praia Grande SP"/></div>
+          </div>
+          <div class="fg"><label>Descrição / Programação</label><textarea class="fi fi-ta" id="ev-desc" style="min-height:100px" placeholder="Descrição do evento..."></textarea></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Lista de Confirmados</span>
+          <span id="ev-confirmed-count" class="badge badge-gold">0 / 100</span>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>#</th><th>Nome</th><th>Email</th><th>Confirmado em</th></tr></thead>
+          <tbody id="ev-tbody"><tr class="loading-row"><td colspan="4"><span class="spinner"></span>Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 8. CONFIG ═══ -->
+    <div class="section" id="s-config">
+      <div class="page-header">
+        <div><div class="page-title">⚙️ <span>Configurações</span> da Mentoria</div><div class="page-sub">Textos e links exibidos na plataforma</div></div>
+        <button class="btn btn-gold" onclick="saveConfig()">Salvar Tudo</button>
+      </div>
+      <div class="card">
+        <div style="padding:20px">
+          <div class="cfg-row">
+            <div class="cfg-key">Mensagem de boas-vindas</div>
+            <div class="cfg-val"><textarea class="fi fi-ta" id="cfg-boas-vindas" placeholder="Texto exibido no dashboard ao aluno..."></textarea></div>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-key">Link do grupo WhatsApp</div>
+            <div class="cfg-val"><input class="fi" type="url" id="cfg-whatsapp" placeholder="https://chat.whatsapp.com/..."/></div>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-key">Vagas restantes (primeiros 100)</div>
+            <div class="cfg-val"><input class="fi" type="number" id="cfg-vagas" min="0" max="100" placeholder="Ex: 47"/></div>
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-key">Link Telegram / Discord</div>
+            <div class="cfg-val"><input class="fi" type="url" id="cfg-telegram" placeholder="https://t.me/..."/></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- /admin-panel -->
+
+<!-- ═══ MODAL MAPA ═══ -->
+<div class="modal-overlay" id="mapa-modal">
+  <div class="modal-lg">
+    <div class="modal-head">
+      <h3 id="mapa-modal-title">Adicionar Ponto</h3>
+      <button class="x-btn" onclick="closeMapaModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="row2">
+        <div class="fg"><label>Nome do Ponto</label><input class="fi" id="m-nome" placeholder="Ex: Vila Caiçara"/></div>
+        <div class="fg"><label>Bairro / Região</label><input class="fi" id="m-bairro" placeholder="Ex: Caiçara — Praia Grande SP"/></div>
+      </div>
+      <div class="row3">
+        <div class="fg"><label>Latitude</label><input class="fi" type="number" step="0.0001" id="m-lat" placeholder="-24.0089"/></div>
+        <div class="fg"><label>Longitude</label><input class="fi" type="number" step="0.0001" id="m-lng" placeholder="-46.4089"/></div>
+        <div class="fg"><label>Nível</label>
+          <select class="fi fi-sel" id="m-nivel">
+            <option>Alta</option><option>Média</option><option>Baixa</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>Pilar</label>
+        <select class="fi fi-sel" id="m-pilar">
+          <option>P1 Ponto Estratégico</option>
+          <option>P2 Projeto Validado</option>
+          <option>P3 Posição Antecipada</option>
+          <option>P4 Patrimônio Multiplicado</option>
+        </select>
+      </div>
+      <div class="fg"><label>Descrição</label><textarea class="fi fi-ta" id="m-desc" placeholder="Descreva o empreendimento..."></textarea></div>
+      <div class="fg">
+        <label>Foto do Empreendimento</label>
+        <input class="fi" type="file" id="m-foto" accept="image/*" style="padding:6px"/>
+        <div id="m-foto-preview" style="margin-top:8px"></div>
+        <input type="hidden" id="m-foto-url"/>
+      </div>
+      <div class="fg"><label>Status</label>
+        <select class="fi fi-sel" id="m-ativo">
+          <option value="true">Ativo</option><option value="false">Inativo</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeMapaModal()">Cancelar</button>
+      <button class="btn btn-gold" id="mapa-save-btn" onclick="saveMapa()">Salvar Ponto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL AULA ═══ -->
+<div class="modal-overlay" id="aula-modal">
+  <div class="modal-lg">
+    <div class="modal-head">
+      <h3 id="aula-modal-title">Editar Aula</h3>
+      <button class="x-btn" onclick="closeAulaModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="aula-modal-info" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;padding:10px 12px;background:var(--card2);border-radius:8px;border-left:3px solid var(--gold-dim)"></div>
+      <div class="fg"><label>URL do Vídeo (YouTube)</label><input class="fi" id="au-video" placeholder="https://www.youtube.com/watch?v=..."/></div>
+      <div class="row2">
+        <div class="fg"><label>URL do PDF</label><input class="fi" id="au-pdf" placeholder="https://..."/></div>
+        <div class="fg"><label>URL da Planilha</label><input class="fi" id="au-planilha" placeholder="https://docs.google.com/..."/></div>
+      </div>
+      <div class="fg"><label>Tarefa / Exercício</label><textarea class="fi fi-ta" id="au-tarefa"></textarea></div>
+      <div class="fg"><label>Status</label>
+        <select class="fi fi-sel" id="au-status">
+          <option value="ativo">Ativo</option><option value="inativo">Inativo</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeAulaModal()">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveAula()">Salvar Aula</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ENCONTRO ═══ -->
+<div class="modal-overlay" id="enc-modal">
+  <div class="modal-lg" style="width:min(520px,100%)">
+    <div class="modal-head">
+      <h3 id="enc-modal-title">Editar Encontro</h3>
+      <button class="x-btn" onclick="closeEncModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="enc-modal-info" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;padding:10px 12px;background:var(--card2);border-radius:8px;border-left:3px solid var(--gold-dim)"></div>
+      <div class="row2">
+        <div class="fg"><label>Data</label><input class="fi" type="date" id="enc-data"/></div>
+        <div class="fg"><label>Hora</label><input class="fi" type="time" id="enc-hora"/></div>
+      </div>
+      <div class="fg"><label>Link da Sala (Zoom / Meet)</label><input class="fi" id="enc-link" placeholder="https://zoom.us/j/..."/></div>
+      <div class="fg"><label>Status</label>
+        <select class="fi fi-sel" id="enc-status">
+          <option value="agendado">Agendado</option>
+          <option value="realizado">Realizado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+      <div class="fg"><label>Link da Gravação (pós-encontro)</label><input class="fi" id="enc-gravacao" placeholder="https://youtube.com/..."/></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeEncModal()">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveEncontro()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CONFIRM MODAL ═══ -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-lg" style="width:min(420px,100%)">
+    <div class="modal-head"><h3 id="conf-title">Confirmar</h3><button class="x-btn" onclick="closeConfirm()">✕</button></div>
+    <div class="modal-body"><p id="conf-msg" style="font-size:13px;color:var(--text-muted);line-height:1.6"></p></div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" id="conf-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── CONFIG ──
+const SUPABASE_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
+const SERVICE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Njc4ODI5OSwiZXhwIjoyMDkyMzY0Mjk5fQ.uMarVb3dj3MQ0GSsMZArlARUrF6m2I-4aDUe_Kz3lv8';
+const ADMIN_PASS   = '4P@admin2025';
+
+const sb = supabase.createClient(SUPABASE_URL, SERVICE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false }
+});
+
+// ── LOGIN ──
+const MAX_ATTEMPTS = 5, LOCKOUT_MS = 15*60*1000;
+const LS_ATT = 'adm_ment_fa', LS_LOCK = 'adm_ment_lu';
+let lockTimer = null;
+
+function getLS() { return { att: parseInt(localStorage.getItem(LS_ATT)||'0',10), lock: parseInt(localStorage.getItem(LS_LOCK)||'0',10) }; }
+function isLocked() { return getLS().lock > Date.now(); }
+function recordFail() {
+  const {att} = getLS(); const next = att+1;
+  localStorage.setItem(LS_ATT, next);
+  if(next >= MAX_ATTEMPTS) localStorage.setItem(LS_LOCK, Date.now()+LOCKOUT_MS);
+}
+function clearLock() { localStorage.removeItem(LS_ATT); localStorage.removeItem(LS_LOCK); }
+
+function startLockTimer() {
+  const el = document.getElementById('lockout-timer');
+  const box = document.getElementById('login-lockout');
+  const btn = document.getElementById('login-btn');
+  box.style.display='block'; document.getElementById('login-error').style.display='none';
+  btn.disabled = true;
+  clearInterval(lockTimer);
+  lockTimer = setInterval(()=>{
+    const rem = getLS().lock - Date.now();
+    if(rem <= 0){ clearInterval(lockTimer); clearLock(); box.style.display='none'; btn.disabled=false; if(el)el.textContent=''; return; }
+    const m=Math.floor(rem/60000), s=Math.floor((rem%60000)/1000);
+    if(el) el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+  },1000);
+}
+if(isLocked()) startLockTimer();
+
+function doLogin() {
+  if(isLocked()){startLockTimer();return;}
+  const pw = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  if(pw === ADMIN_PASS){
+    clearLock(); clearInterval(lockTimer);
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('admin-panel').style.display='block';
+    initAdmin();
+  } else {
+    recordFail();
+    document.getElementById('login-password').value='';
+    if(isLocked()){ startLockTimer(); } else {
+      const rem = MAX_ATTEMPTS - getLS().att;
+      errEl.textContent=`Senha incorreta. ${rem} tentativa${rem!==1?'s':''} restante${rem!==1?'s':''}.`;
+      errEl.style.display='block';
+    }
+  }
+}
+
+function logout() { document.getElementById('admin-panel').style.display='none'; document.getElementById('login-screen').style.display='flex'; }
+
+// ── NAVIGATION ──
+let currentSection = 'mapa';
+function nav(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+  document.getElementById('n-'+id).classList.add('active');
+  currentSection = id;
+  closeMob();
+  if(id==='mapa') loadMapa();
+  else if(id==='modulos') loadModulos();
+  else if(id==='encontros') loadEncontros();
+  else if(id==='alunos') loadAlunos();
+  else if(id==='comunidade') loadPosts();
+  else if(id==='ranking') loadRanking();
+  else if(id==='evento') loadEvento();
+  else if(id==='config') loadConfig();
+}
+
+function toggleMob(){ document.getElementById('sidebar').classList.toggle('mob-open'); document.getElementById('overlay').classList.toggle('show'); }
+function closeMob(){ document.getElementById('sidebar').classList.remove('mob-open'); document.getElementById('overlay').classList.remove('show'); }
+
+// ── TOAST ──
+let toastTmr;
+function toast(msg, type='success'){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show '+(type||'');
+  clearTimeout(toastTmr);
+  toastTmr=setTimeout(()=>el.className='',3000);
+}
+
+// ── CONFIRM ──
+let confirmCb = null;
+function confirm2(title, msg, cb){
+  document.getElementById('conf-title').textContent=title;
+  document.getElementById('conf-msg').textContent=msg;
+  confirmCb=cb;
+  document.getElementById('confirm-modal').classList.add('open');
+  document.getElementById('conf-ok').onclick=()=>{closeConfirm();cb();};
+}
+function closeConfirm(){ document.getElementById('confirm-modal').classList.remove('open'); }
+
+// ── INIT ──
+function initAdmin() {
+  nav('mapa');
+}
+
+// ═══════════════════════════════════════════
+// 1. MAPA DE OPORTUNIDADES
+// ═══════════════════════════════════════════
+let mapaData = [], mapaEditId = null;
+
+async function loadMapa(){
+  const tbody = document.getElementById('mapa-tbody');
+  tbody.innerHTML='<tr class="loading-row"><td colspan="6"><span class="spinner"></span>Carregando...</td></tr>';
+  const {data, error} = await sb.from('mapa_oportunidades').select('*').order('created_at',{ascending:false});
+  if(error){ tbody.innerHTML=`<tr class="loading-row"><td colspan="6" style="color:var(--danger)">Erro: ${error.message}</td></tr>`; return; }
+  mapaData = data || [];
+  document.getElementById('mapa-count').textContent = `${mapaData.length} ponto${mapaData.length!==1?'s':''} cadastrado${mapaData.length!==1?'s':''}`;
+  renderMapaTable(mapaData);
+}
+
+function renderMapaTable(rows){
+  const tbody = document.getElementById('mapa-tbody');
+  if(!rows.length){ tbody.innerHTML='<tr class="loading-row"><td colspan="6">Nenhum ponto cadastrado.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r=>`
+    <tr>
+      <td><strong>${r.nome||'—'}</strong></td>
+      <td style="color:var(--text-muted)">${r.bairro||'—'}</td>
+      <td><span class="badge badge-gold">${r.pilar||'—'}</span></td>
+      <td>${nivelBadge(r.nivel)}</td>
+      <td>${r.ativo?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-gray">Inativo</span>'}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="editMapa('${r.id}')">Editar</button>
+        <button class="btn btn-sm btn-danger" style="margin-left:4px" onclick="deleteMapa('${r.id}','${escHtml(r.nome)}')">Excluir</button>
+      </td>
+    </tr>`).join('');
+}
+
+function nivelBadge(n){ return n==='Alta'?'<span class="badge badge-green">Alta</span>':n==='Média'?'<span class="badge badge-gold">Média</span>':'<span class="badge badge-gray">Baixa</span>'; }
+
+function filterMapa(q){
+  const f = q.toLowerCase();
+  renderMapaTable(mapaData.filter(r=>(r.nome+r.bairro+r.pilar+r.nivel).toLowerCase().includes(f)));
+}
+
+function openMapaModal(reset=true){
+  if(reset){ mapaEditId=null; document.getElementById('mapa-modal-title').textContent='Adicionar Ponto'; ['m-nome','m-bairro','m-lat','m-lng','m-desc','m-foto-url'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; }); document.getElementById('m-foto-preview').innerHTML=''; document.getElementById('m-nivel').value='Alta'; document.getElementById('m-pilar').value='P1 Ponto Estratégico'; document.getElementById('m-ativo').value='true'; }
+  document.getElementById('mapa-modal').classList.add('open');
+}
+function closeMapaModal(){ document.getElementById('mapa-modal').classList.remove('open'); }
+
+function editMapa(id){
+  const r = mapaData.find(x=>x.id===id);
+  if(!r) return;
+  mapaEditId = id;
+  document.getElementById('mapa-modal-title').textContent='Editar Ponto';
+  document.getElementById('m-nome').value = r.nome||'';
+  document.getElementById('m-bairro').value = r.bairro||'';
+  document.getElementById('m-lat').value = r.lat||'';
+  document.getElementById('m-lng').value = r.lng||'';
+  document.getElementById('m-desc').value = r.descricao||'';
+  document.getElementById('m-pilar').value = r.pilar||'P1 Ponto Estratégico';
+  document.getElementById('m-nivel').value = r.nivel||'Alta';
+  document.getElementById('m-ativo').value = r.ativo?'true':'false';
+  document.getElementById('m-foto-url').value = r.foto_url||'';
+  document.getElementById('m-foto-preview').innerHTML = r.foto_url?`<img src="${r.foto_url}" style="max-width:100%;max-height:120px;border-radius:6px;margin-top:4px">`:''
+  openMapaModal(false);
+}
+
+async function saveMapa(){
+  const btn = document.getElementById('mapa-save-btn');
+  btn.disabled=true; btn.textContent='Salvando...';
+  try {
+    const nome = document.getElementById('m-nome').value.trim();
+    if(!nome){ toast('Nome é obrigatório.','error'); btn.disabled=false; btn.textContent='Salvar Ponto'; return; }
+    let foto_url = document.getElementById('m-foto-url').value||null;
+    const fileInput = document.getElementById('m-foto');
+    if(fileInput.files[0]){
+      const file = fileInput.files[0];
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}.${ext}`;
+      const {data:upData, error:upErr} = await sb.storage.from('mentoria-mapa').upload(path, file, {upsert:true});
+      if(upErr) throw upErr;
+      const {data:urlData} = sb.storage.from('mentoria-mapa').getPublicUrl(path);
+      foto_url = urlData.publicUrl;
+    }
+    const payload = {
+      nome, bairro: document.getElementById('m-bairro').value.trim()||null,
+      lat: parseFloat(document.getElementById('m-lat').value),
+      lng: parseFloat(document.getElementById('m-lng').value),
+      pilar: document.getElementById('m-pilar').value,
+      nivel: document.getElementById('m-nivel').value,
+      descricao: document.getElementById('m-desc').value.trim()||null,
+      foto_url, ativo: document.getElementById('m-ativo').value==='true'
+    };
+    let err;
+    if(mapaEditId){ ({error:err} = await sb.from('mapa_oportunidades').update(payload).eq('id',mapaEditId)); }
+    else { ({error:err} = await sb.from('mapa_oportunidades').insert(payload)); }
+    if(err) throw err;
+    toast(mapaEditId?'Ponto atualizado!':'Ponto adicionado!');
+    closeMapaModal(); loadMapa();
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+  finally { btn.disabled=false; btn.textContent='Salvar Ponto'; }
+}
+
+function deleteMapa(id, nome){
+  confirm2('Excluir ponto', `Deseja excluir "${nome}"? Esta ação não pode ser desfeita.`, async()=>{
+    const {error} = await sb.from('mapa_oportunidades').delete().eq('id',id);
+    if(error){ toast('Erro: '+error.message,'error'); return; }
+    toast('Ponto excluído.');
+    loadMapa();
+  });
+}
+
+// Foto preview
+document.getElementById('m-foto').addEventListener('change', function(){
+  const f=this.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=e=>{ document.getElementById('m-foto-preview').innerHTML=`<img src="${e.target.result}" style="max-width:100%;max-height:120px;border-radius:6px;margin-top:4px">`; };
+  reader.readAsDataURL(f);
+});
+
+// ═══════════════════════════════════════════
+// 2. MÓDULOS E AULAS
+// ═══════════════════════════════════════════
+const MODULOS = [
+  { num:1, titulo:'O Ecossistema do Imóvel na Planta', aulas:[
+    {id:'1.1',titulo:'Como funciona o ciclo completo — do terreno à entrega'},
+    {id:'1.2',titulo:'Os participantes do ecossistema — incorporadora, construtora, investidor e comprador final'},
+    {id:'1.3',titulo:'Como o investidor lucra sem construir — os mecanismos do ganho'},
+    {id:'1.4',titulo:'Análise de mercado — Baixada Santista: o que está acontecendo'},
+    {id:'1.5',titulo:'Mapeando oportunidades — o que olhar antes de qualquer passo'},
+    {id:'1.6',titulo:'Erros clássicos do investidor iniciante — como evitá-los'},
+    {id:'1.7',titulo:'Case real: primeiro empreendimento do Pablo Dantas — da ideia ao lucro'},
+  ]},
+  { num:2, titulo:'P1 e P2 — Ponto Estratégico e Projeto Validado', aulas:[
+    {id:'2.1',titulo:'O que é o P1 — Ponto Estratégico e como identificar'},
+    {id:'2.2',titulo:'Análise de bairros: infraestrutura, demanda e valorização'},
+    {id:'2.3',titulo:'O que é o P2 — Projeto Validado e como avaliar'},
+    {id:'2.4',titulo:'Due diligence do projeto: planta, memorial, INCC e reajustes'},
+    {id:'2.5',titulo:'Como negociar com incorporadoras — estratégias avançadas'},
+    {id:'2.6',titulo:'Case real: operação P1+P2 — resultado de 47% em 6 meses'},
+  ]},
+  { num:3, titulo:'P3 — Posição Antecipada e Gestão de Carteira', aulas:[
+    {id:'3.1',titulo:'O que é o P3 — Posição Antecipada e a lógica da antecipação'},
+    {id:'3.2',titulo:'Timing de entrada: quando comprar para maximizar o retorno'},
+    {id:'3.3',titulo:'Gestão de múltiplos ativos — como diversificar sem perder foco'},
+    {id:'3.4',titulo:'Saída estratégica — vender na planta ou esperar a entrega?'},
+    {id:'3.5',titulo:'Tributação e estrutura jurídica — como proteger o patrimônio'},
+  ]},
+  { num:4, titulo:'P4 — Patrimônio Multiplicado e Escala', aulas:[
+    {id:'4.1',titulo:'O que é o P4 — multiplicação de ciclos de investimento'},
+    {id:'4.2',titulo:'Como usar o lucro de um ciclo para financiar o próximo'},
+    {id:'4.3',titulo:'Construindo uma carteira de R$1M+ em imóveis na planta'},
+    {id:'4.4',titulo:'Parcerias estratégicas — como entrar em operações maiores'},
+    {id:'4.5',titulo:'Mindset do investidor patrimonial — disciplina e visão de longo prazo'},
+  ]},
+];
+
+let aulasDb = {}, aulaEditId = null, aulaEditInfo = null;
+
+async function loadModulos(){
+  const wrap = document.getElementById('modulos-wrap');
+  wrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
+  const {data} = await sb.from('aulas_mentoria').select('*');
+  aulasDb = {};
+  (data||[]).forEach(a=>{ aulasDb[a.aula_id]=a; });
+  renderModulos();
+}
+
+function renderModulos(){
+  const wrap = document.getElementById('modulos-wrap');
+  wrap.innerHTML = MODULOS.map(m=>`
+    <div class="modulo-block">
+      <div class="modulo-head" onclick="toggleModulo(${m.num})">
+        <div>
+          <div class="modulo-title">Módulo ${m.num} — ${m.titulo}</div>
+          <div class="modulo-sub">${m.aulas.length} aulas</div>
+        </div>
+        <span id="mod-arrow-${m.num}" style="color:var(--text-dim)">▸</span>
+      </div>
+      <div class="modulo-body" id="mod-body-${m.num}">
+        ${m.aulas.map(a=>{
+          const db = aulasDb[a.id]||{};
+          const hasVideo = !!db.url_video;
+          const st = db.status||'inativo';
+          return `<div class="aula-row">
+            <span class="aula-id">${a.id}</span>
+            <span class="aula-title">${a.titulo}</span>
+            <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+              ${hasVideo?'<span class="badge badge-green">▶ Vídeo</span>':'<span class="badge badge-gray">Sem vídeo</span>'}
+              <span class="badge ${st==='ativo'?'badge-blue':'badge-gray'}">${st}</span>
+              <button class="btn btn-sm btn-outline" onclick="openAulaModal('${a.id}','${escHtml(a.titulo)}',${m.num})">Editar</button>
+            </span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleModulo(num){
+  const body = document.getElementById('mod-body-'+num);
+  const head = body.previousElementSibling;
+  const arrow = document.getElementById('mod-arrow-'+num);
+  const isOpen = body.classList.toggle('open');
+  head.classList.toggle('open', isOpen);
+  arrow.textContent = isOpen?'▾':'▸';
+}
+
+function openAulaModal(aulaId, titulo, moduloNum){
+  aulaEditId = aulaId;
+  aulaEditInfo = {aulaId, titulo, moduloNum};
+  document.getElementById('aula-modal-title').textContent='Editar Aula '+aulaId;
+  document.getElementById('aula-modal-info').textContent=titulo;
+  const db = aulasDb[aulaId]||{};
+  document.getElementById('au-video').value = db.url_video||'';
+  document.getElementById('au-pdf').value = db.url_pdf||'';
+  document.getElementById('au-planilha').value = db.url_planilha||'';
+  document.getElementById('au-tarefa').value = db.tarefa||'';
+  document.getElementById('au-status').value = db.status||'inativo';
+  document.getElementById('aula-modal').classList.add('open');
+}
+function closeAulaModal(){ document.getElementById('aula-modal').classList.remove('open'); }
+
+async function saveAula(){
+  if(!aulaEditInfo) return;
+  const {aulaId, titulo, moduloNum} = aulaEditInfo;
+  const payload = {
+    aula_id: aulaId, modulo_num: moduloNum, titulo,
+    url_video: document.getElementById('au-video').value.trim()||null,
+    url_pdf: document.getElementById('au-pdf').value.trim()||null,
+    url_planilha: document.getElementById('au-planilha').value.trim()||null,
+    tarefa: document.getElementById('au-tarefa').value.trim()||null,
+    status: document.getElementById('au-status').value,
+    updated_at: new Date().toISOString()
+  };
+  const {error} = await sb.from('aulas_mentoria').upsert(payload, {onConflict:'aula_id'});
+  if(error){ toast('Erro: '+error.message,'error'); return; }
+  toast('Aula salva!');
+  closeAulaModal();
+  loadModulos();
+}
+
+// ═══════════════════════════════════════════
+// 3. ENCONTROS
+// ═══════════════════════════════════════════
+let encData = [], encEditId = null;
+const TEMAS = [
+  'Imersão 4P — Apresentação do método e da turma','Ecossistema do imóvel na planta — visão geral',
+  'Como identificar o P1 Ponto Estratégico','Análise de mercado — Baixada Santista ao vivo',
+  'P2 Projeto Validado — due diligence na prática','Negociação com incorporadoras — estratégias ao vivo',
+  'Case real: operação completa do zero ao lucro','P3 Posição Antecipada — timing de entrada',
+  'Gestão de carteira — múltiplos ativos simultâneos','Saída estratégica — quando e como vender',
+  'Tributação e estrutura jurídica básica','Financiamento e uso de FGTS na estratégia',
+  'Parcerias e co-investimento — como estruturar','Alavancagem patrimonial com imóvel na planta',
+  'Análise técnica de plantas e memoriais','Riscos e como mitigá-los em cada etapa',
+  'Case ao vivo: análise de oportunidade real','Escala — de R$200k a R$1M de patrimônio',
+  'Mentalidade do investidor patrimonial','Gestão de tempo e decisão sob pressão',
+  'Revisão geral — dúvidas abertas da turma','Planejamento individual — próximos 12 meses',
+  'Oportunidade estratégica do 4º trimestre','Encerramento da turma — retrospectiva e próximos passos',
+];
+
+async function loadEncontros(){
+  const tbody = document.getElementById('enc-tbody');
+  tbody.innerHTML='<tr class="loading-row"><td colspan="7"><span class="spinner"></span>Carregando...</td></tr>';
+  const {data} = await sb.from('encontros').select('*').order('data',{ascending:true,nullsFirst:false});
+  encData = data||[];
+  const hoje = new Date().toISOString().slice(0,10);
+  const done = encData.filter(e=>e.data&&e.data<hoje).length;
+  const future = encData.filter(e=>!e.data||e.data>=hoje).length;
+  document.getElementById('enc-total').textContent = encData.length;
+  document.getElementById('enc-done').textContent = done;
+  document.getElementById('enc-future').textContent = future;
+  const hoje2 = hoje;
+  tbody.innerHTML = TEMAS.map((t,i)=>{
+    const enc = encData[i]||null;
+    const d = enc?.data||null;
+    const st = enc?.status||'agendado';
+    const stBadge = st==='realizado'?'<span class="badge badge-green">Realizado</span>':st==='cancelado'?'<span class="badge badge-red">Cancelado</span>':'<span class="badge badge-gold">Agendado</span>';
+    const linkHtml = enc?.link?`<a href="${enc.link}" target="_blank" style="color:var(--gold);font-size:11px">🔗 Abrir</a>`:'<span style="color:var(--text-dim);font-size:11px">—</span>';
+    return `<tr>
+      <td style="font-weight:700;color:var(--gold)">E${String(i+1).padStart(2,'0')}</td>
+      <td style="font-size:12px;max-width:240px">${enc?.titulo||t}</td>
+      <td>${d?fmtDate(d):'<span style="color:var(--text-dim)">—</span>'}</td>
+      <td>${enc?.hora||'<span style="color:var(--text-dim)">—</span>'}</td>
+      <td>${stBadge}</td>
+      <td>${linkHtml}</td>
+      <td><button class="btn btn-sm btn-outline" onclick="openEncModal(${i},'${escHtml(t)}')">Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openEncModal(idx, tema){
+  encEditId = idx;
+  const enc = encData[idx]||{};
+  document.getElementById('enc-modal-title').textContent=`E${String(idx+1).padStart(2,'0')} — Editar`;
+  document.getElementById('enc-modal-info').textContent=enc.titulo||tema;
+  document.getElementById('enc-data').value=enc.data||'';
+  document.getElementById('enc-hora').value=enc.hora||'';
+  document.getElementById('enc-link').value=enc.link||'';
+  document.getElementById('enc-status').value=enc.status||'agendado';
+  document.getElementById('enc-gravacao').value=enc.link_gravacao||enc.gravacao||'';
+  document.getElementById('enc-modal').classList.add('open');
+}
+function closeEncModal(){ document.getElementById('enc-modal').classList.remove('open'); }
+
+async function saveEncontro(){
+  const enc = encData[encEditId];
+  const payload = {
+    data: document.getElementById('enc-data').value||null,
+    hora: document.getElementById('enc-hora').value||null,
+    link: document.getElementById('enc-link').value.trim()||null,
+    status: document.getElementById('enc-status').value,
+    link_gravacao: document.getElementById('enc-gravacao').value.trim()||null,
+  };
+  let err;
+  if(enc?.id){ ({error:err} = await sb.from('encontros').update(payload).eq('id',enc.id)); }
+  else {
+    const tema = TEMAS[encEditId];
+    ({error:err} = await sb.from('encontros').insert({titulo:tema, ativo:true, numero:encEditId+1, ...payload}));
+  }
+  if(err){ toast('Erro: '+err.message,'error'); return; }
+  toast('Encontro salvo!');
+  closeEncModal(); loadEncontros();
+}
+
+// ═══════════════════════════════════════════
+// 4. ALUNOS
+// ═══════════════════════════════════════════
+let alunosData = [];
+
+async function loadAlunos(){
+  const tbody = document.getElementById('alunos-tbody');
+  tbody.innerHTML='<tr class="loading-row"><td colspan="7"><span class="spinner"></span>Carregando...</td></tr>';
+  const {data, error} = await sb.from('profiles').select('*').eq('plano','mentoria').order('created_at',{ascending:false});
+  if(error){ tbody.innerHTML=`<tr class="loading-row"><td colspan="7" style="color:var(--danger)">Erro: ${error.message}</td></tr>`; return; }
+  alunosData = data||[];
+  const ativos = alunosData.filter(a=>a.ativo!==false).length;
+  const bloq = alunosData.length - ativos;
+  document.getElementById('al-total').textContent = alunosData.length;
+  document.getElementById('al-ativos').textContent = ativos;
+  document.getElementById('al-bloq').textContent = bloq;
+  renderAlunos(alunosData);
+}
+
+function renderAlunos(rows){
+  const tbody = document.getElementById('alunos-tbody');
+  if(!rows.length){ tbody.innerHTML='<tr class="loading-row"><td colspan="7">Nenhum aluno encontrado.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(a=>{
+    const isAtivo = a.ativo !== false;
+    const nivel = getNivelRanking(a.patrimonio||0);
+    const entrada = a.created_at ? fmtDate(a.created_at.slice(0,10)) : '—';
+    return `<tr>
+      <td><strong>${a.nome||'—'}</strong></td>
+      <td style="font-size:12px;color:var(--text-muted)">${a.email||'—'}</td>
+      <td style="font-size:12px">${entrada}</td>
+      <td><span class="badge badge-gold">${nivel}</span></td>
+      <td style="font-size:12px">${a.patrimonio ? 'R$ '+Number(a.patrimonio).toLocaleString('pt-BR') : '—'}</td>
+      <td>${isAtivo?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-red">Bloqueado</span>'}</td>
+      <td>
+        <button class="btn btn-sm ${isAtivo?'btn-danger':'btn-success'}" onclick="toggleAluno('${a.id}','${escHtml(a.nome||a.email||'')}',${isAtivo})">${isAtivo?'Bloquear':'Desbloquear'}</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterAlunos(q){
+  const f=q.toLowerCase();
+  renderAlunos(alunosData.filter(a=>(a.nome+a.email+'').toLowerCase().includes(f)));
+}
+
+async function toggleAluno(id, nome, isAtivo){
+  const acao = isAtivo?'bloquear':'desbloquear';
+  confirm2(`${isAtivo?'Bloquear':'Desbloquear'} aluno`, `Deseja ${acao} o acesso de "${nome}"?`, async()=>{
+    const {error} = await sb.from('profiles').update({ativo:!isAtivo}).eq('id',id);
+    if(error){ toast('Erro: '+error.message,'error'); return; }
+    toast(`Aluno ${isAtivo?'bloqueado':'desbloqueado'}.`);
+    loadAlunos();
+  });
+}
+
+function getNivelRanking(p){
+  if(p>=100000000) return 'Diamante II';
+  if(p>=50000000) return 'Diamante I';
+  if(p>=10000000) return 'Platina III';
+  if(p>=5000000) return 'Platina II';
+  if(p>=2000000) return 'Platina I';
+  if(p>=1000000) return 'Ouro III';
+  if(p>=500000) return 'Ouro II';
+  if(p>=350000) return 'Ouro I';
+  if(p>=300000) return 'Prata III';
+  if(p>=280000) return 'Prata II';
+  if(p>=265000) return 'Prata I';
+  if(p>=260000) return 'Bronze III';
+  if(p>=255000) return 'Bronze II';
+  return 'Bronze I';
+}
+
+// ═══════════════════════════════════════════
+// 5. COMUNIDADE
+// ═══════════════════════════════════════════
+let postsData = [], postFilter = 'all';
+
+async function loadPosts(){
+  const wrap = document.getElementById('posts-wrap');
+  wrap.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
+  const {data, error} = await sb.from('posts')
+    .select('id,user_id,conteudo,likes,fixado,deletado,created_at,is_admin_reply')
+    .eq('grupo','mentoria')
+    .is('parent_id',null)
+    .order('fixado',{ascending:false})
+    .order('created_at',{ascending:false})
+    .limit(50);
+  if(error){ wrap.innerHTML=`<p style="color:var(--danger);padding:16px">Erro: ${error.message}</p>`; return; }
+  postsData = data||[];
+  if(postsData.length){
+    const uids=[...new Set(postsData.map(p=>p.user_id).filter(Boolean))];
+    if(uids.length){
+      const {data:profs}=await sb.from('profiles').select('id,nome').in('id',uids);
+      const map=Object.fromEntries((profs||[]).map(p=>[p.id,p.nome||'Mentorado']));
+      postsData.forEach(p=>{p._nome=map[p.user_id]||'Mentorado';});
+    }
+  }
+  renderPosts();
+}
+
+function filterPosts(f){
+  postFilter=f;
+  document.getElementById('pf-all').classList.toggle('btn-gold', f==='all');
+  document.getElementById('pf-fixed').classList.toggle('btn-gold', f==='fixed');
+  renderPosts();
+}
+
+function renderPosts(){
+  const wrap=document.getElementById('posts-wrap');
+  let rows=postsData.filter(p=>!p.deletado);
+  if(postFilter==='fixed') rows=rows.filter(p=>p.fixado);
+  if(!rows.length){ wrap.innerHTML='<p style="text-align:center;padding:32px;color:var(--text-dim)">Nenhum post.</p>'; return; }
+  wrap.innerHTML=rows.map(p=>`
+    <div class="post-row" id="prow-${p.id}">
+      <div class="post-author">${p._nome||'—'} <span style="font-weight:400;color:var(--text-dim)">${timeAgo(p.created_at)}</span> ${p.fixado?'<span class="badge badge-gold" style="margin-left:4px">📌 Fixado</span>':''} ${p.is_admin_reply?'<span class="badge badge-blue" style="margin-left:4px">Admin</span>':''}</div>
+      <div class="post-txt">${escHtml(p.conteudo)}</div>
+      <div class="post-acts">
+        <button class="btn btn-sm btn-outline" onclick="toggleFixar('${p.id}',${!!p.fixado})">${p.fixado?'Desafixar':'📌 Fixar'}</button>
+        <button class="btn btn-sm btn-outline" onclick="toggleReplyForm('${p.id}')">↩ Responder como Admin</button>
+        <button class="btn btn-sm btn-danger" onclick="deletePost('${p.id}')">Excluir</button>
+      </div>
+      <div class="reply-form" id="rf-${p.id}">
+        <textarea rows="3" placeholder="Resposta do admin..." id="rt-${p.id}"></textarea>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn btn-sm btn-gold" onclick="sendAdminReply('${p.id}')">Publicar resposta</button>
+          <button class="btn btn-sm btn-outline" onclick="toggleReplyForm('${p.id}')">Cancelar</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleReplyForm(id){ document.getElementById('rf-'+id).classList.toggle('open'); }
+
+async function toggleFixar(id, fixado){
+  const {error}=await sb.from('posts').update({fixado:!fixado}).eq('id',id);
+  if(error){ toast('Erro: '+error.message,'error'); return; }
+  toast(fixado?'Post desafixado.':'Post fixado.');
+  loadPosts();
+}
+
+async function sendAdminReply(parentId){
+  const txt=document.getElementById('rt-'+parentId)?.value.trim();
+  if(!txt){ toast('Escreva a resposta.','error'); return; }
+  const {error}=await sb.from('posts').insert({conteudo:txt,parent_id:parentId,is_admin_reply:true,grupo:'mentoria',deletado:false,likes:0});
+  if(error){ toast('Erro: '+error.message,'error'); return; }
+  toast('Resposta publicada!');
+  loadPosts();
+}
+
+async function deletePost(id){
+  confirm2('Excluir post', 'Deseja excluir este post permanentemente?', async()=>{
+    const {error}=await sb.from('posts').update({deletado:true}).eq('id',id);
+    if(error){ toast('Erro: '+error.message,'error'); return; }
+    toast('Post excluído.');
+    postsData=postsData.filter(p=>p.id!==id);
+    renderPosts();
+  });
+}
+
+// ═══════════════════════════════════════════
+// 6. RANKING
+// ═══════════════════════════════════════════
+let rankData = [];
+
+async function loadRanking(){
+  const tbody=document.getElementById('ranking-tbody');
+  tbody.innerHTML='<tr class="loading-row"><td colspan="5"><span class="spinner"></span>Carregando...</td></tr>';
+  try {
+    const {data,error}=await sb.rpc('get_leaderboard');
+    if(error) throw error;
+    rankData=data||[];
+    if(!rankData.length){ tbody.innerHTML='<tr class="loading-row"><td colspan="5">Nenhum dado disponível.</td></tr>'; return; }
+    tbody.innerHTML=rankData.map((r,i)=>`
+      <tr>
+        <td style="font-weight:700;color:var(--gold)">${i+1}º</td>
+        <td><strong>${r.nome||'—'}</strong></td>
+        <td>${r.aulas_concluidas||0}</td>
+        <td><strong>${(r.pontos||0).toLocaleString('pt-BR')}</strong></td>
+        <td><span class="badge badge-gold">${getNivelRanking(0)}</span></td>
+      </tr>`).join('');
+  } catch(e){ tbody.innerHTML=`<tr class="loading-row"><td colspan="5" style="color:var(--danger)">Erro: ${e.message}</td></tr>`; }
+}
+
+function exportCSV(){
+  if(!rankData.length){ toast('Carregue o ranking primeiro.','error'); return; }
+  const rows=[['Posição','Nome','Aulas Concluídas','Pontos'],...rankData.map((r,i)=>[i+1,r.nome||'',r.aulas_concluidas||0,r.pontos||0])];
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
+  a.download='ranking_mentoria_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// ═══════════════════════════════════════════
+// 7. EVENTO
+// ═══════════════════════════════════════════
+async function loadEvento(){
+  const keys=['mentoria_evento_data','mentoria_evento_local','mentoria_evento_desc'];
+  const {data}=await sb.from('configuracoes').select('chave,valor').in('chave',keys);
+  const map=Object.fromEntries((data||[]).map(r=>[r.chave,r.valor]));
+  document.getElementById('ev-data').value=map['mentoria_evento_data']||'2026-11-26';
+  document.getElementById('ev-local').value=map['mentoria_evento_local']||'Praia Grande SP';
+  document.getElementById('ev-desc').value=map['mentoria_evento_desc']||'';
+  loadEventoConfirmados();
+}
+
+async function saveEvento(){
+  const items=[
+    {chave:'mentoria_evento_data',valor:document.getElementById('ev-data').value},
+    {chave:'mentoria_evento_local',valor:document.getElementById('ev-local').value},
+    {chave:'mentoria_evento_desc',valor:document.getElementById('ev-desc').value},
+  ];
+  for(const item of items){
+    await sb.from('configuracoes').upsert(item,{onConflict:'chave'});
+  }
+  toast('Evento salvo!');
+}
+
+async function loadEventoConfirmados(){
+  const tbody=document.getElementById('ev-tbody');
+  const {data}=await sb.from('profiles').select('id,nome,email,created_at').eq('plano','mentoria').eq('evento_confirmado',true).order('created_at',{ascending:true});
+  const rows=data||[];
+  document.getElementById('ev-confirmed-count').textContent=`${rows.length} / 100`;
+  if(!rows.length){ tbody.innerHTML='<tr class="loading-row"><td colspan="4">Nenhum confirmado ainda.</td></tr>'; return; }
+  tbody.innerHTML=rows.map((r,i)=>`<tr>
+    <td>${i+1}</td><td>${r.nome||'—'}</td><td style="font-size:12px;color:var(--text-muted)">${r.email||'—'}</td>
+    <td style="font-size:12px">${r.created_at?fmtDate(r.created_at.slice(0,10)):'—'}</td>
+  </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// 8. CONFIGURAÇÕES
+// ═══════════════════════════════════════════
+const CFG_KEYS = {
+  'cfg-boas-vindas': 'mentoria_boas_vindas',
+  'cfg-whatsapp': 'mentoria_whatsapp',
+  'cfg-vagas': 'mentoria_vagas',
+  'cfg-telegram': 'mentoria_telegram',
+};
+
+async function loadConfig(){
+  const keys=Object.values(CFG_KEYS);
+  const {data}=await sb.from('configuracoes').select('chave,valor').in('chave',keys);
+  const map=Object.fromEntries((data||[]).map(r=>[r.chave,r.valor]));
+  Object.entries(CFG_KEYS).forEach(([elId,key])=>{
+    const el=document.getElementById(elId);
+    if(el) el.value=map[key]||'';
+  });
+}
+
+async function saveConfig(){
+  const items=Object.entries(CFG_KEYS).map(([elId,key])=>({chave:key,valor:document.getElementById(elId)?.value||''}));
+  for(const item of items){
+    await sb.from('configuracoes').upsert(item,{onConflict:'chave'});
+  }
+  toast('Configurações salvas!');
+}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function escHtml(str){ return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(d){ try{ return new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}); }catch(e){return d;} }
+function timeAgo(ts){
+  const s=Math.floor((Date.now()-new Date(ts))/1000);
+  if(s<60) return 'agora';
+  if(s<3600) return Math.floor(s/60)+'m atrás';
+  if(s<86400) return Math.floor(s/3600)+'h atrás';
+  return Math.floor(s/86400)+'d atrás';
+}
+</script>
+</body>
+</html>
