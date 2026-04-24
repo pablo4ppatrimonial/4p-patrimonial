@@ -485,7 +485,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
           <div class="stat-card">
             <div class="stat-label">Dias para o Evento</div>
             <div class="stat-val" id="stat-dias">—</div>
-            <div class="stat-sub">01 de novembro de 2026</div>
+            <div class="stat-sub">26 de novembro de 2026</div>
           </div>
         </div>
 
@@ -628,7 +628,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
         <div class="evento-hero">
           <div class="evento-badge">Evento Exclusivo · Mentorados 4P</div>
           <div class="evento-title">Encontro Presencial<br>de Mentorados</div>
-          <div class="evento-date-big">01 de Novembro de 2026 · Baixada Santista</div>
+          <div class="evento-date-big">26 de Novembro de 2026 · Baixada Santista</div>
           <div class="evento-countdown" id="ev-countdown">
             <div class="ev-cd-block"><div class="ev-cd-num" id="ev-d">—</div><div class="ev-cd-lbl">dias</div></div>
             <div class="ev-cd-block"><div class="ev-cd-num" id="ev-h">—</div><div class="ev-cd-lbl">horas</div></div>
@@ -770,7 +770,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const EVENTO_DATE = new Date('2026-11-01T09:00:00-03:00');
+const EVENTO_DATE = new Date('2026-11-26T09:00:00-03:00');
 
 // ── DADOS ESTÁTICOS ──
 const MODULOS = [
@@ -931,7 +931,7 @@ async function init(){
       const {data:prof}=await sb.from('profiles').select('plano').eq('id',currentUser.id).maybeSingle();
       plano=prof?.plano||'';
     }
-    if(plano!=='mentoria'){
+    if(plano?.toLowerCase()!=='mentoria'){
       document.getElementById('loading').style.display='none';
       document.getElementById('access-denied').style.display='flex';
       return;
@@ -1175,7 +1175,7 @@ function renderEncontros(){
       <div class="enc-num">E${String(i+1).padStart(2,'0')}</div>
       <div class="enc-tema">${t}</div>
       <div class="enc-date">Data a confirmar</div>
-      <span class="enc-status enc-future-badge">Agendado</span>
+      <span class="enc-status" style="background:rgba(120,120,120,.15);color:#777;border:1px solid #333">Em breve</span>
     </div>`).join('');
     return;
   }
@@ -1205,7 +1205,7 @@ function renderEncontros(){
       <div class="enc-num">E${String(i+1).padStart(2,'0')}</div>
       <div class="enc-tema">${enc?.titulo||t}</div>
       <div class="enc-date">${dateStr}</div>
-      <span class="enc-status ${isPast?'enc-done-badge':isNext?'enc-next-badge':'enc-future-badge'}">${isPast?'Concluído':isNext?'Próximo':'Agendado'}</span>
+      <span class="enc-status ${isPast?'enc-done-badge':isNext?'enc-next-badge':data?'enc-future-badge':''}" style="${(!isPast&&!isNext&&!data)?'background:rgba(120,120,120,.15);color:#777;border:1px solid #333':''}">${isPast?'Concluído':isNext?'Próximo':data?'Agendado':'Em breve'}</span>
       ${cdHtml}
     </div>`;
   }).join('');
@@ -1275,8 +1275,9 @@ function initMapa(){
   mapInit=true;
   const map=L.map('mapa-container',{zoomControl:true,scrollWheelZoom:true}).setView([-24.0,-46.4],11);
   mapObj=map;
-  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',{
-    attribution:'&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>',
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains:'abcd',
     maxZoom:20,
   }).addTo(map);
 
@@ -1319,6 +1320,7 @@ async function loadPosts(){
     const {data,error}=await sb.from('posts')
       .select('id,user_id,conteudo,likes,fixado,created_at,imagem_url')
       .eq('deletado',false)
+      .eq('grupo','mentoria')
       .is('parent_id',null)
       .order('fixado',{ascending:false})
       .order('created_at',{ascending:false})
@@ -1367,7 +1369,7 @@ async function submitPost(){
   if(!txt){showToast('Escreva algo antes de publicar.','');return;}
   if(!currentUser){showToast('Não autenticado.','error');return;}
   try{
-    await sb.from('posts').insert({user_id:currentUser.id,conteudo:txt});
+    await sb.from('posts').insert({user_id:currentUser.id,conteudo:txt,grupo:'mentoria'});
     ta.value='';
     showToast('Post publicado!','success');
     await loadPosts();
