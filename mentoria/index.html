@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentoria 4P Patrimonial — Acesso Restrito</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080808;--card:#111111;--card2:#161616;--border:#1E1E1E;--border2:#2a2a2a;
+  --gold:#C8A951;--gold-l:#E8C96A;--gold-d:#8B6B1F;--gold-bg:rgba(200,169,81,.07);
+  --text:#F0F0F0;--text2:#999999;--text3:#555555;
+  --green:#1D9E75;--green-l:#2CC494;--red:#E05252;
+  --bronze:#CD7F32;--prata:#C0C0C0;--platino:#B8A9D9;--diamante:#7ED4E8;
+  --r:12px;--r-sm:8px;--r-full:999px;--trans:0.3s ease;
+  --sidebar:220px;--topbar:58px;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh}
+
+/* ── LOADING ── */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:20px}
+.load-logo{font-size:48px;font-weight:800;color:var(--gold);letter-spacing:-2px}
+.load-spinner{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── ACCESS DENIED ── */
+#access-denied{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9998;text-align:center;padding:24px}
+.denied-icon{font-size:56px;margin-bottom:16px}
+.denied-title{font-size:24px;font-weight:700;color:var(--gold);margin-bottom:8px}
+.denied-sub{font-size:14px;color:var(--text2);margin-bottom:24px;line-height:1.7;max-width:400px}
+.denied-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:var(--bg);font-weight:700;font-size:13px;padding:12px 28px;border-radius:var(--r-full);text-decoration:none;transition:opacity .2s}
+.denied-btn:hover{opacity:.85}
+
+/* ── APP LAYOUT ── */
+#app{display:none;flex-direction:column;height:100vh}
+#app.visible{display:flex}
+
+/* ── TOPBAR ── */
+.topbar{height:var(--topbar);background:rgba(8,8,8,.95);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.topbar-brand{display:flex;align-items:center;gap:12px}
+.topbar-title{font-size:13px;font-weight:700;color:var(--text);letter-spacing:1.5px;text-transform:uppercase}
+.topbar-badge{background:rgba(200,169,81,.15);border:1px solid rgba(200,169,81,.35);color:var(--gold);font-size:9px;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:var(--r-full);text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-full);padding:4px 12px 4px 4px;cursor:pointer;transition:border-color var(--trans)}
+.user-chip:hover{border-color:var(--gold)}
+.user-chip-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold-d),var(--gold));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--bg);text-transform:uppercase}
+.user-chip-name{font-size:12px;font-weight:500;color:var(--text)}
+.menu-btn{display:none;width:34px;height:34px;background:none;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;color:var(--text2);transition:all var(--trans)}
+.menu-btn:hover{border-color:var(--gold);color:var(--gold)}
+.menu-btn span{display:block;width:14px;height:1.5px;background:currentColor;border-radius:2px}
+
+/* ── BODY ── */
+.body{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);background:rgba(10,10,10,.98);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;transition:transform var(--trans)}
+.sidebar-logo{padding:24px 20px 16px;text-align:center}
+.sidebar-logo-text{font-size:38px;font-weight:800;color:var(--gold);line-height:1;letter-spacing:-2px;display:block}
+.sidebar-logo-sub{font-size:9px;font-weight:700;letter-spacing:3px;color:var(--text3);text-transform:uppercase;margin-top:4px}
+.sidebar-line{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:0 20px 16px;opacity:.4}
+.nav-section{padding:8px 16px 4px;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;margin:1px 8px;border-radius:var(--r-sm);cursor:pointer;transition:all var(--trans);border:1px solid transparent;font-size:12px;font-weight:500;color:var(--text2);user-select:none}
+.nav-item:hover{background:var(--card);color:var(--text);border-color:var(--border)}
+.nav-item.active{background:var(--gold-bg);color:var(--gold);border-color:rgba(200,169,81,.2)}
+.nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.sidebar-bottom{margin-top:auto;padding:16px}
+.sidebar-logout{display:flex;align-items:center;gap:8px;width:100%;background:none;border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:var(--text3);font-size:12px;font-family:'Inter',system-ui;cursor:pointer;transition:all var(--trans)}
+.sidebar-logout:hover{border-color:var(--red);color:var(--red)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;background:var(--bg)}
+.screen{display:none;padding:28px 32px;animation:fadeIn .2s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.page-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:3px}
+.page-sub{font-size:12px;color:var(--text3);margin-bottom:24px}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:border-color var(--trans)}
+.card:hover{border-color:var(--border2)}
+.card-gold{border-color:rgba(200,169,81,.2);background:linear-gradient(135deg,rgba(200,169,81,.04),var(--card))}
+.glass{background:rgba(17,17,17,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(200,169,81,.12)}
+
+/* ── STAT CARDS ── */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:all var(--trans);position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity var(--trans)}
+.stat-card:hover{border-color:rgba(200,169,81,.2)}
+.stat-card:hover::before{opacity:1}
+.stat-label{font-size:10px;font-weight:600;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.stat-val{font-size:28px;font-weight:800;color:var(--gold);line-height:1;margin-bottom:4px}
+.stat-sub{font-size:11px;color:var(--text2)}
+
+/* ── PROGRESS ── */
+.prog-bar{background:var(--card2);border-radius:var(--r-full);height:6px;overflow:hidden;margin:8px 0}
+.prog-fill{background:linear-gradient(90deg,var(--gold-d),var(--gold));height:6px;border-radius:var(--r-full);transition:width .8s ease}
+.prog-fill.green{background:linear-gradient(90deg,#0d6b50,var(--green))}
+
+/* ── GRID UTILS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+
+/* ── SECTION LABEL ── */
+.sec-label{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:12px}
+
+/* ── DASHBOARD ── */
+.dash-hero{background:linear-gradient(135deg,rgba(200,169,81,.06),rgba(200,169,81,.02));border:1px solid rgba(200,169,81,.15);border-radius:var(--r);padding:24px;margin-bottom:20px;position:relative;overflow:hidden}
+.dash-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:240px;height:240px;background:radial-gradient(circle,rgba(200,169,81,.08),transparent 70%);pointer-events:none}
+.dash-hello{font-size:11px;font-weight:600;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.dash-name{font-size:26px;font-weight:700;color:var(--text);line-height:1.2;margin-bottom:4px}
+.dash-desc{font-size:12px;color:var(--text2)}
+
+.prog-module-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:20px}
+.prog-module-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.prog-module-title{font-size:13px;font-weight:600;color:var(--text)}
+.prog-pct{font-size:22px;font-weight:800;color:var(--gold)}
+
+.next-live{background:var(--card);border:2px solid var(--gold);border-radius:var(--r);padding:20px;position:relative;overflow:hidden}
+.next-live::before{content:'AO VIVO';position:absolute;top:10px;right:12px;background:var(--red);color:#fff;font-size:8px;font-weight:700;letter-spacing:1.5px;padding:3px 8px;border-radius:var(--r-full)}
+@keyframes pulse-border{0%,100%{border-color:var(--gold);box-shadow:0 0 0 rgba(200,169,81,0)}50%{border-color:var(--gold-l);box-shadow:0 0 24px rgba(200,169,81,.2)}}
+.next-live.pulse{animation:pulse-border 2.5s ease-in-out infinite}
+.live-title{font-size:12px;font-weight:600;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.live-name{font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;line-height:1.4}
+.countdown{display:flex;gap:12px;margin-bottom:16px}
+.cd-block{text-align:center;min-width:44px}
+.cd-num{font-size:28px;font-weight:800;color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
+.cd-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.cd-sep{font-size:22px;font-weight:700;color:var(--text3);margin-top:2px}
+.btn-enter{width:100%;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:var(--bg);font-weight:700;font-size:13px;letter-spacing:.5px;padding:12px;border-radius:var(--r-full);border:none;cursor:pointer;transition:opacity var(--trans);text-transform:uppercase;font-family:'Inter',system-ui}
+.btn-enter:hover{opacity:.85}
+
+.timeline-item{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--border)}
+.timeline-item:last-child{border-bottom:none}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.tl-dot.done{background:var(--green)}
+.tl-dot.next{background:var(--gold);box-shadow:0 0 8px rgba(200,169,81,.4)}
+.tl-dot.future{background:var(--border2)}
+.tl-num{font-size:10px;font-weight:700;color:var(--text3);width:28px;flex-shrink:0}
+.tl-title{font-size:12px;color:var(--text2);flex:1;line-height:1.4}
+.tl-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:var(--r-full)}
+.tl-done{background:rgba(29,158,117,.12);color:var(--green-l)}
+.tl-next{background:rgba(200,169,81,.12);color:var(--gold)}
+.tl-future{background:var(--card2);color:var(--text3)}
+
+.vagas-banner{background:linear-gradient(135deg,#0d1a10,#111711);border:1px solid rgba(29,158,117,.25);border-radius:var(--r);padding:18px;text-align:center}
+.vagas-num{font-size:36px;font-weight:800;color:var(--green-l);line-height:1}
+.vagas-label{font-size:11px;color:#4dab88;margin-top:4px;font-weight:500}
+.vagas-desc{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5}
+.rank-badge-mini{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px}
+.rank-badge-mini-icon{font-size:28px}
+.rank-badge-mini-text .level-name{font-size:15px;font-weight:700;color:var(--text)}
+.rank-badge-mini-text .level-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ── MODULES ── */
+.module-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px;transition:border-color var(--trans)}
+.module-card:hover{border-color:var(--border2)}
+.module-header{display:flex;align-items:center;gap:16px;padding:20px;cursor:pointer}
+.module-num{font-size:32px;font-weight:800;color:var(--gold);line-height:1;min-width:48px}
+.module-info{flex:1}
+.module-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
+.module-meta{font-size:11px;color:var(--text3)}
+.module-prog{font-size:13px;font-weight:700;color:var(--gold);margin-left:auto}
+.module-chevron{color:var(--text3);transition:transform var(--trans);font-size:14px}
+.module-card.open .module-chevron{transform:rotate(180deg)}
+.module-body{display:none;border-top:1px solid var(--border);padding:0}
+.module-card.open .module-body{display:block}
+.aula-row{display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background var(--trans)}
+.aula-row:last-child{border-bottom:none}
+.aula-row:hover{background:var(--card2)}
+.aula-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;transition:all var(--trans)}
+.aula-row.done .aula-check{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.aula-id{font-size:10px;font-weight:700;color:var(--text3);min-width:40px}
+.aula-title{font-size:12px;color:var(--text2);flex:1;line-height:1.4}
+.aula-row.done .aula-title{color:var(--text)}
+.aula-play{font-size:11px;color:var(--text3);flex-shrink:0}
+
+/* ── ENCONTROS ── */
+.enc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.enc-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:all var(--trans);position:relative}
+.enc-card:hover{border-color:var(--border2)}
+.enc-card.next{border-color:var(--gold);background:linear-gradient(135deg,rgba(200,169,81,.05),var(--card))}
+.enc-card.done{opacity:.75}
+.enc-num{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
+.enc-tema{font-size:12px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:10px}
+.enc-date{font-size:11px;color:var(--text3)}
+.enc-status{position:absolute;top:12px;right:12px;font-size:9px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:var(--r-full)}
+.enc-done-badge{background:rgba(29,158,117,.12);color:var(--green-l)}
+.enc-next-badge{background:rgba(200,169,81,.12);color:var(--gold)}
+.enc-future-badge{background:var(--card2);color:var(--text3)}
+.enc-card.next .enc-countdown{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.enc-cd-small{display:flex;gap:8px}
+.enc-cd-block{text-align:center}
+.enc-cd-num{font-size:18px;font-weight:800;color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
+.enc-cd-lbl{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.enc-sep{font-size:14px;color:var(--text3);margin-top:2px}
+.btn-enc-enter{width:100%;margin-top:10px;background:var(--gold);color:var(--bg);border:none;border-radius:var(--r-full);padding:9px;font-size:11px;font-weight:700;font-family:'Inter',system-ui;cursor:pointer;transition:opacity var(--trans);text-transform:uppercase;letter-spacing:.5px}
+.btn-enc-enter:hover{opacity:.85}
+.btn-enc-replay{width:100%;margin-top:8px;background:none;border:1px solid var(--border2);color:var(--text3);border-radius:var(--r-full);padding:7px;font-size:11px;font-family:'Inter',system-ui;cursor:pointer;transition:all var(--trans)}
+.btn-enc-replay:hover{border-color:var(--green);color:var(--green)}
+
+/* ── RANKING ── */
+.ranking-screen{position:relative;overflow:hidden}
+.particles-wrap{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.particle{position:absolute;border-radius:50%;background:var(--gold);opacity:0;animation:float-up linear infinite}
+@keyframes float-up{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:.5}90%{opacity:.2}100%{transform:translateY(-40px) scale(1);opacity:0}}
+.ranking-content{position:relative;z-index:1}
+.level-display{background:linear-gradient(135deg,rgba(200,169,81,.08),rgba(200,169,81,.02));border:2px solid rgba(200,169,81,.3);border-radius:16px;padding:28px;text-align:center;margin-bottom:20px;position:relative;overflow:hidden}
+.level-display::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:300px;height:200px;background:radial-gradient(ellipse,rgba(200,169,81,.1),transparent 70%);pointer-events:none}
+.level-icon{font-size:52px;margin-bottom:10px;filter:drop-shadow(0 0 16px rgba(200,169,81,.3))}
+.level-name-big{font-size:28px;font-weight:800;color:var(--gold);margin-bottom:4px}
+.level-tier{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:16px}
+.level-progress-wrap{max-width:400px;margin:0 auto 12px}
+.level-progress-text{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:6px}
+.level-prog-bar{height:8px;background:var(--card2);border-radius:var(--r-full);overflow:hidden}
+.level-prog-fill{height:8px;border-radius:var(--r-full);transition:width 1s ease}
+.next-level-info{font-size:12px;color:var(--text2)}
+.next-level-info strong{color:var(--gold)}
+.patrimonio-form{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px}
+.pat-label{font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;display:block}
+.pat-input-row{display:flex;gap:10px}
+.pat-input{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;color:var(--text);font-family:'Inter',system-ui;font-size:14px;outline:none;transition:border-color var(--trans)}
+.pat-input:focus{border-color:var(--gold)}
+.pat-btn{background:linear-gradient(135deg,var(--gold-d),var(--gold));color:var(--bg);border:none;border-radius:var(--r-sm);padding:11px 20px;font-weight:700;font-size:13px;font-family:'Inter',system-ui;cursor:pointer;transition:opacity var(--trans);white-space:nowrap}
+.pat-btn:hover{opacity:.85}
+.levels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:20px}
+.level-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;text-align:center;transition:all var(--trans)}
+.level-card.active{border-color:var(--gold);background:var(--gold-bg)}
+.level-card-icon{font-size:22px;margin-bottom:6px}
+.level-card-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
+.level-card-val{font-size:11px;color:var(--text3)}
+
+/* ── MAPA ── */
+.mapa-wrap{display:grid;grid-template-columns:1fr 300px;gap:16px;height:calc(100vh - var(--topbar) - 120px);min-height:500px}
+#mapa-container{border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
+.mapa-panel{display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.mapa-opp{background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;cursor:pointer;transition:all var(--trans)}
+.mapa-opp:hover{border-color:var(--gold)}
+.mapa-opp-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px}
+.mapa-opp-tipo{font-size:10px;color:var(--gold);margin-bottom:4px;font-weight:600}
+.mapa-opp-nivel{font-size:10px;padding:2px 8px;border-radius:var(--r-full);display:inline-flex;align-items:center;gap:4px}
+.nivel-alta{background:rgba(29,158,117,.12);color:var(--green-l)}
+.nivel-media{background:rgba(200,169,81,.1);color:var(--gold)}
+
+/* ── COMUNIDADE ── */
+.compose-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:18px}
+.compose-ta{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;color:var(--text);font-family:'Inter',system-ui;font-size:13px;outline:none;resize:none;height:80px;transition:border-color var(--trans)}
+.compose-ta:focus{border-color:var(--gold)}
+.compose-footer{display:flex;justify-content:flex-end;margin-top:10px}
+.btn-post{background:linear-gradient(135deg,var(--gold-d),var(--gold));color:var(--bg);border:none;border-radius:var(--r-full);padding:8px 20px;font-size:12px;font-weight:700;font-family:'Inter',system-ui;cursor:pointer;transition:opacity var(--trans)}
+.btn-post:hover{opacity:.85}
+.post-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:10px;transition:all var(--trans)}
+.post-card:hover{border-color:var(--border2)}
+.post-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.post-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold-d),var(--gold));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--bg);text-transform:uppercase;flex-shrink:0}
+.post-av.mentor{background:linear-gradient(135deg,#0d4a30,var(--green));border:2px solid var(--green)}
+.post-author{font-size:13px;font-weight:600;color:var(--text)}
+.post-time{font-size:11px;color:var(--text3)}
+.mentor-tag{font-size:9px;font-weight:700;letter-spacing:1.5px;background:rgba(29,158,117,.15);color:var(--green-l);padding:2px 7px;border-radius:var(--r-full);margin-left:6px}
+.post-text{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px}
+.post-img{max-width:100%;border-radius:var(--r-sm);margin-bottom:12px;display:block}
+.post-like{display:inline-flex;align-items:center;gap:5px;background:none;border:1px solid var(--border);border-radius:var(--r-full);padding:5px 12px;font-size:11px;color:var(--text3);cursor:pointer;transition:all var(--trans);font-family:'Inter',system-ui}
+.post-like:hover,.post-like.liked{border-color:var(--gold);color:var(--gold)}
+
+/* ── EVENTO ── */
+.evento-wrap{position:relative}
+.evento-hero{background:linear-gradient(160deg,#0a0800,#130f00,#0a0a00);border:2px solid var(--gold-d);border-radius:16px;padding:40px 32px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden}
+.evento-hero::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,169,81,.12) 0%,transparent 50%,rgba(200,169,81,.06) 100%);pointer-events:none}
+.evento-badge{display:inline-block;background:rgba(200,169,81,.12);border:1px solid rgba(200,169,81,.35);color:var(--gold);font-size:9px;font-weight:700;letter-spacing:3px;padding:5px 16px;border-radius:var(--r-full);text-transform:uppercase;margin-bottom:16px}
+.evento-title{font-size:clamp(24px,4vw,40px);font-weight:800;color:var(--text);line-height:1.15;margin-bottom:8px}
+.evento-date-big{font-size:16px;font-weight:600;color:var(--gold);margin-bottom:24px}
+.evento-countdown{display:flex;gap:16px;justify-content:center;margin-bottom:24px;flex-wrap:wrap}
+.ev-cd-block{background:rgba(0,0,0,.4);border:1px solid rgba(200,169,81,.2);border-radius:var(--r-sm);padding:14px 16px;min-width:72px;text-align:center;backdrop-filter:blur(4px)}
+.ev-cd-num{font-size:36px;font-weight:800;color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
+.ev-cd-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-top:4px}
+.placa-destaque{background:linear-gradient(135deg,rgba(200,169,81,.15),rgba(200,169,81,.05));border:1px solid rgba(200,169,81,.3);border-radius:var(--r-sm);padding:14px 20px;display:inline-flex;align-items:center;gap:12px;font-size:13px;color:var(--text2)}
+.placa-destaque strong{color:var(--gold)}
+.prog-evento{display:flex;flex-direction:column;gap:0;margin-top:16px;position:relative}
+.prog-evento::before{content:'';position:absolute;left:20px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,var(--gold),transparent)}
+.prog-item{display:flex;gap:16px;padding:16px 0;position:relative}
+.prog-dot{width:40px;height:40px;border-radius:50%;background:var(--card);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;z-index:1;transition:all var(--trans)}
+.prog-item:hover .prog-dot{border-color:var(--gold);background:var(--gold-bg)}
+.prog-item-info{}
+.prog-item-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.prog-item-desc{font-size:12px;color:var(--text3);line-height:1.5}
+.ingresso-card{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border2);border-radius:var(--r);padding:24px;text-align:center}
+.ingresso-tag{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.ingresso-price{font-size:40px;font-weight:800;color:var(--gold);margin-bottom:4px}
+.ingresso-note{font-size:11px;color:var(--text3);margin-bottom:16px}
+.btn-ingresso{width:100%;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:var(--bg);border:none;border-radius:var(--r-full);padding:14px;font-weight:700;font-size:14px;font-family:'Inter',system-ui;cursor:pointer;transition:opacity var(--trans)}
+.btn-ingresso:hover{opacity:.85}
+
+/* ── PERFIL ── */
+.perfil-hero{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px;display:flex;align-items:center;gap:20px;margin-bottom:20px}
+.perfil-av-lg{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--gold-d),var(--gold));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:var(--bg);flex-shrink:0;border:3px solid var(--gold);text-transform:uppercase}
+.perfil-name{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+.perfil-email{font-size:12px;color:var(--text3);margin-bottom:8px}
+.badge-mentoria{display:inline-flex;align-items:center;gap:5px;background:rgba(200,169,81,.1);border:1px solid rgba(200,169,81,.25);color:var(--gold);font-size:10px;font-weight:700;padding:3px 10px;border-radius:var(--r-full)}
+.form-field{margin-bottom:16px}
+.form-label{font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;color:var(--text);font-family:'Inter',system-ui;font-size:13px;outline:none;transition:border-color var(--trans)}
+.form-input:focus{border-color:var(--gold)}
+.btn-save{background:linear-gradient(135deg,var(--gold-d),var(--gold));color:var(--bg);border:none;border-radius:var(--r-full);padding:10px 24px;font-weight:700;font-size:13px;font-family:'Inter',system-ui;cursor:pointer;transition:opacity var(--trans)}
+.btn-save:hover{opacity:.85}
+
+/* ── AULA MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--card);border:1px solid rgba(200,169,81,.2);border-radius:16px;width:100%;max-width:780px;max-height:90vh;overflow-y:auto;position:relative}
+.modal-header{display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid var(--border)}
+.modal-aula-id{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
+.modal-aula-title{font-size:16px;font-weight:700;color:var(--text);flex:1}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--card2);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:all var(--trans)}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+.player-box{background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;margin:20px 24px 0;border-radius:var(--r-sm);overflow:hidden;position:relative}
+.player-box iframe{width:100%;height:100%;border:none}
+.player-placeholder{display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--text3)}
+.player-play-icon{width:56px;height:56px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform var(--trans)}
+.player-play-icon:hover{transform:scale(1.1)}
+.play-tri{width:0;height:0;border-style:solid;border-width:10px 0 10px 18px;border-color:transparent transparent transparent var(--bg);margin-left:3px}
+.modal-body{padding:20px 24px 24px}
+.modal-resources{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.res-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all var(--trans);text-decoration:none}
+.res-card:hover{border-color:var(--gold)}
+.res-icon{font-size:20px}
+.res-label{font-size:12px;font-weight:600;color:var(--text)}
+.res-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.task-box{background:rgba(200,169,81,.04);border:1px solid rgba(200,169,81,.12);border-radius:var(--r-sm);padding:14px;margin-bottom:18px}
+.task-title{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+.task-text{font-size:12px;color:var(--text2);line-height:1.7}
+.btn-conclude{width:100%;background:linear-gradient(135deg,#0d6b50,var(--green));color:#fff;border:none;border-radius:var(--r-full);padding:14px;font-size:14px;font-weight:700;font-family:'Inter',system-ui;cursor:pointer;transition:opacity var(--trans)}
+.btn-conclude:hover{opacity:.85}
+.btn-conclude.done{background:var(--card2);color:var(--green-l);border:1px solid rgba(29,158,117,.25)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:12px 18px;font-size:12px;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:1000;transform:translateY(80px);opacity:0;transition:all .3s ease;max-width:280px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:rgba(29,158,117,.4);background:rgba(29,158,117,.08)}
+.toast.error{border-color:rgba(224,82,82,.35)}
+
+/* ── LEAFLET OVERRIDE ── */
+.leaflet-container{background:#000!important}
+.leaflet-popup-content-wrapper{background:var(--card)!important;border:1px solid var(--border2)!important;border-radius:var(--r)!important;color:var(--text)!important;box-shadow:0 8px 32px rgba(0,0,0,.7)!important}
+.leaflet-popup-tip{background:var(--card)!important}
+.leaflet-popup-content{color:var(--text)!important;font-family:'Inter',system-ui!important;font-size:12px!important}
+
+/* ── MOBILE ── */
+@media(max-width:900px){
+  .sidebar{position:fixed!important;top:var(--topbar);left:0;height:calc(100vh - var(--topbar));z-index:100;transform:translateX(-100%);transition:transform var(--trans);background:rgba(8,8,8,.99)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.show{display:block}
+  .menu-btn{display:flex}
+  .content{margin-left:0!important}
+  .screen{padding:16px 18px}
+  .grid-4{grid-template-columns:1fr 1fr!important}
+  .grid-3,.grid-2{grid-template-columns:1fr!important}
+  .mapa-wrap{grid-template-columns:1fr!important;height:auto}
+  #mapa-container{height:340px}
+  .mapa-panel{max-height:300px}
+  .modal-resources{grid-template-columns:1fr!important}
+  .perfil-hero{flex-direction:column;text-align:center}
+  .enc-grid{grid-template-columns:1fr!important}
+  .levels-grid{grid-template-columns:repeat(2,1fr)!important}
+}
+@media(max-width:480px){
+  .grid-4{grid-template-columns:1fr!important}
+  .countdown{gap:6px}
+  .cd-num{font-size:22px}
+  .evento-countdown{gap:8px}
+  .ev-cd-num{font-size:28px}
+  .ev-cd-block{min-width:56px;padding:10px 12px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="load-logo">4P</div>
+  <div style="font-size:10px;letter-spacing:3px;color:var(--text3);text-transform:uppercase;margin-top:-10px">Mentoria</div>
+  <div class="load-spinner"></div>
+</div>
+
+<!-- ACCESS DENIED -->
+<div id="access-denied">
+  <div class="denied-icon">🔒</div>
+  <div class="denied-title">Acesso Restrito</div>
+  <div class="denied-sub">Esta plataforma é exclusiva para membros da Mentoria 4P Patrimonial. Seu plano atual não inclui este acesso.</div>
+  <a href="../auth.html" class="denied-btn">← Voltar ao login</a>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <button class="menu-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+      <div>
+        <div class="topbar-title">Mentoria 4P Patrimonial</div>
+      </div>
+      <span class="topbar-badge">Acesso Restrito</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip" onclick="navigate('perfil')">
+        <div class="user-chip-av" id="top-av">M</div>
+        <span class="user-chip-name" id="top-name">Mentorado</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div class="body">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <span class="sidebar-logo-text">4P</span>
+        <div class="sidebar-logo-sub">Mentoria Elite</div>
+      </div>
+      <div class="sidebar-line"></div>
+
+      <div class="nav-item active" id="nav-dashboard" onclick="navigate('dashboard')">
+        <span class="nav-icon">🏛</span> Visão Geral
+      </div>
+      <div class="nav-item" id="nav-modulos" onclick="navigate('modulos')">
+        <span class="nav-icon">📚</span> Módulos
+      </div>
+      <div class="nav-item" id="nav-encontros" onclick="navigate('encontros')">
+        <span class="nav-icon">🎯</span> Encontros Ao Vivo
+      </div>
+      <div class="nav-item" id="nav-ranking" onclick="navigate('ranking')">
+        <span class="nav-icon">🏆</span> Ranking Patrimonial
+      </div>
+      <div class="nav-item" id="nav-mapa" onclick="navigate('mapa')">
+        <span class="nav-icon">🗺</span> Mapa de Oportunidades
+      </div>
+      <div class="nav-item" id="nav-comunidade" onclick="navigate('comunidade')">
+        <span class="nav-icon">👥</span> Comunidade Elite
+      </div>
+      <div class="nav-item" id="nav-evento" onclick="navigate('evento')">
+        <span class="nav-icon">📅</span> Evento Presencial
+      </div>
+      <div class="nav-item" id="nav-perfil" onclick="navigate('perfil')">
+        <span class="nav-icon">⚙️</span> Meu Perfil
+      </div>
+
+      <div class="sidebar-bottom">
+        <button class="sidebar-logout" onclick="handleLogout()">
+          <span>🚪</span> Sair da plataforma
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="content">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="screen active" id="screen-dashboard">
+        <div class="dash-hero">
+          <div class="dash-hello">Seu escritório de investimentos</div>
+          <div class="dash-name" id="dash-name">Bem-vindo, Investidor</div>
+          <div class="dash-desc">Mentoria 4P Patrimonial · Turma 2026</div>
+        </div>
+
+        <div class="grid-4">
+          <div class="stat-card">
+            <div class="stat-label">Módulos Concluídos</div>
+            <div class="stat-val" id="stat-mod">—</div>
+            <div class="stat-sub">de 23 aulas totais</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Próximo Encontro</div>
+            <div class="stat-val" id="stat-enc" style="font-size:16px;margin-top:4px">—</div>
+            <div class="stat-sub" id="stat-enc-sub">carregando...</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Seu Nível Atual</div>
+            <div class="stat-val" id="stat-nivel" style="font-size:16px;margin-top:4px">—</div>
+            <div class="stat-sub" id="stat-nivel-sub">declare seu patrimônio</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Dias para o Evento</div>
+            <div class="stat-val" id="stat-dias">—</div>
+            <div class="stat-sub">01 de novembro de 2026</div>
+          </div>
+        </div>
+
+        <div class="prog-module-wrap">
+          <div class="prog-module-header">
+            <div class="prog-module-title">Progresso nos módulos</div>
+            <div class="prog-pct" id="prog-pct-big">0%</div>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" id="prog-fill-dash" style="width:0%"></div></div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px" id="prog-desc-dash">0 de 23 aulas concluídas</div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:20px">
+          <div>
+            <div class="sec-label">Próxima Sessão Ao Vivo</div>
+            <div class="next-live pulse" id="next-live-card">
+              <div class="live-title">Próximo Encontro</div>
+              <div class="live-name" id="next-live-name">Carregando...</div>
+              <div class="countdown" id="live-countdown">
+                <div class="cd-block"><div class="cd-num" id="cd-h">00</div><div class="cd-label">horas</div></div>
+                <div class="cd-sep">:</div>
+                <div class="cd-block"><div class="cd-num" id="cd-m">00</div><div class="cd-label">min</div></div>
+                <div class="cd-sep">:</div>
+                <div class="cd-block"><div class="cd-num" id="cd-s">00</div><div class="cd-label">seg</div></div>
+              </div>
+              <button class="btn-enter" id="btn-enter-sala" onclick="enterSala()">ENTRAR NA SALA →</button>
+            </div>
+          </div>
+          <div>
+            <div class="sec-label">Seu Ranking Atual</div>
+            <div class="card" id="rank-dash-card">
+              <div class="rank-badge-mini">
+                <div class="rank-badge-mini-icon" id="rank-icon">🏅</div>
+                <div class="rank-badge-mini-text">
+                  <div class="level-name" id="rank-level-name" style="font-size:16px;font-weight:700;color:var(--gold)">Iniciante</div>
+                  <div class="level-sub" style="font-size:11px;color:var(--text3);margin-top:2px">Declare seu patrimônio</div>
+                </div>
+              </div>
+              <div class="prog-bar" style="margin-top:14px"><div class="prog-fill" id="rank-prog-fill" style="width:0%"></div></div>
+              <div style="font-size:11px;color:var(--text3);margin-top:6px" id="rank-prog-text">—</div>
+              <button style="margin-top:12px;background:none;border:1px solid var(--border2);color:var(--text3);border-radius:var(--r-full);padding:7px 16px;font-size:11px;font-family:'Inter',system-ui;cursor:pointer;width:100%;transition:all var(--trans)" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text3)'" onclick="navigate('ranking')">Ver ranking completo →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="sec-label">Últimos Encontros</div>
+            <div class="card" id="timeline-list">
+              <div style="font-size:12px;color:var(--text3);padding:8px 0">Carregando...</div>
+            </div>
+          </div>
+          <div>
+            <div class="sec-label">Primeiros 100 Mentorados</div>
+            <div class="vagas-banner">
+              <div class="vagas-num" id="vagas-num">47</div>
+              <div class="vagas-label">vagas restantes</div>
+              <div class="vagas-desc">Você faz parte de um grupo seleto de investidores com acesso direto ao Método 4P e a Pablo Dantas.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MÓDULOS ── -->
+      <div class="screen" id="screen-modulos">
+        <div class="page-title">Módulos da Mentoria</div>
+        <div class="page-sub">4 módulos · 23 aulas · aprenda no seu ritmo</div>
+        <div id="modulos-list"></div>
+      </div>
+
+      <!-- ── ENCONTROS ── -->
+      <div class="screen" id="screen-encontros">
+        <div class="page-title">Encontros Ao Vivo</div>
+        <div class="page-sub">24 encontros ao longo do ano · toda semana com Pablo Dantas</div>
+        <div class="enc-grid" id="enc-grid"></div>
+      </div>
+
+      <!-- ── RANKING ── -->
+      <div class="screen ranking-screen" id="screen-ranking">
+        <div class="particles-wrap" id="particles-wrap"></div>
+        <div class="ranking-content">
+          <div class="page-title">Ranking Patrimonial</div>
+          <div class="page-sub">Declare seu patrimônio e descubra seu nível na hierarquia de investidores</div>
+
+          <div class="level-display" id="level-display">
+            <div class="level-icon" id="level-icon-big">🏅</div>
+            <div class="level-name-big" id="level-name-big">Iniciante</div>
+            <div class="level-tier" id="level-tier-label">Declare seu patrimônio para subir de nível</div>
+            <div class="level-progress-wrap">
+              <div class="level-progress-text">
+                <span id="lv-from">R$ 0</span>
+                <span id="lv-to">próximo: Bronze I</span>
+              </div>
+              <div class="level-prog-bar"><div class="level-prog-fill" id="level-prog-fill" style="width:0%;background:linear-gradient(90deg,var(--bronze),var(--gold))"></div></div>
+            </div>
+            <div class="next-level-info" id="next-level-info">Declare seu patrimônio abaixo para começar</div>
+          </div>
+
+          <div class="patrimonio-form">
+            <label class="pat-label">Declarar patrimônio atual</label>
+            <div class="pat-input-row">
+              <input type="text" class="pat-input" id="pat-input" placeholder="Ex: 1500000" inputmode="numeric">
+              <button class="pat-btn" onclick="salvarPatrimonio()">Salvar</button>
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-top:8px">Informe o valor total em reais (somente números). Uso exclusivo para fins de ranking interno.</div>
+          </div>
+
+          <div class="sec-label">Níveis de Investidor</div>
+          <div class="levels-grid" id="levels-grid"></div>
+        </div>
+      </div>
+
+      <!-- ── MAPA ── -->
+      <div class="screen" id="screen-mapa">
+        <div class="page-title">Mapa de Oportunidades</div>
+        <div class="page-sub">Baixada Santista — regiões estratégicas monitoradas pelo Método 4P</div>
+        <div class="mapa-wrap">
+          <div id="mapa-container"></div>
+          <div class="mapa-panel" id="mapa-panel"></div>
+        </div>
+      </div>
+
+      <!-- ── COMUNIDADE ── -->
+      <div class="screen" id="screen-comunidade">
+        <div class="page-title">Comunidade Elite</div>
+        <div class="page-sub">Compartilhe estratégias, dúvidas e conquistas com seus co-investidores.</div>
+        <div class="compose-box">
+          <textarea class="compose-ta" id="compose-input" placeholder="Compartilhe uma ideia, operação ou aprendizado com a comunidade..."></textarea>
+          <div class="compose-footer">
+            <button class="btn-post" onclick="submitPost()">Publicar</button>
+          </div>
+        </div>
+        <div id="posts-list"><div style="text-align:center;padding:32px;font-size:12px;color:var(--text3)">Carregando...</div></div>
+      </div>
+
+      <!-- ── EVENTO ── -->
+      <div class="screen" id="screen-evento">
+        <div class="page-title">Evento Presencial 2026</div>
+        <div class="page-sub">Um encontro exclusivo de mentorados e o encerramento oficial da turma.</div>
+        <div class="evento-hero">
+          <div class="evento-badge">Evento Exclusivo · Mentorados 4P</div>
+          <div class="evento-title">Encontro Presencial<br>de Mentorados</div>
+          <div class="evento-date-big">01 de Novembro de 2026 · Baixada Santista</div>
+          <div class="evento-countdown" id="ev-countdown">
+            <div class="ev-cd-block"><div class="ev-cd-num" id="ev-d">—</div><div class="ev-cd-lbl">dias</div></div>
+            <div class="ev-cd-block"><div class="ev-cd-num" id="ev-h">—</div><div class="ev-cd-lbl">horas</div></div>
+            <div class="ev-cd-block"><div class="ev-cd-num" id="ev-m">—</div><div class="ev-cd-lbl">min</div></div>
+            <div class="ev-cd-block"><div class="ev-cd-num" id="ev-s">—</div><div class="ev-cd-lbl">seg</div></div>
+          </div>
+          <div class="placa-destaque">🏆 <strong>Primeiros 100 mentorados</strong> recebem placa de ranking GRÁTIS</div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:20px">
+          <div>
+            <div class="sec-label">Programação do Evento</div>
+            <div class="prog-evento">
+              <div class="prog-item">
+                <div class="prog-dot">🚪</div>
+                <div class="prog-item-info"><div class="prog-item-title">Abertura</div><div class="prog-item-desc">Recepção, credenciamento e coffee de boas-vindas para todos os mentorados.</div></div>
+              </div>
+              <div class="prog-item">
+                <div class="prog-dot">📊</div>
+                <div class="prog-item-info"><div class="prog-item-title">Cases do Ano</div><div class="prog-item-desc">Pablo Dantas apresenta ao vivo as operações realizadas durante a mentoria.</div></div>
+              </div>
+              <div class="prog-item">
+                <div class="prog-dot">🗺</div>
+                <div class="prog-item-info"><div class="prog-item-title">Análise de Mercado</div><div class="prog-item-desc">Panorama da Baixada Santista e oportunidades para o próximo ciclo de investimentos.</div></div>
+              </div>
+              <div class="prog-item">
+                <div class="prog-dot">🏆</div>
+                <div class="prog-item-info"><div class="prog-item-title">Premiação de Ranking</div><div class="prog-item-desc">Entrega das placas aos primeiros 100 mentorados e reconhecimento dos destaques do ano.</div></div>
+              </div>
+              <div class="prog-item">
+                <div class="prog-dot">🥂</div>
+                <div class="prog-item-info"><div class="prog-item-title">Encerramento</div><div class="prog-item-desc">Brinde, networking e próximos passos para quem continua no próximo ciclo da Mentoria 4P.</div></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="sec-label">Ingresso Avulso</div>
+            <div class="ingresso-card">
+              <div class="ingresso-tag">Para quem entrou depois dos primeiros 100</div>
+              <div class="ingresso-price">R$ 197</div>
+              <div class="ingresso-note">ingresso individual · acesso ao dia inteiro</div>
+              <button class="btn-ingresso">GARANTIR MINHA VAGA →</button>
+              <div style="font-size:10px;color:var(--text3);margin-top:10px">Vagas limitadas. Mentorados dos primeiros 100 têm acesso gratuito + placa de ranking.</div>
+            </div>
+            <div class="card" style="margin-top:14px">
+              <div class="sec-label" style="margin-bottom:8px">O que está incluso</div>
+              <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text2)">
+                <div>✅ Acesso a todos os painéis do dia</div>
+                <div>✅ Material exclusivo do evento</div>
+                <div>✅ Networking com mentorados</div>
+                <div>✅ Análise de mercado ao vivo</div>
+                <div>🏆 Placa de ranking (primeiros 100)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PERFIL ── -->
+      <div class="screen" id="screen-perfil">
+        <div class="page-title">Meu Perfil</div>
+        <div class="page-sub">Gerencie suas informações de conta.</div>
+        <div class="perfil-hero">
+          <div class="perfil-av-lg" id="perfil-av-lg">M</div>
+          <div>
+            <div class="perfil-name" id="perfil-nome-disp">Mentorado</div>
+            <div class="perfil-email" id="perfil-email-disp">—</div>
+            <span class="badge-mentoria">⭐ Mentoria 4P</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="form-field">
+            <label class="form-label">Nome</label>
+            <input type="text" class="form-input" id="p-nome" placeholder="Seu nome">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Sobrenome</label>
+            <input type="text" class="form-input" id="p-sobrenome" placeholder="Seu sobrenome">
+          </div>
+          <div class="form-field">
+            <label class="form-label">E-mail</label>
+            <input type="email" class="form-input" id="p-email" disabled style="opacity:.5;cursor:not-allowed">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Nova senha (deixe em branco para manter)</label>
+            <input type="password" class="form-input" id="p-senha" placeholder="••••••••">
+          </div>
+          <button class="btn-save" onclick="salvarPerfil()">Salvar alterações</button>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /body -->
+</div><!-- /app -->
+
+<!-- AULA MODAL -->
+<div class="modal-overlay" id="aula-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-aula-id" id="modal-aula-id">—</div>
+        <div class="modal-aula-title" id="modal-aula-title">—</div>
+      </div>
+      <button class="modal-close" onclick="closeAulaModal()">✕</button>
+    </div>
+    <div class="player-box" id="player-box">
+      <div class="player-placeholder">
+        <div class="player-play-icon"><div class="play-tri"></div></div>
+        <div style="font-size:12px;margin-top:8px">Vídeo disponível em breve</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-resources">
+        <a class="res-card" href="#" target="_blank" id="modal-pdf-link">
+          <span class="res-icon">📄</span>
+          <div><div class="res-label">Material PDF</div><div class="res-sub">Slides e resumo da aula</div></div>
+        </a>
+        <div class="res-card" onclick="showToast('Em breve disponível.','')">
+          <span class="res-icon">📝</span>
+          <div><div class="res-label">Anotações</div><div class="res-sub">Adicione suas notas</div></div>
+        </div>
+      </div>
+      <div class="task-box" id="modal-task-box">
+        <div class="task-title">📌 Tarefa da Aula</div>
+        <div class="task-text" id="modal-task">—</div>
+      </div>
+      <button class="btn-conclude" id="btn-conclude" onclick="toggleConclude()">✓ Marcar como concluída</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTES ──
+const SUPABASE_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const EVENTO_DATE = new Date('2026-11-01T09:00:00-03:00');
+
+// ── DADOS ESTÁTICOS ──
+const MODULOS = [
+  { num:1, code:'M1', titulo:'O Ecossistema do Imóvel na Planta', cor:'var(--gold)', aulas:[
+    {id:'M1-1.1',num_db:1001,titulo:'Como funciona o ciclo completo — do terreno à entrega',tarefa:'Pesquise um lançamento na planta na sua cidade e mapeie os participantes do ecossistema.'},
+    {id:'M1-1.2',num_db:1002,titulo:'Os participantes do ecossistema — incorporadora, construtora, investidor e comprador final',tarefa:'Liste 3 construtoras locais e verifique seus projetos em andamento.'},
+    {id:'M1-1.3',num_db:1003,titulo:'Como o preço é formado em cada fase do ciclo',tarefa:'Calcule o potencial de valorização de um imóvel hipotético entre lançamento e entrega.'},
+    {id:'M1-1.4',num_db:1004,titulo:'A diferença entre comprar para morar e comprar para alavancar patrimônio',tarefa:'Defina por escrito sua tese de investimento pessoal.'},
+    {id:'M1-1.5',num_db:1005,titulo:'Como funciona a alavancagem de patrimônio — o que prometemos e o que não prometemos',tarefa:'Simule um cenário de alavancagem com seus números reais.'},
+    {id:'M1-1.6',num_db:1006,titulo:'Riscos reais do mercado imobiliário — como identificar e mitigar',tarefa:'Mapeie os 3 principais riscos para o seu perfil de investidor.'},
+    {id:'M1-1.7',num_db:1007,titulo:'Decisão estratégica de saída — vender, transferir ou manter o imóvel',tarefa:'Para um imóvel hipotético, defina sua estratégia de saída e os critérios de decisão.'},
+  ]},
+  { num:2, code:'M2', titulo:'Contratos: o que você precisa saber antes de assinar', cor:'var(--gold)', aulas:[
+    {id:'M2-2.1',num_db:1008,titulo:'Tipos de contrato na planta — promessa de compra e venda, contrato de gaveta, permuta',tarefa:'Identifique qual tipo de contrato é mais comum na sua região-alvo.'},
+    {id:'M2-2.2',num_db:1009,titulo:'Cláusulas essenciais que você precisa entender antes de assinar',tarefa:'Liste as 5 cláusulas que você sempre vai verificar antes de assinar qualquer contrato.'},
+    {id:'M2-2.3',num_db:1010,titulo:'Cláusulas de risco — o que pode te prejudicar e como negociar',tarefa:'Revise um contrato real (ou modelo) e marque as cláusulas de risco que você identificar.'},
+    {id:'M2-2.4',num_db:1011,titulo:'Como funciona a cessão de direitos — vender antes da obra terminar',tarefa:'Simule os números de uma operação de cessão antes da entrega das chaves.'},
+    {id:'M2-2.5',num_db:1012,titulo:'O contrato entre você e o investidor — como funciona e o que cobre',tarefa:'Rascunhe os pontos principais que você quer ver num contrato de sociedade.'},
+    {id:'M2-2.6',num_db:1013,titulo:'Documentação necessária — o que o investidor precisa ter em ordem',tarefa:'Monte seu checklist de documentação pessoal e verifique o que está faltando.'},
+  ]},
+  { num:3, code:'M3', titulo:'Lado Jurídico: proteger seu capital', cor:'var(--gold)', aulas:[
+    {id:'M3-3.1',num_db:1014,titulo:'Pessoa física ou pessoa jurídica — qual a melhor estrutura para investir em imóveis',tarefa:'Pesquise os custos de abertura e manutenção de uma LTDA no seu estado.'},
+    {id:'M3-3.2',num_db:1015,titulo:'Como funciona o registro de imóvel e por que é fundamental',tarefa:'Verifique o custo de registro no cartório de imóveis da sua cidade para uma transação de R$300k.'},
+    {id:'M3-3.3',num_db:1016,titulo:'Due diligence básica — como checar a idoneidade da construtora antes de entrar',tarefa:'Aplique o checklist de due diligence em uma construtora que você já conhece.'},
+    {id:'M3-3.4',num_db:1017,titulo:'O que fazer se a obra atrasar ou a construtora tiver problema',tarefa:'Escreva um plano de contingência para cenário de atraso de obra acima de 6 meses.'},
+    {id:'M3-3.5',num_db:1018,titulo:'Como documentar sua posição — provas de pagamento, contrato registrado, histórico',tarefa:'Crie uma pasta (física ou digital) com toda documentação de um investimento atual ou futuro.'},
+  ]},
+  { num:4, code:'M4', titulo:'Contabilidade e Finanças do Investidor Imobiliário', cor:'var(--gold)', aulas:[
+    {id:'M4-4.1',num_db:1019,titulo:'Como declarar imóvel na planta no imposto de renda',tarefa:'Verifique como você declarou (ou declararia) um imóvel na planta na sua última declaração.'},
+    {id:'M4-4.2',num_db:1020,titulo:'Ganho de capital na venda de imóvel — quanto você paga de imposto e como calcular',tarefa:'Calcule o imposto sobre ganho de capital numa operação hipotética de R$170k → R$250k.'},
+    {id:'M4-4.3',num_db:1021,titulo:'Como organizar seu fluxo de caixa para investir em ciclos',tarefa:'Monte um fluxo de caixa pessoal para os próximos 12 meses considerando um investimento imobiliário.'},
+    {id:'M4-4.4',num_db:1022,titulo:'Pessoa jurídica para investimento imobiliário — vantagens fiscais e quando vale',tarefa:'Compare a tributação (pessoa física vs PJ) numa simulação de venda de imóvel por R$350k.'},
+    {id:'M4-4.5',num_db:1023,titulo:'Como mensurar seu patrimônio real — calcular evolução de ciclo a ciclo',tarefa:'Calcule seu patrimônio líquido atual e projete-o ao longo dos próximos 3 ciclos de 6 meses.'},
+  ]},
+];
+
+const ENCONTROS_TEMAS = [
+  'Boas-vindas à turma — apresentação de cada mentorado e seus objetivos',
+  'Aplicando o P1 na prática — análise ao vivo de uma região',
+  'Aplicando o P2 — validação de projeto com dados reais',
+  'Leitura de contrato ao vivo — cláusulas que você precisa entender',
+  'Estudo de caso 1 — projeto real analisado do zero',
+  'Decisão de saída — quando vender, transferir ou manter',
+  'Imposto de renda e ganho de capital — perguntas e respostas',
+  'Análise ao vivo de oportunidade trazida por mentorado',
+  'Como funciona o MCMV — oportunidade para o comprador final',
+  'Pessoa física vs pessoa jurídica — quando vale abrir empresa',
+  'Estudo de case 2 — operação de permuta na prática',
+  'Metade do ano — cada mentorado apresenta seu momento atual',
+  'Como montar carteira de ativos imobiliários',
+  'Análise de mercado — Baixada Santista: o que está acontecendo',
+  'Erros que investidores cometem e como o 4P protege',
+  'Reinvestimento — como usar o lucro do primeiro ciclo',
+  'Estudo de case 3 — sociedade de investimento na prática',
+  'Documentação — o que você precisa ter registrado em cada etapa',
+  'Oportunidade estratégica do 4º trimestre — preparação para novembro',
+  'Planejamento patrimonial — pensar em 5 e 10 anos',
+  'Como negociar com construtora — o que você pode pedir',
+  'Preparação para o evento presencial — cada mentorado calcula seu ranking',
+  'Perguntas abertas — espaço livre para o grupo',
+  'Encerramento do ano — balanço, conquistas e próximos ciclos',
+];
+
+const LEVELS = [
+  {name:'Bronze I',   tier:'bronze',   icon:'🥉', min:250000,    max:500000,   color:'#CD7F32'},
+  {name:'Bronze II',  tier:'bronze',   icon:'🥉', min:500000,    max:1000000,  color:'#CD7F32'},
+  {name:'Bronze III', tier:'bronze',   icon:'🥉', min:1000000,   max:2000000,  color:'#CD7F32'},
+  {name:'Prata I',    tier:'prata',    icon:'🥈', min:2000000,   max:3500000,  color:'#C0C0C0'},
+  {name:'Prata II',   tier:'prata',    icon:'🥈', min:3500000,   max:5000000,  color:'#C0C0C0'},
+  {name:'Prata III',  tier:'prata',    icon:'🥈', min:5000000,   max:8000000,  color:'#C0C0C0'},
+  {name:'Ouro I',     tier:'ouro',     icon:'🥇', min:8000000,   max:12000000, color:'#C8A951'},
+  {name:'Ouro II',    tier:'ouro',     icon:'🥇', min:12000000,  max:20000000, color:'#C8A951'},
+  {name:'Ouro III',   tier:'ouro',     icon:'🥇', min:20000000,  max:30000000, color:'#C8A951'},
+  {name:'Platino I',  tier:'platino',  icon:'💎', min:30000000,  max:40000000, color:'#B8A9D9'},
+  {name:'Platino II', tier:'platino',  icon:'💎', min:40000000,  max:50000000, color:'#B8A9D9'},
+  {name:'Platino III',tier:'platino',  icon:'💎', min:50000000,  max:70000000, color:'#B8A9D9'},
+  {name:'Diamante I', tier:'diamante', icon:'💠', min:70000000,  max:100000000,color:'#7ED4E8'},
+  {name:'Diamante II',tier:'diamante', icon:'💠', min:100000000, max:Infinity, color:'#7ED4E8'},
+];
+
+const MARKERS = [
+  {lat:-24.006,lng:-46.412,nome:'Praia Grande Centro',tipo:'P1 Estratégico',oport:'Alta demanda MCMV',nivel:'Alta',obs:'Maior volume de lançamentos MCMV da Baixada Santista. Liquidez garantida pelo programa federal.'},
+  {lat:-24.021,lng:-46.432,nome:'Praia Grande Guilhermina',tipo:'Valorização',oport:'Zona de valorização ativa',nivel:'Alta',obs:'Faixa nobre com alta liquidez no mercado de revenda. Preços em tendência de alta.'},
+  {lat:-24.035,lng:-46.453,nome:'Praia Grande Ocian',tipo:'P2 Expansão',oport:'Expansão residencial em curso',nivel:'Média',obs:'Bairro em desenvolvimento com potencial de ganho na planta. Infraestrutura avançando.'},
+  {lat:-23.934,lng:-46.332,nome:'Santos Centro',tipo:'Permuta',oport:'Hub comercial — oportunidade de permuta',nivel:'Alta',obs:'Mercado consolidado com oportunidades de permuta e cessão de direitos em andamento.'},
+  {lat:-23.963,lng:-46.386,nome:'São Vicente',tipo:'P3 Terreno',oport:'Terrenos com potencial de incorporação',nivel:'Média',obs:'Terrenos amplos a preço acessível para incorporação própria. Boa relação custo/benefício.'},
+  {lat:-24.085,lng:-46.621,nome:'Mongaguá',tipo:'P3 Entrada',oport:'Região emergente — entrada antecipada',nivel:'Média',obs:'Mercado em início de ciclo. Preços ainda abaixo da curva. Oportunidade de entrar cedo.'},
+  {lat:-24.183,lng:-46.788,nome:'Itanhaém',tipo:'P4 Expansão',oport:'Mercado em expansão litoral sul',nivel:'Média',obs:'Expansão do litoral sul com projetos de médio prazo. Crescimento sustentado da demanda.'},
+];
+
+// ── ESTADO ──
+let currentUser = null;
+let completedAulas = new Set();
+let encontrosList = [];
+let patrimonio = parseInt(localStorage.getItem('4p_ment_patrimonio') || '0');
+let currentAulaNum = null;
+let mapObj = null;
+let mapInit = false;
+let nextEncDate = null;
+let timerInterval = null;
+let toastTimer;
+
+// ── UTILIDADES ──
+function fmtBRL(v){
+  if(v>=1e9) return 'R$ '+(v/1e9).toLocaleString('pt-BR',{maximumFractionDigits:2})+' B';
+  if(v>=1e6) return 'R$ '+(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2})+' M';
+  if(v>=1000) return 'R$ '+(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k';
+  return 'R$ '+Math.round(v).toLocaleString('pt-BR');
+}
+
+function fmtBRLFull(v){
+  return 'R$ '+Math.round(v).toLocaleString('pt-BR');
+}
+
+function pad2(n){return String(n).padStart(2,'0')}
+
+function timeAgo(d){
+  const diff=Math.floor((Date.now()-new Date(d))/1000);
+  if(diff<60)return 'agora mesmo';
+  if(diff<3600)return Math.floor(diff/60)+'min atrás';
+  if(diff<86400)return Math.floor(diff/3600)+'h atrás';
+  return Math.floor(diff/86400)+'d atrás';
+}
+
+function showToast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className='toast show '+type;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+function set(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
+
+function getLevel(p){
+  if(p<250000)return{name:'Iniciante',tier:'iniciante',icon:'🏅',color:'#666',level:null,nextLevel:LEVELS[0],progress:0};
+  for(let i=LEVELS.length-1;i>=0;i--){
+    if(p>=LEVELS[i].min){
+      const next=LEVELS[i+1]||null;
+      const pct=next?Math.min(100,(p-LEVELS[i].min)/(LEVELS[i].max-LEVELS[i].min)*100):100;
+      return{name:LEVELS[i].name,tier:LEVELS[i].tier,icon:LEVELS[i].icon,color:LEVELS[i].color,level:LEVELS[i],nextLevel:next,progress:pct};
+    }
+  }
+}
+
+// ── AUTH ──
+async function init(){
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){
+      window.location.href='../auth.html?redirect=mentoria';
+      return;
+    }
+    currentUser=session.user;
+    const meta=currentUser.user_metadata||{};
+    let plano=meta.produto||meta.plano||'';
+    if(!plano){
+      const {data:prof}=await sb.from('profiles').select('plano').eq('id',currentUser.id).maybeSingle();
+      plano=prof?.plano||'';
+    }
+    if(plano!=='mentoria'){
+      document.getElementById('loading').style.display='none';
+      document.getElementById('access-denied').style.display='flex';
+      return;
+    }
+    await loadUserData();
+    document.getElementById('loading').style.display='none';
+    const app=document.getElementById('app');
+    app.style.display='flex';
+    app.classList.add('visible');
+    await Promise.all([loadProgresso(),loadEncontrosData()]);
+    renderDashboard();
+    startTimers();
+    createParticles();
+  }catch(e){
+    console.error(e);
+    document.getElementById('loading').innerHTML='<div style="color:#e05252;font-size:14px">Erro ao carregar. <a href="../auth.html" style="color:#C8A951">Voltar ao login</a></div>';
+  }
+}
+
+async function loadUserData(){
+  const meta=currentUser.user_metadata||{};
+  const nome=(meta.nome||meta.first_name||'Mentorado').split(' ')[0];
+  const email=currentUser.email||'';
+  const ini=nome.charAt(0).toUpperCase();
+  set('top-name',nome);
+  set('dash-name','Bem-vindo ao seu escritório, '+nome);
+  set('perfil-nome-disp',meta.nome||nome);
+  set('perfil-email-disp',email);
+  set('perfil-av-lg',ini);
+  set('top-av',ini);
+  const pEl=document.getElementById('p-nome');if(pEl)pEl.value=meta.nome||nome;
+  const sEl=document.getElementById('p-sobrenome');if(sEl)sEl.value=meta.sobrenome||meta.last_name||'';
+  const eEl=document.getElementById('p-email');if(eEl)eEl.value=email;
+}
+
+async function loadProgresso(){
+  try{
+    const {data}=await sb.from('progresso').select('aula_num').eq('user_id',currentUser.id);
+    completedAulas=new Set((data||[]).map(r=>r.aula_num).filter(n=>n>=1001&&n<=1023));
+  }catch(e){completedAulas=new Set();}
+}
+
+async function loadEncontrosData(){
+  try{
+    const {data}=await sb.from('encontros').select('*').eq('ativo',true).order('data',{ascending:true});
+    encontrosList=data||[];
+    const hoje=new Date().toISOString().slice(0,10);
+    const prox=encontrosList.find(e=>e.data>=hoje);
+    if(prox){
+      const hora=prox.hora||'19:00:00';
+      nextEncDate=new Date(prox.data+'T'+hora+'-03:00');
+    }
+  }catch(e){encontrosList=[];}
+}
+
+// ── NAV ──
+let currentScreen='dashboard';
+function navigate(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+screen)?.classList.add('active');
+  document.getElementById('nav-'+screen)?.classList.add('active');
+  currentScreen=screen;
+  closeSidebar();
+  if(screen==='modulos')renderModulos();
+  if(screen==='encontros')renderEncontros();
+  if(screen==='ranking'){renderRanking();renderLevelsGrid();}
+  if(screen==='mapa')initMapa();
+  if(screen==='comunidade')loadPosts();
+}
+
+function toggleSidebar(){
+  const sb_el=document.getElementById('sidebar');
+  const ov=document.getElementById('sidebar-overlay');
+  if(window.innerWidth<=900){
+    sb_el.classList.toggle('open');
+    ov.classList.toggle('show',sb_el.classList.contains('open'));
+  }
+}
+function closeSidebar(){
+  if(window.innerWidth<=900){
+    document.getElementById('sidebar')?.classList.remove('open');
+    document.getElementById('sidebar-overlay')?.classList.remove('show');
+  }
+}
+
+// ── DASHBOARD ──
+function renderDashboard(){
+  const total=23;
+  const done=completedAulas.size;
+  const pct=Math.round(done/total*100);
+  set('stat-mod',done+'/'+total);
+  set('prog-pct-big',pct+'%');
+  document.getElementById('prog-fill-dash').style.width=pct+'%';
+  set('prog-desc-dash',done+' de '+total+' aulas concluídas');
+
+  const dias=Math.ceil((EVENTO_DATE-Date.now())/86400000);
+  set('stat-dias',dias>0?dias:'0');
+
+  const hoje=new Date().toISOString().slice(0,10);
+  const prox=encontrosList.find(e=>e.data>=hoje);
+  if(prox){
+    const d=new Date(prox.data+'T12:00:00');
+    set('stat-enc',d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}));
+    set('stat-enc-sub',prox.titulo||'Encontro ao vivo');
+    set('next-live-name',prox.titulo||'Encontro Semanal');
+    document.getElementById('btn-enter-sala').onclick=()=>{if(prox.link)window.open(prox.link,'_blank');else showToast('Link ainda não disponível.','');};
+  }else{
+    set('stat-enc','—');
+    set('stat-enc-sub','Nenhum agendado');
+    set('next-live-name','Nenhum encontro agendado');
+  }
+
+  renderRankBadgeDash();
+  renderTimeline();
+}
+
+function renderRankBadgeDash(){
+  const lv=getLevel(patrimonio);
+  set('stat-nivel',lv.name);
+  set('rank-level-name',lv.name);
+  document.getElementById('rank-icon').textContent=lv.icon;
+  const fill=document.getElementById('rank-prog-fill');
+  if(fill){fill.style.width=lv.progress+'%';fill.style.background=`linear-gradient(90deg,${lv.color}88,${lv.color})`;}
+  if(lv.nextLevel){
+    set('rank-prog-text','Próximo: '+lv.nextLevel.name+' ('+fmtBRL(lv.nextLevel.min)+')');
+  }else{
+    set('rank-prog-text','Nível máximo atingido 🏆');
+  }
+}
+
+function renderTimeline(){
+  const container=document.getElementById('timeline-list');
+  if(!container)return;
+  const hoje=new Date().toISOString().slice(0,10);
+  const past=encontrosList.filter(e=>e.data<hoje).slice(-3).reverse();
+  const prox=encontrosList.find(e=>e.data>=hoje);
+  const future=encontrosList.filter(e=>e.data>=(prox?prox.data:hoje)).slice(1,3);
+  const items=[...past.slice(-2),(prox&&{...prox,_next:true})||null,...future.slice(0,2)].filter(Boolean);
+  if(!items.length){container.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Nenhum encontro cadastrado ainda.</div>';return;}
+  const hoje2=new Date().toISOString().slice(0,10);
+  container.innerHTML=items.map(e=>{
+    const past2=e.data<hoje2;
+    const next2=e._next;
+    const cls=past2?'done':next2?'next':'future';
+    const badge=past2?'<span class="tl-status tl-done">Realizado</span>':next2?'<span class="tl-status tl-next">Próximo</span>':'<span class="tl-status tl-future">Agendado</span>';
+    const d=new Date(e.data+'T12:00:00');
+    const dateStr=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+    const idx=encontrosList.findIndex(x=>x.id===e.id)+1;
+    return `<div class="timeline-item"><div class="tl-dot ${cls}"></div><div class="tl-num">E${String(idx).padStart(2,'0')}</div><div class="tl-title">${e.titulo||ENCONTROS_TEMAS[idx-1]||'Encontro '+idx} <span style="color:var(--text3);font-size:10px">· ${dateStr}</span></div>${badge}</div>`;
+  }).join('');
+}
+
+// ── MÓDULOS ──
+function renderModulos(){
+  const container=document.getElementById('modulos-list');
+  container.innerHTML=MODULOS.map(mod=>{
+    const modDone=mod.aulas.filter(a=>completedAulas.has(a.num_db)).length;
+    const pct=Math.round(modDone/mod.aulas.length*100);
+    const aulasHTML=mod.aulas.map(a=>{
+      const done=completedAulas.has(a.num_db);
+      return `<div class="aula-row${done?' done':''}" onclick="openAulaModal(${a.num_db})">
+        <div class="aula-check">${done?'✓':''}</div>
+        <div class="aula-id">${a.id}</div>
+        <div class="aula-title">${a.titulo}</div>
+        <div class="aula-play">${done?'✅':'▶'}</div>
+      </div>`;
+    }).join('');
+    return `<div class="module-card" id="mod-${mod.num}">
+      <div class="module-header" onclick="toggleModule(${mod.num})">
+        <div class="module-num">${mod.code}</div>
+        <div class="module-info">
+          <div class="module-title">${mod.titulo}</div>
+          <div class="module-meta">${mod.aulas.length} aulas · ${modDone} concluídas</div>
+          <div class="prog-bar" style="margin-top:8px;max-width:200px"><div class="prog-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="module-prog">${pct}%</div>
+        <div class="module-chevron">▼</div>
+      </div>
+      <div class="module-body">${aulasHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleModule(n){
+  document.getElementById('mod-'+n)?.classList.toggle('open');
+}
+
+// ── AULA MODAL ──
+function openAulaModal(numDb){
+  currentAulaNum=numDb;
+  let aula=null;
+  for(const mod of MODULOS){
+    const found=mod.aulas.find(a=>a.num_db===numDb);
+    if(found){aula=found;break;}
+  }
+  if(!aula)return;
+  set('modal-aula-id',aula.id);
+  set('modal-aula-title',aula.titulo);
+  set('modal-task',aula.tarefa||'Complete a aula e aplique o conteúdo no seu contexto.');
+  const done=completedAulas.has(numDb);
+  const btn=document.getElementById('btn-conclude');
+  if(btn){
+    btn.textContent=done?'✓ Aula concluída':'✓ Marcar como concluída';
+    btn.className='btn-conclude'+(done?' done':'');
+  }
+  const player=document.getElementById('player-box');
+  if(player)player.innerHTML=`<div class="player-placeholder"><div class="player-play-icon"><div class="play-tri"></div></div><div style="font-size:12px;margin-top:8px;color:var(--text3)">Vídeo disponível em breve</div></div>`;
+  document.getElementById('aula-modal').classList.add('open');
+}
+
+function closeAulaModal(){
+  document.getElementById('aula-modal').classList.remove('open');
+  currentAulaNum=null;
+}
+
+async function toggleConclude(){
+  if(!currentAulaNum||!currentUser)return;
+  const wasDone=completedAulas.has(currentAulaNum);
+  try{
+    if(!wasDone){
+      await sb.from('progresso').upsert({user_id:currentUser.id,aula_num:currentAulaNum,concluida:true},{onConflict:'user_id,aula_num'});
+      completedAulas.add(currentAulaNum);
+      showToast('Aula concluída! 🎉','success');
+    }
+    const done=completedAulas.has(currentAulaNum);
+    const btn=document.getElementById('btn-conclude');
+    if(btn){btn.textContent=done?'✓ Aula concluída':'✓ Marcar como concluída';btn.className='btn-conclude'+(done?' done':'');}
+    if(currentScreen==='modulos')renderModulos();
+    renderDashboard();
+  }catch(e){showToast('Erro ao salvar progresso.','error');}
+}
+
+// ── ENCONTROS ──
+function renderEncontros(){
+  const container=document.getElementById('enc-grid');
+  const hoje=new Date().toISOString().slice(0,10);
+  const temas=ENCONTROS_TEMAS;
+  if(!encontrosList.length){
+    container.innerHTML=temas.map((t,i)=>`<div class="enc-card">
+      <div class="enc-num">E${String(i+1).padStart(2,'0')}</div>
+      <div class="enc-tema">${t}</div>
+      <div class="enc-date">Data a confirmar</div>
+      <span class="enc-status enc-future-badge">Agendado</span>
+    </div>`).join('');
+    return;
+  }
+  const html=temas.map((t,i)=>{
+    const enc=encontrosList[i]||null;
+    const data=enc?enc.data:null;
+    const isPast=data&&data<hoje;
+    const isNext=!isPast&&enc&&enc.data===encontrosList.find(e=>e.data>=hoje)?.data;
+    const dateStr=data?new Date(data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}):'Data a confirmar';
+    let cdHtml='';
+    if(isNext&&nextEncDate){
+      cdHtml=`<div class="enc-card.next .enc-countdown" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <div class="enc-cd-small" id="enc-cd-${i}">
+          <div class="enc-cd-block"><div class="enc-cd-num enc-cd-h-${i}">--</div><div class="enc-cd-lbl">h</div></div>
+          <div class="enc-sep">:</div>
+          <div class="enc-cd-block"><div class="enc-cd-num enc-cd-m-${i}">--</div><div class="enc-cd-lbl">m</div></div>
+          <div class="enc-sep">:</div>
+          <div class="enc-cd-block"><div class="enc-cd-num enc-cd-s-${i}">--</div><div class="enc-cd-lbl">s</div></div>
+        </div>
+        <button class="btn-enc-enter" onclick="enterSalaEnc('${enc?.link||''}')">ENTRAR NA SALA →</button>
+      </div>`;
+    }
+    if(isPast&&enc?.link){
+      cdHtml=`<button class="btn-enc-replay" onclick="window.open('${enc.link}','_blank')">▶ Ver gravação</button>`;
+    }
+    return `<div class="enc-card${isNext?' next':''}${isPast?' done':''}">
+      <div class="enc-num">E${String(i+1).padStart(2,'0')}</div>
+      <div class="enc-tema">${enc?.titulo||t}</div>
+      <div class="enc-date">${dateStr}</div>
+      <span class="enc-status ${isPast?'enc-done-badge':isNext?'enc-next-badge':'enc-future-badge'}">${isPast?'Concluído':isNext?'Próximo':'Agendado'}</span>
+      ${cdHtml}
+    </div>`;
+  }).join('');
+  container.innerHTML=html;
+}
+
+function enterSalaEnc(link){
+  if(link)window.open(link,'_blank');
+  else showToast('Link ainda não disponível.','');
+}
+function enterSala(){
+  const prox=encontrosList.find(e=>{const hoje=new Date().toISOString().slice(0,10);return e.data>=hoje;});
+  if(prox?.link)window.open(prox.link,'_blank');
+  else showToast('Link ainda não disponível.','');
+}
+
+// ── RANKING ──
+function renderRanking(){
+  const lv=getLevel(patrimonio);
+  document.getElementById('level-icon-big').textContent=lv.icon;
+  set('level-name-big',lv.name);
+  set('level-tier-label',lv.tier.charAt(0).toUpperCase()+lv.tier.slice(1));
+  const fill=document.getElementById('level-prog-fill');
+  if(fill){fill.style.width=lv.progress+'%';fill.style.background=`linear-gradient(90deg,${lv.color}88,${lv.color})`;}
+  const from=lv.level?fmtBRL(lv.level.min):'R$ 0';
+  set('lv-from',from);
+  set('lv-to',lv.nextLevel?'próximo: '+lv.nextLevel.name+' ('+fmtBRL(lv.nextLevel.min)+')':'Nível máximo');
+  if(lv.nextLevel){
+    const falta=lv.nextLevel.min-patrimonio;
+    set('next-level-info','Faltam '+fmtBRL(falta)+' para '+lv.nextLevel.name);
+  }else{
+    set('next-level-info','🏆 Você atingiu o nível máximo — Diamante II');
+  }
+  const inp=document.getElementById('pat-input');
+  if(inp&&patrimonio>0)inp.value=patrimonio;
+  renderRankBadgeDash();
+}
+
+function renderLevelsGrid(){
+  const lv=getLevel(patrimonio);
+  const grid=document.getElementById('levels-grid');
+  if(!grid)return;
+  grid.innerHTML=LEVELS.map(l=>{
+    const active=lv.name===l.name;
+    return `<div class="level-card${active?' active':''}">
+      <div class="level-card-icon">${l.icon}</div>
+      <div class="level-card-name" style="color:${l.color}">${l.name}</div>
+      <div class="level-card-val">${fmtBRL(l.min)}${l.max===Infinity?'+':' — '+fmtBRL(l.max)}</div>
+    </div>`;
+  }).join('');
+}
+
+function salvarPatrimonio(){
+  const inp=document.getElementById('pat-input');
+  if(!inp)return;
+  const val=parseInt(inp.value.replace(/\D/g,''))||0;
+  patrimonio=val;
+  localStorage.setItem('4p_ment_patrimonio',String(val));
+  renderRanking();
+  renderLevelsGrid();
+  showToast('Patrimônio salvo! Nível: '+getLevel(val).name,'success');
+}
+
+// ── MAPA ──
+function initMapa(){
+  if(mapInit){if(mapObj)mapObj.invalidateSize();return;}
+  mapInit=true;
+  const map=L.map('mapa-container',{zoomControl:true,scrollWheelZoom:true}).setView([-24.0,-46.4],11);
+  mapObj=map;
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>',
+    maxZoom:20,
+  }).addTo(map);
+
+  const goldIcon=L.divIcon({
+    className:'',
+    html:`<div style="width:14px;height:14px;background:#C8A951;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px rgba(200,169,81,.6)"></div>`,
+    iconSize:[14,14],iconAnchor:[7,7],
+  });
+
+  MARKERS.forEach(m=>{
+    const marker=L.marker([m.lat,m.lng],{icon:goldIcon}).addTo(map);
+    marker.bindPopup(`
+      <div style="min-width:200px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#C8A951;text-transform:uppercase;margin-bottom:6px">${m.tipo}</div>
+        <div style="font-size:14px;font-weight:700;color:#F0F0F0;margin-bottom:6px">${m.nome}</div>
+        <div style="font-size:12px;color:#999;margin-bottom:8px">${m.oport}</div>
+        <div style="font-size:11px;color:#777;line-height:1.5;margin-bottom:8px">${m.obs}</div>
+        <span style="display:inline-block;background:${m.nivel==='Alta'?'rgba(29,158,117,.15)':'rgba(200,169,81,.1)'};color:${m.nivel==='Alta'?'#2CC494':'#C8A951'};padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700">● ${m.nivel} oportunidade</span>
+      </div>
+    `);
+  });
+
+  const panel=document.getElementById('mapa-panel');
+  if(panel){
+    panel.innerHTML=`<div class="sec-label" style="margin-bottom:8px">Regiões monitoradas</div>`+
+    MARKERS.map((m,i)=>`<div class="mapa-opp" onclick="mapObj.flyTo([${m.lat},${m.lng}],14)">
+      <div class="mapa-opp-name">${m.nome}</div>
+      <div class="mapa-opp-tipo">${m.tipo}</div>
+      <span class="mapa-opp-nivel ${m.nivel==='Alta'?'nivel-alta':'nivel-media'}">● ${m.nivel}</span>
+    </div>`).join('');
+  }
+}
+
+// ── COMUNIDADE ──
+let dbPosts=[];
+async function loadPosts(){
+  const container=document.getElementById('posts-list');
+  container.innerHTML='<div style="text-align:center;padding:32px;font-size:12px;color:var(--text3)">Carregando...</div>';
+  try{
+    const {data,error}=await sb.from('posts')
+      .select('id,user_id,conteudo,likes,fixado,created_at,imagem_url')
+      .eq('deletado',false)
+      .is('parent_id',null)
+      .order('fixado',{ascending:false})
+      .order('created_at',{ascending:false})
+      .limit(30);
+    if(error)throw error;
+    dbPosts=data||[];
+    if(dbPosts.length){
+      const uids=[...new Set(dbPosts.map(p=>p.user_id).filter(Boolean))];
+      if(uids.length){
+        const {data:profs}=await sb.from('profiles').select('id,nome').in('id',uids);
+        const map=Object.fromEntries((profs||[]).map(p=>[p.id,p.nome||'Mentorado']));
+        dbPosts.forEach(p=>{p._nome=map[p.user_id]||'Mentorado';});
+      }
+    }
+    renderPosts();
+  }catch(e){
+    container.innerHTML='<div style="color:var(--text3);font-size:12px;padding:16px">Erro ao carregar posts.</div>';
+  }
+}
+
+function renderPosts(){
+  const container=document.getElementById('posts-list');
+  if(!dbPosts.length){container.innerHTML='<div style="text-align:center;padding:32px;font-size:12px;color:var(--text3)">Nenhum post ainda. Seja o primeiro!</div>';return;}
+  container.innerHTML=dbPosts.map(p=>{
+    const ini=(p._nome||'M').charAt(0).toUpperCase();
+    const isPablo=p._nome==='Pablo'||p._nome==='Pablo Dantas';
+    const imgHtml=p.imagem_url?`<img src="${p.imagem_url}" class="post-img" alt="imagem">`:'';
+    return `<div class="post-card">
+      <div class="post-header">
+        <div class="post-av${isPablo?' mentor':''}">${ini}</div>
+        <div>
+          <div class="post-author">${p._nome||'Mentorado'}${isPablo?'<span class="mentor-tag">MENTOR</span>':''}</div>
+          <div class="post-time">${timeAgo(p.created_at)}</div>
+        </div>
+      </div>
+      ${imgHtml}
+      <div class="post-text">${p.conteudo}</div>
+      <button class="post-like" onclick="darLike('${p.id}',this)">❤ ${p.likes||0}</button>
+    </div>`;
+  }).join('');
+}
+
+async function submitPost(){
+  const ta=document.getElementById('compose-input');
+  const txt=ta?.value.trim();
+  if(!txt){showToast('Escreva algo antes de publicar.','');return;}
+  if(!currentUser){showToast('Não autenticado.','error');return;}
+  try{
+    await sb.from('posts').insert({user_id:currentUser.id,conteudo:txt});
+    ta.value='';
+    showToast('Post publicado!','success');
+    await loadPosts();
+  }catch(e){showToast('Erro ao publicar.','error');}
+}
+
+async function darLike(id,btn){
+  const post=dbPosts.find(p=>p.id===id);
+  if(!post)return;
+  const novoLike=(post.likes||0)+1;
+  try{
+    await sb.from('posts').update({likes:novoLike}).eq('id',id);
+    post.likes=novoLike;
+    btn.innerHTML='❤ '+novoLike;
+    btn.classList.add('liked');
+  }catch(e){}
+}
+
+// ── PERFIL ──
+async function salvarPerfil(){
+  if(!currentUser)return;
+  const nome=document.getElementById('p-nome')?.value.trim()||'';
+  const sobrenome=document.getElementById('p-sobrenome')?.value.trim()||'';
+  const senha=document.getElementById('p-senha')?.value.trim()||'';
+  try{
+    const upd={data:{nome,sobrenome}};
+    if(senha)upd.password=senha;
+    await sb.auth.updateUser(upd);
+    showToast('Perfil salvo com sucesso!','success');
+  }catch(e){showToast('Erro ao salvar perfil.','error');}
+}
+
+async function handleLogout(){
+  await sb.auth.signOut();
+  window.location.href='../auth.html';
+}
+
+// ── TIMERS ──
+function startTimers(){
+  clearInterval(timerInterval);
+  timerInterval=setInterval(tickTimers,1000);
+  tickTimers();
+}
+
+function tickTimers(){
+  const now=Date.now();
+  // Live session countdown
+  if(nextEncDate){
+    const diff=Math.max(0,nextEncDate-now);
+    const h=Math.floor(diff/3600000);
+    const m=Math.floor(diff%3600000/60000);
+    const s=Math.floor(diff%60000/1000);
+    set('cd-h',pad2(h));
+    set('cd-m',pad2(m));
+    set('cd-s',pad2(s));
+    // enc grid countdowns
+    document.querySelectorAll('[class*="enc-cd-h-"]').forEach(el=>{el.textContent=pad2(h);});
+    document.querySelectorAll('[class*="enc-cd-m-"]').forEach(el=>{el.textContent=pad2(m);});
+    document.querySelectorAll('[class*="enc-cd-s-"]').forEach(el=>{el.textContent=pad2(s);});
+  }
+  // Evento countdown
+  const evDiff=Math.max(0,EVENTO_DATE-now);
+  const evD=Math.floor(evDiff/86400000);
+  const evH=Math.floor(evDiff%86400000/3600000);
+  const evM=Math.floor(evDiff%3600000/60000);
+  const evS=Math.floor(evDiff%60000/1000);
+  set('ev-d',evD);
+  set('ev-h',pad2(evH));
+  set('ev-m',pad2(evM));
+  set('ev-s',pad2(evS));
+  set('stat-dias',evD>0?evD:'0');
+}
+
+// ── PARTÍCULAS ──
+function createParticles(){
+  const wrap=document.getElementById('particles-wrap');
+  if(!wrap)return;
+  for(let i=0;i<40;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.left=Math.random()*100+'%';
+    p.style.width=p.style.height=(1+Math.random()*2.5)+'px';
+    p.style.animationDuration=(8+Math.random()*14)+'s';
+    p.style.animationDelay=(Math.random()*12)+'s';
+    wrap.appendChild(p);
+  }
+}
+
+// ── START ──
+document.getElementById('aula-modal').addEventListener('click',function(e){
+  if(e.target===this)closeAulaModal();
+});
+
+init();
+</script>
+</body>
+</html>
