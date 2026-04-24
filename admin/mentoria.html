@@ -4,6 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>4P Mentoria — Admin</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -153,6 +155,13 @@ tbody td{padding:11px 14px;font-size:13px;color:var(--text);vertical-align:middl
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--gold-dim)}
+/* MAPA LEAFLET */
+#adm-mapa-container{height:520px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.leaflet-popup-content-wrapper{background:var(--card)!important;border:1px solid var(--border-gold)!important;border-radius:8px!important;color:var(--text)!important;box-shadow:0 8px 32px rgba(0,0,0,.7)!important}
+.leaflet-popup-tip{background:var(--card)!important}
+.leaflet-popup-content{color:var(--text)!important;font-family:'Segoe UI',system-ui!important;font-size:12px!important;min-width:200px}
+.mapa-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.mapa-hint{font-size:11px;color:var(--text-dim);font-style:italic}
 /* MOBILE */
 .admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99;cursor:pointer}
 .admin-overlay.show{display:block}
@@ -219,22 +228,14 @@ tbody td{padding:11px 14px;font-size:13px;color:var(--text);vertical-align:middl
     <!-- ═══ 1. MAPA ═══ -->
     <div class="section active" id="s-mapa">
       <div class="page-header">
-        <div><div class="page-title">🗺 <span>Mapa</span> de Oportunidades</div><div class="page-sub">Pontos e empreendimentos cadastrados na plataforma</div></div>
+        <div><div class="page-title">🗺 <span>Mapa</span> de Oportunidades</div><div class="page-sub">Clique no mapa para adicionar um ponto. Clique num marcador para editar ou excluir.</div></div>
         <button class="btn btn-gold" onclick="openMapaModal()">+ Adicionar Ponto</button>
       </div>
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title" id="mapa-count">Carregando...</span>
-          <input class="search-input" placeholder="Buscar ponto..." oninput="filterMapa(this.value)"/>
-        </div>
-        <div class="table-wrap">
-          <table><thead><tr>
-            <th>Nome</th><th>Bairro</th><th>Pilar</th><th>Nível</th><th>Status</th><th>Ações</th>
-          </tr></thead>
-          <tbody id="mapa-tbody"><tr class="loading-row"><td colspan="6"><span class="spinner"></span>Carregando...</td></tr></tbody>
-          </table>
-        </div>
+      <div class="mapa-toolbar">
+        <span id="mapa-count" style="font-size:13px;color:var(--text-muted)">Carregando...</span>
+        <span class="mapa-hint">🖱 Clique no mapa para preencher lat/lng automaticamente</span>
       </div>
+      <div id="adm-mapa-container"></div>
     </div>
 
     <!-- ═══ 2. MÓDULOS ═══ -->
@@ -250,7 +251,8 @@ tbody td{padding:11px 14px;font-size:13px;color:var(--text);vertical-align:middl
     <!-- ═══ 3. ENCONTROS ═══ -->
     <div class="section" id="s-encontros">
       <div class="page-header">
-        <div><div class="page-title">🎯 <span>Encontros</span> Ao Vivo</div><div class="page-sub">Agenda, links e gravações dos 24 encontros</div></div>
+        <div><div class="page-title">🎯 <span>Encontros</span> Ao Vivo</div><div class="page-sub">Agenda, links e gravações — dados do Supabase</div></div>
+        <button class="btn btn-gold" onclick="openEncModal(null)">+ Novo Encontro</button>
       </div>
       <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
         <div class="metric-card"><div class="metric-label">Total</div><div class="metric-value" id="enc-total">—</div><div class="metric-icon">🎯</div></div>
@@ -297,7 +299,7 @@ tbody td{padding:11px 14px;font-size:13px;color:var(--text);vertical-align:middl
     <!-- ═══ 5. COMUNIDADE ═══ -->
     <div class="section" id="s-comunidade">
       <div class="page-header">
-        <div><div class="page-title">💬 <span>Comunidade</span> Elite</div><div class="page-sub">Posts com grupo = mentoria</div></div>
+        <div><div class="page-title">💬 <span>Comunidade</span> Elite</div><div class="page-sub">Todos os posts da comunidade (fixar, responder como admin, excluir)</div></div>
         <button class="btn btn-gold" onclick="loadPosts()">↻ Atualizar</button>
       </div>
       <div class="card">
@@ -477,19 +479,23 @@ tbody td{padding:11px 14px;font-size:13px;color:var(--text);vertical-align:middl
       <button class="x-btn" onclick="closeEncModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div id="enc-modal-info" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;padding:10px 12px;background:var(--card2);border-radius:8px;border-left:3px solid var(--gold-dim)"></div>
+      <input type="hidden" id="enc-edit-id"/>
+      <div class="row2">
+        <div class="fg"><label>Número (1–24)</label><input class="fi" id="enc-numero" placeholder="Ex: 1" type="number" min="1" max="24"/></div>
+        <div class="fg"><label>Status</label>
+          <select class="fi fi-sel" id="enc-status">
+            <option value="agendado">Agendado</option>
+            <option value="realizado">Realizado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>Tema</label><input class="fi" id="enc-tema" placeholder="Ex: Imersão 4P — Apresentação do método"/></div>
       <div class="row2">
         <div class="fg"><label>Data</label><input class="fi" type="date" id="enc-data"/></div>
         <div class="fg"><label>Hora</label><input class="fi" type="time" id="enc-hora"/></div>
       </div>
       <div class="fg"><label>Link da Sala (Zoom / Meet)</label><input class="fi" id="enc-link" placeholder="https://zoom.us/j/..."/></div>
-      <div class="fg"><label>Status</label>
-        <select class="fi fi-sel" id="enc-status">
-          <option value="agendado">Agendado</option>
-          <option value="realizado">Realizado</option>
-          <option value="cancelado">Cancelado</option>
-        </select>
-      </div>
       <div class="fg"><label>Link da Gravação (pós-encontro)</label><input class="fi" id="enc-gravacao" placeholder="https://youtube.com/..."/></div>
     </div>
     <div class="modal-foot">
@@ -584,7 +590,7 @@ function nav(id) {
   document.getElementById('n-'+id).classList.add('active');
   currentSection = id;
   closeMob();
-  if(id==='mapa') loadMapa();
+  if(id==='mapa'){ loadMapa(); setTimeout(()=>admMap&&admMap.invalidateSize(),200); }
   else if(id==='modulos') loadModulos();
   else if(id==='encontros') loadEncontros();
   else if(id==='alunos') loadAlunos();
@@ -625,41 +631,61 @@ function initAdmin() {
 // ═══════════════════════════════════════════
 // 1. MAPA DE OPORTUNIDADES
 // ═══════════════════════════════════════════
-let mapaData = [], mapaEditId = null;
+let mapaData = [], mapaEditId = null, admMap = null, admMarkers = [];
 
-async function loadMapa(){
-  const tbody = document.getElementById('mapa-tbody');
-  tbody.innerHTML='<tr class="loading-row"><td colspan="6"><span class="spinner"></span>Carregando...</td></tr>';
-  const {data, error} = await sb.from('mapa_oportunidades').select('*').order('created_at',{ascending:false});
-  if(error){ tbody.innerHTML=`<tr class="loading-row"><td colspan="6" style="color:var(--danger)">Erro: ${error.message}</td></tr>`; return; }
-  mapaData = data || [];
-  document.getElementById('mapa-count').textContent = `${mapaData.length} ponto${mapaData.length!==1?'s':''} cadastrado${mapaData.length!==1?'s':''}`;
-  renderMapaTable(mapaData);
+const GOLD_ICON = () => L.divIcon({
+  className:'',
+  html:`<div style="width:14px;height:14px;background:#c9a84c;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px rgba(201,168,76,.7)"></div>`,
+  iconSize:[14,14], iconAnchor:[7,7], popupAnchor:[0,-10],
+});
+
+function initAdmMap(){
+  if(admMap) return;
+  admMap = L.map('adm-mapa-container',{zoomControl:true,scrollWheelZoom:true}).setView([-24.015,-46.430],14);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains:'abcd', maxZoom:20,
+  }).addTo(admMap);
+  admMap.on('click', e=>{
+    document.getElementById('m-lat').value = e.latlng.lat.toFixed(6);
+    document.getElementById('m-lng').value = e.latlng.lng.toFixed(6);
+    openMapaModal();
+  });
 }
 
-function renderMapaTable(rows){
-  const tbody = document.getElementById('mapa-tbody');
-  if(!rows.length){ tbody.innerHTML='<tr class="loading-row"><td colspan="6">Nenhum ponto cadastrado.</td></tr>'; return; }
-  tbody.innerHTML = rows.map(r=>`
-    <tr>
-      <td><strong>${r.nome||'—'}</strong></td>
-      <td style="color:var(--text-muted)">${r.bairro||'—'}</td>
-      <td><span class="badge badge-gold">${r.pilar||'—'}</span></td>
-      <td>${nivelBadge(r.nivel)}</td>
-      <td>${r.ativo?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-gray">Inativo</span>'}</td>
-      <td>
-        <button class="btn btn-sm btn-outline" onclick="editMapa('${r.id}')">Editar</button>
-        <button class="btn btn-sm btn-danger" style="margin-left:4px" onclick="deleteMapa('${r.id}','${escHtml(r.nome)}')">Excluir</button>
-      </td>
-    </tr>`).join('');
+async function loadMapa(){
+  initAdmMap();
+  const {data, error} = await sb.from('mapa_oportunidades').select('*').order('created_at',{ascending:false});
+  if(error){ toast('Erro ao carregar mapa: '+error.message,'error'); return; }
+  mapaData = data || [];
+  document.getElementById('mapa-count').textContent = `${mapaData.length} ponto${mapaData.length!==1?'s':''} cadastrado${mapaData.length!==1?'s':''}`;
+  renderMapaMarkers();
+  admMap.invalidateSize();
+}
+
+function renderMapaMarkers(){
+  admMarkers.forEach(m=>m.remove());
+  admMarkers=[];
+  mapaData.forEach(r=>{
+    if(!r.lat||!r.lng) return;
+    const m = L.marker([r.lat,r.lng],{icon:GOLD_ICON()}).addTo(admMap);
+    const fotoHtml = r.foto_url?`<img src="${r.foto_url}" style="width:100%;max-height:90px;object-fit:cover;border-radius:6px;margin-bottom:8px">`:''
+    m.bindPopup(`
+      <div>
+        ${fotoHtml}
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#c9a84c;text-transform:uppercase;margin-bottom:4px">${escHtml(r.pilar||'')}</div>
+        <div style="font-size:13px;font-weight:700;color:#e8e8e8;margin-bottom:4px">${escHtml(r.nome||'')}</div>
+        <div style="font-size:11px;color:#888;margin-bottom:8px;line-height:1.4">${escHtml(r.descricao||'')}</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="editMapa('${r.id}')" style="padding:4px 10px;border-radius:6px;border:1px solid #3a2e10;background:linear-gradient(135deg,#8a6e2f,#c9a84c);color:#000;font-size:11px;font-weight:700;cursor:pointer">Editar</button>
+          <button onclick="deleteMapa('${r.id}','${escHtml(r.nome)}')" style="padding:4px 10px;border-radius:6px;border:none;background:#c0392b;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Excluir</button>
+        </div>
+      </div>`);
+    admMarkers.push(m);
+  });
 }
 
 function nivelBadge(n){ return n==='Alta'?'<span class="badge badge-green">Alta</span>':n==='Média'?'<span class="badge badge-gold">Média</span>':'<span class="badge badge-gray">Baixa</span>'; }
-
-function filterMapa(q){
-  const f = q.toLowerCase();
-  renderMapaTable(mapaData.filter(r=>(r.nome+r.bairro+r.pilar+r.nivel).toLowerCase().includes(f)));
-}
 
 function openMapaModal(reset=true){
   if(reset){ mapaEditId=null; document.getElementById('mapa-modal-title').textContent='Adicionar Ponto'; ['m-nome','m-bairro','m-lat','m-lng','m-desc','m-foto-url'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; }); document.getElementById('m-foto-preview').innerHTML=''; document.getElementById('m-nivel').value='Alta'; document.getElementById('m-pilar').value='P1 Ponto Estratégico'; document.getElementById('m-ativo').value='true'; }
@@ -716,7 +742,7 @@ async function saveMapa(){
     else { ({error:err} = await sb.from('mapa_oportunidades').insert(payload)); }
     if(err) throw err;
     toast(mapaEditId?'Ponto atualizado!':'Ponto adicionado!');
-    closeMapaModal(); loadMapa();
+    closeMapaModal(); await loadMapa();
   } catch(e){ toast('Erro: '+e.message,'error'); }
   finally { btn.disabled=false; btn.textContent='Salvar Ponto'; }
 }
@@ -726,7 +752,7 @@ function deleteMapa(id, nome){
     const {error} = await sb.from('mapa_oportunidades').delete().eq('id',id);
     if(error){ toast('Erro: '+error.message,'error'); return; }
     toast('Ponto excluído.');
-    loadMapa();
+    await loadMapa();
   });
 }
 
@@ -862,26 +888,13 @@ async function saveAula(){
 // ═══════════════════════════════════════════
 // 3. ENCONTROS
 // ═══════════════════════════════════════════
-let encData = [], encEditId = null;
-const TEMAS = [
-  'Imersão 4P — Apresentação do método e da turma','Ecossistema do imóvel na planta — visão geral',
-  'Como identificar o P1 Ponto Estratégico','Análise de mercado — Baixada Santista ao vivo',
-  'P2 Projeto Validado — due diligence na prática','Negociação com incorporadoras — estratégias ao vivo',
-  'Case real: operação completa do zero ao lucro','P3 Posição Antecipada — timing de entrada',
-  'Gestão de carteira — múltiplos ativos simultâneos','Saída estratégica — quando e como vender',
-  'Tributação e estrutura jurídica básica','Financiamento e uso de FGTS na estratégia',
-  'Parcerias e co-investimento — como estruturar','Alavancagem patrimonial com imóvel na planta',
-  'Análise técnica de plantas e memoriais','Riscos e como mitigá-los em cada etapa',
-  'Case ao vivo: análise de oportunidade real','Escala — de R$200k a R$1M de patrimônio',
-  'Mentalidade do investidor patrimonial','Gestão de tempo e decisão sob pressão',
-  'Revisão geral — dúvidas abertas da turma','Planejamento individual — próximos 12 meses',
-  'Oportunidade estratégica do 4º trimestre','Encerramento da turma — retrospectiva e próximos passos',
-];
+let encData = [];
 
 async function loadEncontros(){
   const tbody = document.getElementById('enc-tbody');
   tbody.innerHTML='<tr class="loading-row"><td colspan="7"><span class="spinner"></span>Carregando...</td></tr>';
-  const {data} = await sb.from('encontros').select('*').order('data',{ascending:true,nullsFirst:false});
+  const {data, error} = await sb.from('encontros').select('*').order('numero',{ascending:true,nullsFirst:false});
+  if(error){ tbody.innerHTML=`<tr class="loading-row"><td colspan="7" style="color:var(--danger)">Erro: ${error.message}</td></tr>`; return; }
   encData = data||[];
   const hoje = new Date().toISOString().slice(0,10);
   const done = encData.filter(e=>e.data&&e.data<hoje).length;
@@ -889,57 +902,73 @@ async function loadEncontros(){
   document.getElementById('enc-total').textContent = encData.length;
   document.getElementById('enc-done').textContent = done;
   document.getElementById('enc-future').textContent = future;
-  const hoje2 = hoje;
-  tbody.innerHTML = TEMAS.map((t,i)=>{
-    const enc = encData[i]||null;
-    const d = enc?.data||null;
-    const st = enc?.status||'agendado';
+  if(!encData.length){
+    tbody.innerHTML='<tr class="loading-row"><td colspan="7" style="color:var(--text-dim)">Nenhum encontro cadastrado. Clique em + Novo Encontro para começar.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = encData.map(enc=>{
+    const d = enc.data||null;
+    const st = enc.status||'agendado';
     const stBadge = st==='realizado'?'<span class="badge badge-green">Realizado</span>':st==='cancelado'?'<span class="badge badge-red">Cancelado</span>':'<span class="badge badge-gold">Agendado</span>';
-    const linkHtml = enc?.link?`<a href="${enc.link}" target="_blank" style="color:var(--gold);font-size:11px">🔗 Abrir</a>`:'<span style="color:var(--text-dim);font-size:11px">—</span>';
+    const linkHtml = enc.link?`<a href="${enc.link}" target="_blank" style="color:var(--gold);font-size:11px">🔗 Abrir</a>`:'<span style="color:var(--text-dim);font-size:11px">—</span>';
+    const num = enc.numero||'—';
     return `<tr>
-      <td style="font-weight:700;color:var(--gold)">E${String(i+1).padStart(2,'0')}</td>
-      <td style="font-size:12px;max-width:240px">${enc?.titulo||t}</td>
+      <td style="font-weight:700;color:var(--gold)">E${String(num).padStart(2,'0')}</td>
+      <td style="font-size:12px;max-width:220px">${escHtml(enc.titulo||'—')}</td>
       <td>${d?fmtDate(d):'<span style="color:var(--text-dim)">—</span>'}</td>
-      <td>${enc?.hora||'<span style="color:var(--text-dim)">—</span>'}</td>
+      <td>${enc.hora||'<span style="color:var(--text-dim)">—</span>'}</td>
       <td>${stBadge}</td>
       <td>${linkHtml}</td>
-      <td><button class="btn btn-sm btn-outline" onclick="openEncModal(${i},'${escHtml(t)}')">Editar</button></td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-sm btn-outline" onclick="openEncModal('${enc.id}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteEncontro('${enc.id}',${num})">Excluir</button>
+      </td>
     </tr>`;
   }).join('');
 }
 
-function openEncModal(idx, tema){
-  encEditId = idx;
-  const enc = encData[idx]||{};
-  document.getElementById('enc-modal-title').textContent=`E${String(idx+1).padStart(2,'0')} — Editar`;
-  document.getElementById('enc-modal-info').textContent=enc.titulo||tema;
-  document.getElementById('enc-data').value=enc.data||'';
-  document.getElementById('enc-hora').value=enc.hora||'';
-  document.getElementById('enc-link').value=enc.link||'';
-  document.getElementById('enc-status').value=enc.status||'agendado';
-  document.getElementById('enc-gravacao').value=enc.link_gravacao||enc.gravacao||'';
+function openEncModal(id){
+  const enc = id ? encData.find(e=>e.id===id) : null;
+  document.getElementById('enc-modal-title').textContent = enc ? `Editar E${String(enc.numero||'').padStart(2,'0')}` : 'Novo Encontro';
+  document.getElementById('enc-edit-id').value = enc?.id||'';
+  document.getElementById('enc-numero').value = enc?.numero||'';
+  document.getElementById('enc-tema').value = enc?.titulo||'';
+  document.getElementById('enc-data').value = enc?.data||'';
+  document.getElementById('enc-hora').value = enc?.hora||'';
+  document.getElementById('enc-link').value = enc?.link||'';
+  document.getElementById('enc-status').value = enc?.status||'agendado';
+  document.getElementById('enc-gravacao').value = enc?.link_gravacao||'';
   document.getElementById('enc-modal').classList.add('open');
 }
 function closeEncModal(){ document.getElementById('enc-modal').classList.remove('open'); }
 
 async function saveEncontro(){
-  const enc = encData[encEditId];
+  const editId = document.getElementById('enc-edit-id').value;
   const payload = {
+    numero: parseInt(document.getElementById('enc-numero').value)||null,
+    titulo: document.getElementById('enc-tema').value.trim()||null,
     data: document.getElementById('enc-data').value||null,
     hora: document.getElementById('enc-hora').value||null,
     link: document.getElementById('enc-link').value.trim()||null,
     status: document.getElementById('enc-status').value,
     link_gravacao: document.getElementById('enc-gravacao').value.trim()||null,
+    ativo: true,
   };
   let err;
-  if(enc?.id){ ({error:err} = await sb.from('encontros').update(payload).eq('id',enc.id)); }
-  else {
-    const tema = TEMAS[encEditId];
-    ({error:err} = await sb.from('encontros').insert({titulo:tema, ativo:true, numero:encEditId+1, ...payload}));
-  }
+  if(editId){ ({error:err} = await sb.from('encontros').update(payload).eq('id',editId)); }
+  else { ({error:err} = await sb.from('encontros').insert(payload)); }
   if(err){ toast('Erro: '+err.message,'error'); return; }
   toast('Encontro salvo!');
   closeEncModal(); loadEncontros();
+}
+
+async function deleteEncontro(id, num){
+  confirm2('Excluir encontro', `Deseja excluir o encontro E${String(num).padStart(2,'0')}? Esta ação não pode ser desfeita.`, async()=>{
+    const {error} = await sb.from('encontros').delete().eq('id',id);
+    if(error){ toast('Erro: '+error.message,'error'); return; }
+    toast('Encontro excluído.');
+    loadEncontros();
+  });
 }
 
 // ═══════════════════════════════════════════
@@ -1024,7 +1053,6 @@ async function loadPosts(){
   wrap.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-dim)"><span class="spinner"></span>Carregando...</div>';
   const {data, error} = await sb.from('posts')
     .select('id,user_id,conteudo,likes,fixado,deletado,created_at,is_admin_reply')
-    .eq('grupo','mentoria')
     .is('parent_id',null)
     .order('fixado',{ascending:false})
     .order('created_at',{ascending:false})
@@ -1085,7 +1113,10 @@ async function toggleFixar(id, fixado){
 async function sendAdminReply(parentId){
   const txt=document.getElementById('rt-'+parentId)?.value.trim();
   if(!txt){ toast('Escreva a resposta.','error'); return; }
-  const {error}=await sb.from('posts').insert({conteudo:txt,parent_id:parentId,is_admin_reply:true,grupo:'mentoria',deletado:false,likes:0});
+  const insertPayload={conteudo:txt,parent_id:parentId,is_admin_reply:true,deletado:false,likes:0};
+  // tenta salvar grupo apenas se coluna existir
+  try{ const {error:e}=await sb.from('posts').insert({...insertPayload,grupo:'mentoria'}); if(e&&e.message&&e.message.includes('grupo')){ await sb.from('posts').insert(insertPayload); } else if(e) throw e; return; }catch(ignored){}
+  const {error}=await sb.from('posts').insert(insertPayload);
   if(error){ toast('Erro: '+error.message,'error'); return; }
   toast('Resposta publicada!');
   loadPosts();
