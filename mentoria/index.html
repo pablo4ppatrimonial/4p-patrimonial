@@ -601,7 +601,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
       <!-- ── MAPA ── -->
       <div class="screen" id="screen-mapa">
         <div class="page-title">Mapa de Oportunidades</div>
-        <div class="page-sub">Baixada Santista — regiões estratégicas monitoradas pelo Método 4P</div>
+        <div class="page-sub">Praia Grande SP — empreendimentos reais realizados por Pablo Dantas</div>
         <div class="mapa-wrap">
           <div id="mapa-container"></div>
           <div class="mapa-panel" id="mapa-panel"></div>
@@ -852,13 +852,9 @@ const LEVELS = [
 ];
 
 const MARKERS = [
-  {lat:-24.006,lng:-46.412,nome:'Praia Grande Centro',tipo:'P1 Estratégico',oport:'Alta demanda MCMV',nivel:'Alta',obs:'Maior volume de lançamentos MCMV da Baixada Santista. Liquidez garantida pelo programa federal.'},
-  {lat:-24.021,lng:-46.432,nome:'Praia Grande Guilhermina',tipo:'Valorização',oport:'Zona de valorização ativa',nivel:'Alta',obs:'Faixa nobre com alta liquidez no mercado de revenda. Preços em tendência de alta.'},
-  {lat:-24.035,lng:-46.453,nome:'Praia Grande Ocian',tipo:'P2 Expansão',oport:'Expansão residencial em curso',nivel:'Média',obs:'Bairro em desenvolvimento com potencial de ganho na planta. Infraestrutura avançando.'},
-  {lat:-23.934,lng:-46.332,nome:'Santos Centro',tipo:'Permuta',oport:'Hub comercial — oportunidade de permuta',nivel:'Alta',obs:'Mercado consolidado com oportunidades de permuta e cessão de direitos em andamento.'},
-  {lat:-23.963,lng:-46.386,nome:'São Vicente',tipo:'P3 Terreno',oport:'Terrenos com potencial de incorporação',nivel:'Média',obs:'Terrenos amplos a preço acessível para incorporação própria. Boa relação custo/benefício.'},
-  {lat:-24.085,lng:-46.621,nome:'Mongaguá',tipo:'P3 Entrada',oport:'Região emergente — entrada antecipada',nivel:'Média',obs:'Mercado em início de ciclo. Preços ainda abaixo da curva. Oportunidade de entrar cedo.'},
-  {lat:-24.183,lng:-46.788,nome:'Itanhaém',tipo:'P4 Expansão',oport:'Mercado em expansão litoral sul',nivel:'Média',obs:'Expansão do litoral sul com projetos de médio prazo. Crescimento sustentado da demanda.'},
+  {lat:-24.0089,lng:-46.4089,nome:'Bairro Caiçara',tipo:'Empreendimento Realizado',pilar:'P2 Projeto Validado',nivel:'Alta',descricao:'Operação concluída — terreno transformado em unidades residenciais'},
+  {lat:-24.0312,lng:-46.4398,nome:'Bairro Melvi',tipo:'Empreendimento Realizado',pilar:'P1 Ponto Estratégico',nivel:'Alta',descricao:'Região com alta demanda MCMV — ciclo de valorização ativo'},
+  {lat:-24.0198,lng:-46.4201,nome:'Curva do S',tipo:'Empreendimento Realizado',pilar:'P3 Posição Antecipada',nivel:'Alta',descricao:'Entrada antecipada antes da valorização — resultado acima do esperado'},
 ];
 
 // ── ESTADO ──
@@ -1273,7 +1269,7 @@ function salvarPatrimonio(){
 function initMapa(){
   if(mapInit){if(mapObj)mapObj.invalidateSize();return;}
   mapInit=true;
-  const map=L.map('mapa-container',{zoomControl:true,scrollWheelZoom:true}).setView([-24.0,-46.4],11);
+  const map=L.map('mapa-container',{zoomControl:true,scrollWheelZoom:true}).setView([-24.015,-46.430],13);
   mapObj=map;
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
     attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
@@ -1290,23 +1286,24 @@ function initMapa(){
   MARKERS.forEach(m=>{
     const marker=L.marker([m.lat,m.lng],{icon:goldIcon}).addTo(map);
     marker.bindPopup(`
-      <div style="min-width:200px">
+      <div style="min-width:220px">
         <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#C8A951;text-transform:uppercase;margin-bottom:6px">${m.tipo}</div>
-        <div style="font-size:14px;font-weight:700;color:#F0F0F0;margin-bottom:6px">${m.nome}</div>
-        <div style="font-size:12px;color:#999;margin-bottom:8px">${m.oport}</div>
-        <div style="font-size:11px;color:#777;line-height:1.5;margin-bottom:8px">${m.obs}</div>
-        <span style="display:inline-block;background:${m.nivel==='Alta'?'rgba(29,158,117,.15)':'rgba(200,169,81,.1)'};color:${m.nivel==='Alta'?'#2CC494':'#C8A951'};padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700">● ${m.nivel} oportunidade</span>
+        <div style="font-size:14px;font-weight:700;color:#F0F0F0;margin-bottom:4px">${m.nome}</div>
+        <div style="font-size:11px;color:#C8A951;margin-bottom:8px;font-weight:600">${m.pilar}</div>
+        <div style="font-size:11px;color:#aaa;line-height:1.5;margin-bottom:10px">${m.descricao}</div>
+        <span style="display:inline-block;background:rgba(200,169,81,.15);color:#C8A951;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid rgba(200,169,81,.3)">⭐ Case Real Pablo Dantas</span>
       </div>
     `);
   });
 
   const panel=document.getElementById('mapa-panel');
   if(panel){
-    panel.innerHTML=`<div class="sec-label" style="margin-bottom:8px">Regiões monitoradas</div>`+
-    MARKERS.map((m,i)=>`<div class="mapa-opp" onclick="mapObj.flyTo([${m.lat},${m.lng}],14)">
+    panel.innerHTML=`<div class="sec-label" style="margin-bottom:8px">Cases Reais — Praia Grande SP</div>`+
+    MARKERS.map((m,i)=>`<div class="mapa-opp" onclick="mapObj.flyTo([${m.lat},${m.lng}],15)">
       <div class="mapa-opp-name">${m.nome}</div>
-      <div class="mapa-opp-tipo">${m.tipo}</div>
-      <span class="mapa-opp-nivel ${m.nivel==='Alta'?'nivel-alta':'nivel-media'}">● ${m.nivel}</span>
+      <div class="mapa-opp-tipo" style="color:#C8A951">${m.pilar}</div>
+      <div style="font-size:10px;color:#777;margin-top:2px;line-height:1.4">${m.descricao}</div>
+      <span class="mapa-opp-nivel nivel-alta" style="margin-top:6px">● Case Real</span>
     </div>`).join('');
   }
 }
