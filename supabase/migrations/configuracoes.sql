@@ -21,6 +21,6 @@ insert into public.configuracoes (chave, valor) values
   ('upsell_titulo',     'Mentoria 4P Patrimonial'),
   ('descricao_upsell',  'Acompanhamento direto com Pablo Dantas. 24 encontros quinzenais ao vivo, 7 módulos completos e evento presencial em novembro'),
   ('upsell_descricao',  'Acompanhamento direto com Pablo Dantas. 24 encontros quinzenais ao vivo, 7 módulos completos e evento presencial em novembro'),
-  ('whatsapp_link',     'https://wa.me/5511999999999'),
+  ('whatsapp_link',     'https://wa.me/5513992097189'),
   ('portal_etapas',     '[]')
 on conflict (chave) do update set valor = excluded.valor, updated_at = now();
