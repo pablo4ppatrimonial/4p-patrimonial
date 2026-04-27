@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>4P Patrimonial — Admin</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -692,6 +693,7 @@
       </div>
     </nav>
     <div class="sidebar-footer">
+      <a href="mentoria.html" target="_blank" rel="noopener" style="display:block;text-align:center;font-size:12px;color:var(--gold);text-decoration:none;margin-bottom:10px;padding:6px 0;border:1px solid var(--border-gold);border-radius:6px;transition:background .2s" onmouseover="this.style.background='rgba(201,168,76,.08)'" onmouseout="this.style.background=''">→ Admin Mentoria</a>
       <button class="btn-logout" onclick="doLogout()">⟵ Sair</button>
     </div>
   </aside>
@@ -738,8 +740,9 @@
 
       <!-- Recent students -->
       <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
           <div class="card-title">Últimos Cadastros</div>
+          <input type="text" id="recent-search" placeholder="🔍 Filtrar..." oninput="filterRecent(this.value)" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px;width:200px;outline:none">
         </div>
         <div class="table-wrap">
           <table>
@@ -756,6 +759,17 @@
               <tr class="loading-row"><td colspan="5"><span class="spinner"></span>Carregando...</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Growth chart -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-header">
+          <div class="card-title">Crescimento de Alunos</div>
+          <div class="card-sub" style="font-size:11px;color:var(--text-dim)">Novos cadastros por mês</div>
+        </div>
+        <div style="position:relative;height:220px;padding:12px 0 0">
+          <canvas id="growth-chart"></canvas>
         </div>
       </div>
     </div>
@@ -1370,13 +1384,15 @@
   const SUPABASE_URL  = 'https://vfmtntdaohuwitajxyqc.supabase.co';
   const SERVICE_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Njc4ODI5OSwiZXhwIjoyMDkyMzY0Mjk5fQ.uMarVb3dj3MQ0GSsMZArlARUrF6m2I-4aDUe_Kz3lv8';
   const ADMIN_PASS    = '4P@admin2025';
-  const PLAN_PRICES   = { lowticket: 197, premium: 497, vip: 997, trial: 0 };
+  const PLAN_PRICES   = { lowticket: 97, mentoria: 5000, premium: 497, vip: 997, trial: 0 };
 
   const sb = supabase.createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false }
   });
 
   let allAlunos = [];
+  let recentData = [];
+  let growthChart = null;
 
   // ── LOGIN + RATE LIMITING ──
   const MAX_ATTEMPTS  = 5;
@@ -1588,9 +1604,14 @@
     document.getElementById('m-conversao').textContent = conversao;
     document.getElementById('dash-updated').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
 
-    const recent = data.slice(0, 8);
-    document.getElementById('recent-tbody').innerHTML = recent.length
-      ? recent.map(a => `
+    recentData = data.slice(0, 20);
+    renderRecentTbody(recentData);
+    renderGrowthChart(data);
+  }
+
+  function renderRecentTbody(list) {
+    document.getElementById('recent-tbody').innerHTML = list.length
+      ? list.slice(0, 10).map(a => `
         <tr>
           <td>${a.nome || '—'}</td>
           <td style="color:var(--text-muted)">${a.email || '—'}</td>
@@ -1599,6 +1620,62 @@
           <td>${statusBadge(a.blocked, a.status)}</td>
         </tr>`).join('')
       : '<tr class="loading-row"><td colspan="5" style="color:var(--text-dim)">Nenhum aluno cadastrado.</td></tr>';
+  }
+
+  function filterRecent(q) {
+    const term = q.toLowerCase().trim();
+    if (!term) { renderRecentTbody(recentData); return; }
+    renderRecentTbody(recentData.filter(a =>
+      (a.nome||'').toLowerCase().includes(term) ||
+      (a.email||'').toLowerCase().includes(term)
+    ));
+  }
+
+  function renderGrowthChart(data) {
+    const counts = {};
+    data.forEach(a => {
+      if (!a.created_at) return;
+      const d = new Date(a.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    const sortedKeys = Object.keys(counts).sort();
+    const last12 = sortedKeys.slice(-12);
+    const labels = last12.map(k => {
+      const [y, m] = k.split('-');
+      return new Date(+y, +m-1, 1).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+    });
+    const values = last12.map(k => counts[k]);
+
+    const canvas = document.getElementById('growth-chart');
+    if (!canvas) return;
+    if (growthChart) { growthChart.destroy(); growthChart = null; }
+    growthChart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Novos alunos',
+          data: values,
+          borderColor: '#c9a84c',
+          backgroundColor: 'rgba(201,168,76,.12)',
+          borderWidth: 2,
+          pointBackgroundColor: '#c9a84c',
+          pointRadius: 4,
+          fill: true,
+          tension: 0.35,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#1e1e1e' }, ticks: { color: '#888', font: { size: 11 } } },
+          y: { grid: { color: '#1e1e1e' }, ticks: { color: '#888', font: { size: 11 }, precision: 0 }, beginAtZero: true }
+        }
+      }
+    });
   }
 
   // ── ALUNOS ──

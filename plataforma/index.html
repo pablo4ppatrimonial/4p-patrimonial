@@ -459,6 +459,7 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
       </div>
       <div class="nav-item" onclick="navigate('comunidade')" id="nav-comunidade">
         <span class="nav-icon">💬</span> Comunidade
+        <span class="nav-badge" id="nav-comunidade-badge" style="display:none">0</span>
       </div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-section">Investimentos</div>
@@ -495,9 +496,9 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 
         <div class="grid-4">
           <div class="stat-card">
-            <div class="stat-val" id="stat-aulas-val">—</div>
+            <div class="stat-val" id="stat-aulas-val">0/7</div>
             <div class="stat-label">Aulas concluídas</div>
-            <div class="stat-delta" id="stat-aulas-delta">carregando...</div>
+            <div class="stat-delta" id="stat-aulas-delta">Nenhuma concluída ainda</div>
           </div>
           <div class="stat-card">
             <div class="stat-val" id="stat-pts-val">0</div>
@@ -505,12 +506,12 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
             <div class="stat-delta" id="stat-pts-delta">100 pts por aula</div>
           </div>
           <div class="stat-card">
-            <div class="stat-val" id="stat-prog-val">—</div>
+            <div class="stat-val" id="stat-prog-val">0%</div>
             <div class="stat-label">Progresso geral</div>
             <div class="stat-delta">do curso completo</div>
           </div>
           <div class="stat-card">
-            <div class="stat-val" id="stat-proxima-val">—</div>
+            <div class="stat-val" id="stat-proxima-val">Nenhuma</div>
             <div class="stat-label">Próxima sessão</div>
             <div class="stat-delta" id="stat-proxima-delta">carregando...</div>
           </div>
@@ -533,8 +534,8 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
           </div>
         </div>
 
-        <div class="section-label">Continue de onde parou</div>
-        <div class="card" style="cursor:pointer;margin-bottom:20px" onclick="navigate('aulas')">
+        <div class="section-label" id="dash-continue-label">Continue de onde parou</div>
+        <div class="card" id="dash-continue-card" style="cursor:pointer;margin-bottom:20px" onclick="navigate('aulas')">
           <div style="display:flex;align-items:center;gap:16px">
             <div style="width:54px;height:54px;background:var(--dark4);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🎓</div>
             <div style="flex:1">
@@ -543,7 +544,7 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
               <div class="card-sub" id="dash-continue-sub">Clique para continuar</div>
               <div class="prog-wrap" style="margin:6px 0 0"><div class="prog-fill" id="dash-continue-fill" style="width:0%"></div></div>
             </div>
-            <button class="btn btn-gold btn-sm">Continuar</button>
+            <button class="btn btn-gold btn-sm" id="dash-continue-btn">Continuar</button>
           </div>
         </div>
 
@@ -922,9 +923,16 @@ sb.auth.onAuthStateChange((event, session) => {
 async function loadUserData() {
   if (!currentUser) return;
   const meta = currentUser.user_metadata || {};
-  const nome = meta.nome || meta.nome_completo?.split(' ')[0] || 'Investidor';
-  const sobrenome = meta.sobrenome || '';
+  let nome = meta.nome || meta.nome_completo?.split(' ')[0] || 'Investidor';
+  let sobrenome = meta.sobrenome || '';
   const email = currentUser.email || '';
+
+  // Prefer profiles.nome from DB
+  try {
+    const { data: prof } = await sb.from('profiles').select('nome').eq('id', currentUser.id).maybeSingle();
+    if (prof?.nome) nome = prof.nome.split(' ')[0];
+  } catch (_) {}
+
   const initials = (nome[0] || 'P').toUpperCase();
 
   document.getElementById('avatarBtn').textContent = initials;
@@ -942,6 +950,7 @@ async function loadUserData() {
   document.getElementById('p-email').value = email;
 
   await loadProgresso();
+  checkComunidadeReplies();
 }
 
 // ── PROGRESSO REAL ──
@@ -1004,12 +1013,22 @@ function updateProgressUI(totalDone) {
   setW('dash-prog-fill', `${pct}%`);
   set('dash-prog-text', `${totalDone} de ${total} aulas concluídas`);
 
-  // Card "Continue de onde parou"
+  // Card "Continue de onde parou" / "Comece agora"
+  const contLabel = document.getElementById('dash-continue-label');
+  const contBtn   = document.getElementById('dash-continue-btn');
   if (aulaContinuar) {
     set('dash-continue-badge', `AULA ${aulaContinuar.id}`);
     set('dash-continue-title', aulaContinuar.titulo);
-    set('dash-continue-sub', aulaContinuar.dur + (totalDone > 0 ? ' · Continue de onde parou' : ' · Comece agora'));
     setW('dash-continue-fill', `${pct}%`);
+    if (totalDone === 0) {
+      if (contLabel) contLabel.textContent = 'Comece agora';
+      set('dash-continue-sub', 'Sua jornada patrimonial começa aqui');
+      if (contBtn) contBtn.textContent = 'Começar';
+    } else {
+      if (contLabel) contLabel.textContent = 'Continue de onde parou';
+      set('dash-continue-sub', aulaContinuar.dur + ' · Continue de onde parou');
+      if (contBtn) contBtn.textContent = 'Continuar';
+    }
   }
 
   // Sidebar de aulas
@@ -1037,7 +1056,12 @@ function navigate(screen) {
   if (screen === 'ranking') loadRanking();
   if (screen === 'portal') loadPortal();
   if (screen === 'calculadora') updateCalc();
-  if (screen === 'comunidade') loadPosts();
+  if (screen === 'comunidade') {
+    loadPosts();
+    localStorage.setItem('4p_comunidade_seen', Date.now().toString());
+    const cb = document.getElementById('nav-comunidade-badge');
+    if (cb) cb.style.display = 'none';
+  }
   // mentoria é página estática de apresentação — sem chamadas ao DB
 }
 
@@ -1242,7 +1266,8 @@ function renderPlayerMain() {
     <div style="background:linear-gradient(135deg,#1a1200,#0d0a00);border:1px solid rgba(201,168,76,.2);border-radius:var(--r);padding:18px;text-align:center">
       <div style="font-size:22px;margin-bottom:8px">🏆</div>
       <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--gold);margin-bottom:4px">Curso concluído!</div>
-      <div style="font-size:13px;color:var(--text3)">Parabéns por completar todas as aulas do Método 4P.</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:16px">Parabéns por completar todas as aulas do Método 4P.</div>
+      <button class="btn btn-gold btn-sm" onclick="gerarCertificado()">🏆 Gerar Certificado</button>
     </div>`}
   `;
 }
@@ -1912,6 +1937,96 @@ function closePopup() {
   const id = overlay.dataset.pid;
   if (id) localStorage.setItem(`popup_${id}_visto`, String(Date.now()));
   overlay.classList.remove('open');
+}
+
+// ── COMMUNITY REPLY BADGE ──
+async function checkComunidadeReplies() {
+  if (!currentUser) return;
+  try {
+    const { data: myPosts } = await sb.from('posts')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .is('parent_id', null)
+      .eq('deletado', false);
+    if (!myPosts || !myPosts.length) return;
+    const myPostIds = myPosts.map(p => p.id);
+    const lastSeen = parseInt(localStorage.getItem('4p_comunidade_seen') || '0', 10);
+    const lastSeenISO = new Date(lastSeen || 0).toISOString();
+    const { data: replies } = await sb.from('posts')
+      .select('id')
+      .in('parent_id', myPostIds)
+      .neq('user_id', currentUser.id)
+      .eq('deletado', false)
+      .gt('created_at', lastSeenISO);
+    const count = (replies || []).length;
+    const badge = document.getElementById('nav-comunidade-badge');
+    if (badge) {
+      badge.textContent = count > 9 ? '9+' : count;
+      badge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+  } catch (_) {}
+}
+
+// ── CERTIFICADO ──
+function gerarCertificado() {
+  const titleEl = document.getElementById('welcome-title');
+  const nome = titleEl ? titleEl.textContent.replace(/^Bem-vindo[a]?,\s*/, '') : (currentUser?.email || 'Aluno');
+  const data = new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
+  const win = window.open('', '_blank');
+  if (!win) { toast('Habilite pop-ups para gerar o certificado.', 'error'); return; }
+  win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Certificado — Método 4P Patrimonial</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Inter',sans-serif;padding:30px 20px}
+  .print-btn{margin-bottom:20px;padding:10px 28px;background:#c9a84c;color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:14px;letter-spacing:.5px}
+  .cert{width:850px;max-width:100%;padding:64px 80px;text-align:center;background:linear-gradient(150deg,#0d0d0d,#1a1200);color:#e8e8e8;border:2px solid #c9a84c;border-radius:14px;position:relative}
+  .cert::before{content:'';position:absolute;inset:8px;border:1px solid rgba(201,168,76,.25);border-radius:10px;pointer-events:none}
+  .cert-logo{font-family:'DM Serif Display',serif;font-size:20px;color:#c9a84c;letter-spacing:3px;margin-bottom:36px}
+  .cert-pretitle{font-size:10px;font-weight:600;letter-spacing:4px;color:#8a6e2f;text-transform:uppercase;margin-bottom:10px}
+  .cert-headline{font-family:'DM Serif Display',serif;font-size:36px;color:#e8e8e8;margin-bottom:20px}
+  .cert-body{font-size:15px;color:#999;margin-bottom:6px}
+  .cert-nome{font-family:'DM Serif Display',serif;font-size:40px;color:#c9a84c;margin:12px 0 20px}
+  .cert-curso{font-size:17px;color:#e8e8e8;font-weight:600;margin-bottom:32px}
+  .cert-divider{width:60px;height:2px;background:#c9a84c;margin:0 auto 28px}
+  .cert-data{font-size:12px;color:#666;margin-bottom:48px}
+  .cert-line{width:220px;height:1px;background:#333;margin:0 auto 8px}
+  .cert-assname{font-family:'DM Serif Display',serif;font-size:18px;color:#e8e8e8}
+  .cert-asscargo{font-size:11px;color:#777;letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+  @media print{
+    body{padding:0}
+    .print-btn{display:none}
+    .cert{background:white;color:#111;border-color:#c9a84c;width:100%}
+    .cert-logo,.cert-headline,.cert-nome{color:#8a6e2f}
+    .cert-body,.cert-data{color:#555}
+    .cert-assname{color:#111}
+    .cert-curso{color:#222}
+    .cert-pretitle{color:#8a6e2f}
+  }
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+<div class="cert">
+  <div class="cert-logo">4P PATRIMONIAL</div>
+  <div class="cert-pretitle">Certificado de Conclusão</div>
+  <div class="cert-headline">Certificamos que</div>
+  <div class="cert-nome">${nome}</div>
+  <div class="cert-body">concluiu com êxito o programa</div>
+  <div class="cert-curso">Método 4P Patrimonial</div>
+  <div class="cert-divider"></div>
+  <div class="cert-data">Emitido em ${data}</div>
+  <div class="cert-line"></div>
+  <div class="cert-assname">Pablo Dantas</div>
+  <div class="cert-asscargo">Fundador — 4P Patrimonial</div>
+</div>
+</body>
+</html>`);
+  win.document.close();
 }
 </script>
 </body>
