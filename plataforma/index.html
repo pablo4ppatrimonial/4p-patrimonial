@@ -1418,8 +1418,8 @@ function updateMentoriaStats() {
   const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   let nextLabel = '—';
   if (nextEnc) {
-    const d = new Date(nextEnc.data + 'T12:00:00');
-    nextLabel = d.getDate() + ' ' + meses[d.getMonth()];
+    const d = parseDateLocal(nextEnc.data);
+    if (d) nextLabel = d.getDate() + ' ' + meses[d.getMonth()];
   }
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   set('met-total', total || '0');
@@ -1539,11 +1539,11 @@ function renderEncontros() {
       return '<div style="padding:16px;color:var(--text3);font-size:12px">Nenhum encontro agendado no momento.</div>';
     }
     return futuros.slice(0, maxRows).map((enc, i) => {
-      const d = new Date(enc.data + 'T12:00:00');
-      const dia = d.getDate();
-      const mes = meses[d.getMonth()];
-      const semana = semanas[d.getDay()];
-      const hora = enc.hora ? enc.hora.slice(0,5) + 'h' : '';
+      const d = parseDateLocal(enc.data);
+      const dia = d ? d.getDate() : '—';
+      const mes = d ? meses[d.getMonth()] : '';
+      const semana = d ? semanas[d.getDay()] : '';
+      const hora = enc.hora ? enc.hora.slice(0, 5) + 'h' : '';
       const isLast = i === Math.min(futuros.length, maxRows) - 1;
       return `
         <div class="encontro-row" ${isLast ? 'style="border:0"' : ''}>
@@ -1634,6 +1634,15 @@ async function marcarTodasLidas() {
     notifList.forEach(n => { n.lida = true; });
     renderNotifDropdown();
   } catch (e) { console.error('Erro ao marcar notificações:', e); }
+}
+
+// Parses 'YYYY-MM-DD' as local midnight — new Date('YYYY-MM-DDT12:00:00') is Invalid Date in Safari
+function parseDateLocal(s) {
+  if (!s) return null;
+  const p = String(s).slice(0, 10).split('-');
+  if (p.length !== 3) return null;
+  const d = new Date(+p[0], +p[1] - 1, +p[2]);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 function timeAgo(date) {
