@@ -1709,6 +1709,7 @@
     }
     tbody.innerHTML = list.map(a => {
       const isBlocked = a.blocked || a.status === 'bloqueado';
+      const isMentoria = a.plano === 'mentoria';
       const safeName = (a.nome || 'Aluno').replace(/'/g, "\\'");
       const safeEmail = (a.email || '').replace(/'/g, "\\'");
       return `
@@ -1718,10 +1719,13 @@
         <td>${planBadge(a.plano)}</td>
         <td style="color:var(--text-muted)">${fmtDate(a.created_at)}</td>
         <td>${statusBadge(a.blocked, a.status)}</td>
-        <td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
           ${isBlocked
             ? `<button class="btn btn-sm btn-success" onclick="toggleBlock('${a.id}','${safeEmail}',false,'${safeName}')">✓ Liberar</button>`
             : `<button class="btn btn-sm btn-danger" onclick="toggleBlock('${a.id}','${safeEmail}',true,'${safeName}')">✕ Bloquear</button>`}
+          ${isMentoria
+            ? `<button class="btn btn-sm btn-outline" onclick="toggleMentoria('${a.id}','${safeName}',false)" style="border-color:var(--border);color:var(--text-muted);font-size:11px">⬇️ Reverter LT</button>`
+            : `<button class="btn btn-sm" onclick="toggleMentoria('${a.id}','${safeName}',true)" style="background:rgba(201,168,76,.12);border:1px solid var(--gold);color:var(--gold);font-size:11px">🎓 Ativar Mentoria</button>`}
         </td>
       </tr>`;
     }).join('');
@@ -1758,6 +1762,34 @@
           if (ae) { toast('Erro no Auth: ' + ae.message, 'error'); return; }
 
           toast(`Acesso de ${name} ${block ? 'bloqueado' : 'liberado'} com sucesso.`, block ? 'error' : 'success');
+          loadAlunos();
+          loadDashboard();
+        } catch (e) {
+          toast('Erro inesperado: ' + (e.message || e), 'error');
+        }
+      }
+    );
+  }
+
+  // ── MENTORIA PLAN TOGGLE ──
+  async function toggleMentoria(userId, name, activate) {
+    const newPlano = activate ? 'mentoria' : 'lowticket';
+    const msg = activate
+      ? `Deseja ativar acesso à Mentoria 4P para ${name}? Ele terá acesso completo à mentoria E ao low ticket.`
+      : `Deseja reverter o plano de ${name} para Low Ticket?`;
+    openModal(
+      activate ? '🎓 Ativar Mentoria' : '⬇️ Reverter para Low Ticket',
+      msg,
+      activate ? 'Ativar Mentoria' : 'Reverter',
+      activate ? 'btn-gold' : 'btn-outline',
+      async () => {
+        try {
+          const { error } = await sb.from('profiles').update({ plano: newPlano }).eq('id', userId);
+          if (error) { toast('Erro: ' + error.message, 'error'); return; }
+          toast(
+            activate ? `Acesso à Mentoria ativado para ${name}!` : `Plano de ${name} revertido para Low Ticket.`,
+            activate ? 'success' : ''
+          );
           loadAlunos();
           loadDashboard();
         } catch (e) {
