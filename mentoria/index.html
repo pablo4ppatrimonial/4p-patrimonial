@@ -367,6 +367,14 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .perfil-input:focus{border-color:rgba(200,169,81,.4)}
 .perfil-input:disabled{opacity:.45;cursor:not-allowed}
 .perfil-input-hint{font-size:10px;color:var(--text3);margin-top:2px}
+/* ── COMPROVANTE MODAL ── */
+#comp-modal{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:2000;align-items:center;justify-content:center;padding:20px}
+.comp-box{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.comp-status-pill{border-radius:var(--r-sm);padding:14px;text-align:center;margin-bottom:4px}
+.comp-status-pill.pendente{background:rgba(200,169,81,.08);border:1px solid rgba(200,169,81,.25)}
+.comp-status-pill.aprovado{background:rgba(29,158,117,.08);border:1px solid rgba(29,158,117,.25)}
+.comp-status-pill.reprovado{background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.25)}
+
 .nivel-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(200,169,81,.1);border:1px solid rgba(200,169,81,.25);border-radius:var(--r-full);padding:6px 14px;font-size:12px;font-weight:600;color:var(--gold);margin-top:4px}
 .btn-logout-red{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:none;border:1px solid rgba(224,82,82,.35);border-radius:var(--r-sm);color:var(--red);font-size:13px;font-weight:600;font-family:'Inter',system-ui;cursor:pointer;transition:all var(--trans);margin-top:8px}
 .btn-logout-red:hover{background:rgba(224,82,82,.08);border-color:var(--red)}
@@ -621,13 +629,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
             <div class="next-level-info" id="next-level-info">Declare seu patrimônio abaixo para começar</div>
           </div>
 
-          <div class="patrimonio-form">
-            <label class="pat-label">Declarar patrimônio atual</label>
-            <div class="pat-input-row">
-              <input type="text" class="pat-input" id="pat-input" placeholder="Ex: 1500000" inputmode="numeric">
-              <button class="pat-btn" onclick="salvarPatrimonio()">Salvar</button>
-            </div>
-            <div style="font-size:10px;color:var(--text3);margin-top:8px">Informe o valor total em reais (somente números). Uso exclusivo para fins de ranking interno.</div>
+          <div class="patrimonio-form" id="comp-status-area">
+            <div id="comp-status-display"></div>
+            <button class="pat-btn" style="width:100%;margin-top:10px" onclick="openCompModal()">📸 Enviar Comprovante de Patrimônio</button>
+            <div style="font-size:10px;color:var(--text3);margin-top:8px">Envie extrato, nota ou documento que comprove seu patrimônio. Após aprovação, seu nível será atualizado.</div>
           </div>
 
           <div class="sec-label">Níveis de Investidor</div>
@@ -868,6 +873,25 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   </div>
 </div>
 
+<!-- COMPROVANTE MODAL -->
+<div id="comp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:2000;align-items:center;justify-content:center;padding:20px">
+  <div class="comp-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:15px;font-weight:700;color:var(--gold)">📸 Comprovante de Patrimônio</div>
+      <button onclick="closeCompModal()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Envie um extrato bancário, nota de avaliação de imóvel ou qualquer documento que comprove seu patrimônio atual. O admin irá revisar e aprovar em até 48h.</div>
+    <label style="display:block;font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">VALOR DECLARADO (R$)</label>
+    <input type="number" id="comp-valor" placeholder="Ex: 500000" min="0" style="width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);padding:10px 12px;font-size:14px;box-sizing:border-box;margin-bottom:14px">
+    <label style="display:block;font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">DOCUMENTO / COMPROVANTE</label>
+    <input type="file" id="comp-file" accept="image/*,.pdf" style="width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);padding:10px 12px;font-size:12px;box-sizing:border-box;margin-bottom:14px">
+    <label style="display:block;font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">DESCRIÇÃO (opcional)</label>
+    <textarea id="comp-desc" placeholder="Ex: Extrato Banco do Brasil, imóvel avaliado por R$..." rows="2" style="width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text1);padding:10px 12px;font-size:12px;box-sizing:border-box;resize:none;margin-bottom:18px"></textarea>
+    <button id="comp-submit-btn" onclick="submitComprovante()" style="width:100%;background:var(--gold);color:#0a0a0a;font-weight:700;border:none;border-radius:var(--r-sm);padding:13px;font-size:14px;cursor:pointer">ENVIAR PARA ANÁLISE</button>
+    <div id="comp-modal-msg" style="margin-top:10px;font-size:12px;text-align:center;min-height:16px"></div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -915,33 +939,6 @@ const MODULOS = [
   ]},
 ];
 
-const ENCONTROS_TEMAS = [
-  'Boas-vindas à turma — apresentação de cada mentorado e seus objetivos',
-  'Aplicando o P1 na prática — análise ao vivo de uma região',
-  'Aplicando o P2 — validação de projeto com dados reais',
-  'Leitura de contrato ao vivo — cláusulas que você precisa entender',
-  'Estudo de caso 1 — projeto real analisado do zero',
-  'Decisão de saída — quando vender, transferir ou manter',
-  'Imposto de renda e ganho de capital — perguntas e respostas',
-  'Análise ao vivo de oportunidade trazida por mentorado',
-  'Como funciona o MCMV — oportunidade para o comprador final',
-  'Pessoa física vs pessoa jurídica — quando vale abrir empresa',
-  'Estudo de case 2 — operação de permuta na prática',
-  'Metade do ano — cada mentorado apresenta seu momento atual',
-  'Como montar carteira de ativos imobiliários',
-  'Análise de mercado — Baixada Santista: o que está acontecendo',
-  'Erros que investidores cometem e como o 4P protege',
-  'Reinvestimento — como usar o lucro do primeiro ciclo',
-  'Estudo de case 3 — sociedade de investimento na prática',
-  'Documentação — o que você precisa ter registrado em cada etapa',
-  'Oportunidade estratégica do 4º trimestre — preparação para novembro',
-  'Planejamento patrimonial — pensar em 5 e 10 anos',
-  'Como negociar com construtora — o que você pode pedir',
-  'Preparação para o evento presencial — cada mentorado calcula seu ranking',
-  'Perguntas abertas — espaço livre para o grupo',
-  'Encerramento do ano — balanço, conquistas e próximos ciclos',
-];
-
 const LEVELS = [
   {name:'Bronze I',   tier:'bronze',   icon:'🥉', min:250000,    max:500000,   color:'#CD7F32'},
   {name:'Bronze II',  tier:'bronze',   icon:'🥉', min:500000,    max:1000000,  color:'#CD7F32'},
@@ -969,7 +966,8 @@ const MARKERS = [
 let currentUser = null;
 let completedAulas = new Set();
 let encontrosList = [];
-let patrimonio = parseInt(localStorage.getItem('4p_ment_patrimonio') || '0');
+let patrimonioAprovado = 0;
+let compStatus = null;
 let currentAulaNum = null;
 let mapObj = null;
 let mapInit = false;
@@ -1093,6 +1091,7 @@ async function init(){
     app.style.display='flex';
     app.classList.add('visible');
     await Promise.all([loadProgresso(),loadEncontrosData()]);
+    setupEncontrosRealtime();
     renderDashboard();
     startTimers();
     createParticles();
@@ -1150,7 +1149,7 @@ function navigate(screen){
   closeSidebar();
   if(screen==='modulos')renderModulos();
   if(screen==='encontros')renderEncontros();
-  if(screen==='ranking'){renderRanking();renderLevelsGrid();}
+  if(screen==='ranking'){loadComprovantesStatus();}
   if(screen==='mapa')initMapa();
   if(screen==='comunidade')loadPosts();
   if(screen==='perfil')loadPerfilScreen();
@@ -1323,25 +1322,22 @@ async function toggleConclude(){
 function renderEncontros(){
   const container=document.getElementById('enc-grid');
   const hoje=new Date().toISOString().slice(0,10);
-  const temas=ENCONTROS_TEMAS;
   if(!encontrosList.length){
-    container.innerHTML=temas.map((t,i)=>`<div class="enc-card">
-      <div class="enc-num">E${String(i+1).padStart(2,'0')}</div>
-      <div class="enc-tema">${t}</div>
-      <div class="enc-date">Data a confirmar</div>
-      <span class="enc-status" style="background:rgba(120,120,120,.15);color:#777;border:1px solid #333">Em breve</span>
-    </div>`).join('');
+    container.innerHTML=`<div style="text-align:center;padding:48px 20px;color:var(--text3)">
+      <div style="font-size:36px;margin-bottom:12px">📅</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Encontros em breve</div>
+      <div style="font-size:12px;line-height:1.6">Os encontros ao vivo serão agendados pelo Pablo.<br>Você será notificado quando as datas forem definidas.</div>
+    </div>`;
     return;
   }
-  const html=temas.map((t,i)=>{
-    const enc=encontrosList[i]||null;
-    const data=enc?enc.data:null;
+  const html=encontrosList.map((enc,i)=>{
+    const data=enc.data||null;
     const isPast=data&&data<hoje;
-    const isNext=!isPast&&enc&&enc.data===encontrosList.find(e=>e.data>=hoje)?.data;
+    const isNext=!isPast&&data&&data===encontrosList.find(e=>e.data&&e.data>=hoje)?.data;
     const dateStr=data?new Date(data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}):'Data a confirmar';
     let cdHtml='';
     if(isNext&&nextEncDate){
-      cdHtml=`<div class="enc-card.next .enc-countdown" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+      cdHtml=`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
         <div class="enc-cd-small" id="enc-cd-${i}">
           <div class="enc-cd-block"><div class="enc-cd-num enc-cd-h-${i}">--</div><div class="enc-cd-lbl">h</div></div>
           <div class="enc-sep">:</div>
@@ -1349,15 +1345,15 @@ function renderEncontros(){
           <div class="enc-sep">:</div>
           <div class="enc-cd-block"><div class="enc-cd-num enc-cd-s-${i}">--</div><div class="enc-cd-lbl">s</div></div>
         </div>
-        <button class="btn-enc-enter" onclick="enterSalaEnc('${enc?.link||''}')">ENTRAR NA SALA →</button>
+        <button class="btn-enc-enter" onclick="enterSalaEnc('${enc.link||''}')">ENTRAR NA SALA →</button>
       </div>`;
     }
-    if(isPast&&enc?.link){
+    if(isPast&&enc.link){
       cdHtml=`<button class="btn-enc-replay" onclick="window.open('${enc.link}','_blank')">▶ Ver gravação</button>`;
     }
     return `<div class="enc-card${isNext?' next':''}${isPast?' done':''}">
       <div class="enc-num">E${String(i+1).padStart(2,'0')}</div>
-      <div class="enc-tema">${enc?.titulo||t}</div>
+      <div class="enc-tema">${enc.titulo||'Encontro ao vivo'}</div>
       <div class="enc-date">${dateStr}</div>
       <span class="enc-status ${isPast?'enc-done-badge':isNext?'enc-next-badge':data?'enc-future-badge':''}" style="${(!isPast&&!isNext&&!data)?'background:rgba(120,120,120,.15);color:#777;border:1px solid #333':''}">${isPast?'Concluído':isNext?'Próximo':data?'Agendado':'Em breve'}</span>
       ${cdHtml}
@@ -1378,7 +1374,7 @@ function enterSala(){
 
 // ── RANKING ──
 function renderRanking(){
-  const lv=getLevel(patrimonio);
+  const lv=getLevel(patrimonioAprovado);
   document.getElementById('level-icon-big').textContent=lv.icon;
   set('level-name-big',lv.name);
   set('level-tier-label',lv.tier.charAt(0).toUpperCase()+lv.tier.slice(1));
@@ -1387,23 +1383,23 @@ function renderRanking(){
   const from=lv.level?fmtBRL(lv.level.min):'R$ 0';
   set('lv-from',from);
   set('lv-to',lv.nextLevel?'próximo: '+lv.nextLevel.name+' ('+fmtBRL(lv.nextLevel.min)+')':'Nível máximo');
-  if(lv.nextLevel){
-    const falta=lv.nextLevel.min-patrimonio;
+  if(patrimonioAprovado>0&&lv.nextLevel){
+    const falta=lv.nextLevel.min-patrimonioAprovado;
     set('next-level-info','Faltam '+fmtBRL(falta)+' para '+lv.nextLevel.name);
-  }else{
+  }else if(patrimonioAprovado>0){
     set('next-level-info','🏆 Você atingiu o nível máximo — Diamante II');
+  }else{
+    set('next-level-info','Envie um comprovante de patrimônio para subir de nível');
   }
-  const inp=document.getElementById('pat-input');
-  if(inp&&patrimonio>0)inp.value=patrimonio;
   renderRankBadgeDash();
 }
 
 function renderLevelsGrid(){
-  const lv=getLevel(patrimonio);
+  const lv=getLevel(patrimonioAprovado);
   const grid=document.getElementById('levels-grid');
   if(!grid)return;
   grid.innerHTML=LEVELS.map(l=>{
-    const active=lv.name===l.name;
+    const active=lv.name===l.name&&patrimonioAprovado>0;
     return `<div class="level-card${active?' active':''}">
       <div class="level-card-icon">${l.icon}</div>
       <div class="level-card-name" style="color:${l.color}">${l.name}</div>
@@ -1412,15 +1408,104 @@ function renderLevelsGrid(){
   }).join('');
 }
 
-function salvarPatrimonio(){
-  const inp=document.getElementById('pat-input');
-  if(!inp)return;
-  const val=parseInt(inp.value.replace(/\D/g,''))||0;
-  patrimonio=val;
-  localStorage.setItem('4p_ment_patrimonio',String(val));
-  renderRanking();
-  renderLevelsGrid();
-  showToast('Patrimônio salvo! Nível: '+getLevel(val).name,'success');
+// ── COMPROVANTES ──
+async function loadComprovantesStatus(){
+  if(!currentUser)return;
+  try{
+    const {data}=await sb.from('ranking_comprovantes')
+      .select('*')
+      .eq('user_id',currentUser.id)
+      .order('created_at',{ascending:false})
+      .limit(5);
+    compStatus=(data&&data.length)?data[0]:null;
+    const aprovado=(data||[]).find(r=>r.status==='aprovado');
+    patrimonioAprovado=aprovado?Number(aprovado.valor_declarado):0;
+    renderCompStatus();
+    renderRanking();
+    renderLevelsGrid();
+  }catch(e){console.error('loadComprovantesStatus',e);}
+}
+
+function renderCompStatus(){
+  const el=document.getElementById('comp-status-display');
+  if(!el)return;
+  if(!compStatus){
+    el.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px 0">Nenhum comprovante enviado ainda.</div>';
+    return;
+  }
+  const s=compStatus.status;
+  const cor=s==='aprovado'?'#1d9e75':s==='reprovado'?'#e05252':'#C8A951';
+  const icon=s==='aprovado'?'✅':s==='reprovado'?'❌':'⏳';
+  const label=s==='aprovado'?'Aprovado':s==='reprovado'?'Reprovado':'Em análise';
+  const val=fmtBRL(Number(compStatus.valor_declarado));
+  el.innerHTML=`<div class="comp-status-pill ${s}" style="text-align:center;border-radius:var(--r-sm);padding:14px;margin-bottom:4px;background:${s==='aprovado'?'rgba(29,158,117,.08)':s==='reprovado'?'rgba(224,82,82,.08)':'rgba(200,169,81,.08)'};border:1px solid ${cor}33">
+    <div style="font-size:22px;margin-bottom:4px">${icon}</div>
+    <div style="font-weight:700;color:${cor};font-size:13px">${label}</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:4px">Valor declarado: <strong>${val}</strong></div>
+    ${s==='reprovado'&&compStatus.motivo_reprovacao?`<div style="font-size:11px;color:#e05252;margin-top:6px">Motivo: ${compStatus.motivo_reprovacao}</div>`:''}
+    ${s==='aprovado'?`<div style="font-size:11px;color:var(--text3);margin-top:6px">Nível atualizado com base no patrimônio aprovado</div>`:''}
+  </div>`;
+}
+
+function openCompModal(){
+  const m=document.getElementById('comp-modal');
+  m.style.display='flex';
+  const vi=document.getElementById('comp-valor');
+  if(vi&&patrimonioAprovado>0)vi.value=patrimonioAprovado;
+  document.getElementById('comp-modal-msg').textContent='';
+}
+
+function closeCompModal(){
+  document.getElementById('comp-modal').style.display='none';
+}
+
+async function submitComprovante(){
+  if(!currentUser)return;
+  const valor=parseFloat(document.getElementById('comp-valor').value)||0;
+  const desc=document.getElementById('comp-desc').value.trim();
+  const file=document.getElementById('comp-file').files[0];
+  const msg=document.getElementById('comp-modal-msg');
+  const btn=document.getElementById('comp-submit-btn');
+  if(valor<=0){msg.style.color='#e05252';msg.textContent='Informe o valor declarado.';return;}
+  btn.disabled=true;btn.textContent='Enviando...';msg.textContent='';
+  try{
+    let imagem_url=null;
+    if(file){
+      const ext=file.name.split('.').pop();
+      const path=`${currentUser.id}/${Date.now()}.${ext}`;
+      const {error:upErr}=await sb.storage.from('ranking-comprovantes').upload(path,file,{upsert:true});
+      if(upErr)throw upErr;
+      const {data:urlData}=sb.storage.from('ranking-comprovantes').getPublicUrl(path);
+      imagem_url=urlData?.publicUrl||null;
+    }
+    const {error}=await sb.from('ranking_comprovantes').insert({
+      user_id:currentUser.id,
+      valor_declarado:valor,
+      descricao:desc||null,
+      imagem_url,
+      status:'pendente',
+    });
+    if(error)throw error;
+    msg.style.color='#1d9e75';
+    msg.textContent='Comprovante enviado! Aguarde a análise do admin.';
+    btn.textContent='ENVIAR PARA ANÁLISE';
+    btn.disabled=false;
+    setTimeout(()=>{closeCompModal();loadComprovantesStatus();},2000);
+  }catch(e){
+    msg.style.color='#e05252';
+    msg.textContent='Erro ao enviar: '+(e.message||'tente novamente.');
+    btn.textContent='ENVIAR PARA ANÁLISE';
+    btn.disabled=false;
+  }
+}
+
+function setupEncontrosRealtime(){
+  sb.channel('encontros-changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'encontros'},async()=>{
+      await loadEncontrosData();
+      if(currentScreen==='encontros')renderEncontros();
+    })
+    .subscribe();
 }
 
 // ── MAPA ──

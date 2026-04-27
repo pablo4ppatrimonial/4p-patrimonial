@@ -212,7 +212,7 @@ tbody td{padding:11px 14px;font-size:13px;color:var(--text);vertical-align:middl
       <div class="nav-item" onclick="nav('encontros')" id="n-encontros"><span class="nav-icon">🎯</span> Encontros Ao Vivo</div>
       <div class="nav-item" onclick="nav('alunos')" id="n-alunos"><span class="nav-icon">👥</span> Alunos da Mentoria</div>
       <div class="nav-item" onclick="nav('comunidade')" id="n-comunidade"><span class="nav-icon">💬</span> Comunidade Elite</div>
-      <div class="nav-item" onclick="nav('ranking')" id="n-ranking"><span class="nav-icon">🏆</span> Ranking</div>
+      <div class="nav-item" onclick="nav('ranking')" id="n-ranking"><span class="nav-icon">🏆</span> Ranking <span id="rank-pending-badge" style="display:none;background:#e05252;color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 6px;margin-left:4px">0</span></div>
       <div class="nav-item" onclick="nav('evento')" id="n-evento"><span class="nav-icon">📅</span> Evento Presencial</div>
       <div class="nav-item" onclick="nav('config')" id="n-config"><span class="nav-icon">⚙️</span> Configurações</div>
     </nav>
@@ -319,17 +319,31 @@ tbody td{padding:11px 14px;font-size:13px;color:var(--text);vertical-align:middl
     <!-- ═══ 6. RANKING ═══ -->
     <div class="section" id="s-ranking">
       <div class="page-header">
-        <div><div class="page-title">🏆 <span>Ranking</span> Patrimonial</div><div class="page-sub">Leaderboard dos mentorados por aulas concluídas</div></div>
+        <div><div class="page-title">🏆 <span>Ranking</span> Patrimonial</div><div class="page-sub">Leaderboard e comprovantes dos mentorados</div></div>
         <button class="btn btn-outline" onclick="exportCSV()">⬇ Exportar CSV</button>
       </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Classificação</span></div>
-        <div class="table-wrap">
-          <table><thead><tr>
-            <th>#</th><th>Nome</th><th>Aulas Concluídas</th><th>Pontos</th><th>Nível</th>
-          </tr></thead>
-          <tbody id="ranking-tbody"><tr class="loading-row"><td colspan="5"><span class="spinner"></span>Carregando...</td></tr></tbody>
-          </table>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn btn-gold" id="rank-tab-class" onclick="showRankTab('classificacao')">Classificação</button>
+        <button class="btn btn-outline" id="rank-tab-comp" onclick="showRankTab('comprovantes')">Comprovantes Pendentes <span id="rank-pending-count" style="display:none;background:#e05252;color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 6px;margin-left:4px">0</span></button>
+      </div>
+      <div id="rank-tab-classificacao-wrap">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Classificação</span></div>
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>#</th><th>Nome</th><th>Aulas Concluídas</th><th>Pontos</th><th>Nível</th>
+            </tr></thead>
+            <tbody id="ranking-tbody"><tr class="loading-row"><td colspan="5"><span class="spinner"></span>Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="rank-tab-comprovantes-wrap" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Comprovantes Pendentes de Aprovação</span></div>
+          <div id="comp-admin-list" style="padding:16px">
+            <div style="text-align:center;padding:32px;color:var(--text-muted)"><span class="spinner"></span>Carregando...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1136,14 +1150,37 @@ async function deletePost(id){
 // 6. RANKING
 // ═══════════════════════════════════════════
 let rankData = [];
+let currentRankTab = 'classificacao';
+
+function showRankTab(tab){
+  currentRankTab=tab;
+  document.getElementById('rank-tab-classificacao-wrap').style.display=tab==='classificacao'?'':'none';
+  document.getElementById('rank-tab-comprovantes-wrap').style.display=tab==='comprovantes'?'':'none';
+  document.getElementById('rank-tab-class').className='btn '+(tab==='classificacao'?'btn-gold':'btn-outline');
+  document.getElementById('rank-tab-comp').className='btn '+(tab==='comprovantes'?'btn-gold':'btn-outline');
+  if(tab==='comprovantes')loadComprovantesAdmin();
+}
 
 async function loadRanking(){
   const tbody=document.getElementById('ranking-tbody');
   tbody.innerHTML='<tr class="loading-row"><td colspan="5"><span class="spinner"></span>Carregando...</td></tr>';
   try {
-    const {data,error}=await sb.rpc('get_leaderboard');
+    const [{data,error},{data:pending}]=await Promise.all([
+      sb.rpc('get_leaderboard'),
+      sb.from('ranking_comprovantes').select('id',{count:'exact'}).eq('status','pendente'),
+    ]);
     if(error) throw error;
     rankData=data||[];
+    const pendCount=(pending||[]).length;
+    const badge=document.getElementById('rank-pending-badge');
+    const countEl=document.getElementById('rank-pending-count');
+    if(pendCount>0){
+      if(badge){badge.textContent=pendCount;badge.style.display='inline';}
+      if(countEl){countEl.textContent=pendCount;countEl.style.display='inline';}
+    }else{
+      if(badge)badge.style.display='none';
+      if(countEl)countEl.style.display='none';
+    }
     if(!rankData.length){ tbody.innerHTML='<tr class="loading-row"><td colspan="5">Nenhum dado disponível.</td></tr>'; return; }
     tbody.innerHTML=rankData.map((r,i)=>`
       <tr>
@@ -1154,6 +1191,96 @@ async function loadRanking(){
         <td><span class="badge badge-gold">${getNivelRanking(0)}</span></td>
       </tr>`).join('');
   } catch(e){ tbody.innerHTML=`<tr class="loading-row"><td colspan="5" style="color:var(--danger)">Erro: ${e.message}</td></tr>`; }
+}
+
+async function loadComprovantesAdmin(){
+  const wrap=document.getElementById('comp-admin-list');
+  wrap.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted)"><span class="spinner"></span>Carregando...</div>';
+  try{
+    const {data,error}=await sb.from('ranking_comprovantes')
+      .select('id,user_id,valor_declarado,descricao,imagem_url,status,motivo_reprovacao,created_at')
+      .order('created_at',{ascending:false})
+      .limit(100);
+    if(error)throw error;
+    const list=data||[];
+    if(!list.length){wrap.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted)">Nenhum comprovante enviado ainda.</div>';return;}
+    const uids=[...new Set(list.map(r=>r.user_id))];
+    const {data:profs}=await sb.from('profiles').select('id,nome,email').in('id',uids);
+    const profMap=Object.fromEntries((profs||[]).map(p=>[p.id,p]));
+    const pending=list.filter(r=>r.status==='pendente');
+    const rest=list.filter(r=>r.status!=='pendente');
+    const badge=document.getElementById('rank-pending-badge');
+    const countEl=document.getElementById('rank-pending-count');
+    if(pending.length>0){
+      if(badge){badge.textContent=pending.length;badge.style.display='inline';}
+      if(countEl){countEl.textContent=pending.length;countEl.style.display='inline';}
+    }else{
+      if(badge)badge.style.display='none';
+      if(countEl)countEl.style.display='none';
+    }
+    const renderCard=r=>{
+      const prof=profMap[r.user_id]||{};
+      const nome=prof.nome||prof.email||r.user_id.slice(0,8);
+      const val=Number(r.valor_declarado).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+      const dt=new Date(r.created_at).toLocaleDateString('pt-BR');
+      const cor=r.status==='aprovado'?'#1d9e75':r.status==='reprovado'?'#e05252':'#C8A951';
+      return `<div style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-weight:700;color:var(--text)">${nome}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${dt}</div>
+            <div style="font-size:14px;font-weight:700;color:var(--gold);margin-top:6px">${val}</div>
+            ${r.descricao?`<div style="font-size:12px;color:var(--text-muted);margin-top:4px">${r.descricao}</div>`:''}
+            ${r.imagem_url?`<a href="${r.imagem_url}" target="_blank" style="font-size:12px;color:#7b8cf7;margin-top:6px;display:inline-block">📎 Ver documento</a>`:''}
+          </div>
+          <div style="text-align:right">
+            <span style="display:inline-block;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;background:${cor}22;color:${cor};border:1px solid ${cor}55">${r.status}</span>
+            ${r.motivo_reprovacao?`<div style="font-size:11px;color:#e05252;margin-top:4px">Motivo: ${r.motivo_reprovacao}</div>`:''}
+          </div>
+        </div>
+        ${r.status==='pendente'?`<div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-sm" style="background:#1d9e75;color:#fff;border:none" onclick="approveComp('${r.id}')">✅ Aprovar</button>
+          <button class="btn btn-sm btn-outline" style="border-color:#e05252;color:#e05252" onclick="rejectComp('${r.id}')">❌ Reprovar</button>
+        </div>`:''}
+      </div>`;
+    };
+    let html='';
+    if(pending.length){
+      html+=`<div style="font-size:11px;font-weight:700;color:#C8A951;letter-spacing:1px;margin-bottom:10px">PENDENTES (${pending.length})</div>`;
+      html+=pending.map(renderCard).join('');
+    }
+    if(rest.length){
+      if(pending.length)html+=`<div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin:16px 0 10px">HISTÓRICO</div>`;
+      html+=rest.map(renderCard).join('');
+    }
+    wrap.innerHTML=html;
+  }catch(e){wrap.innerHTML=`<div style="color:var(--danger);padding:16px">Erro: ${e.message}</div>`;}
+}
+
+async function approveComp(id){
+  if(!confirm('Aprovar este comprovante?'))return;
+  const {error}=await sb.from('ranking_comprovantes').update({
+    status:'aprovado',
+    reviewed_at:new Date().toISOString(),
+    reviewed_by:'admin',
+  }).eq('id',id);
+  if(error){toast('Erro ao aprovar: '+error.message,'error');return;}
+  toast('Comprovante aprovado!','success');
+  loadComprovantesAdmin();
+}
+
+async function rejectComp(id){
+  const motivo=window.prompt('Motivo da reprovação (opcional):');
+  if(motivo===null)return;
+  const {error}=await sb.from('ranking_comprovantes').update({
+    status:'reprovado',
+    motivo_reprovacao:motivo||null,
+    reviewed_at:new Date().toISOString(),
+    reviewed_by:'admin',
+  }).eq('id',id);
+  if(error){toast('Erro ao reprovar: '+error.message,'error');return;}
+  toast('Comprovante reprovado.','');
+  loadComprovantesAdmin();
 }
 
 function exportCSV(){
