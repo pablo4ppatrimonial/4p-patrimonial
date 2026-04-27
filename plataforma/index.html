@@ -450,7 +450,7 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
       </div>
       <div class="nav-item" onclick="navigate('mentoria')" id="nav-mentoria">
         <span class="nav-icon">🎯</span> Hub Mentoria
-        <span class="nav-badge green">AO VIVO</span>
+        <span class="nav-badge green" id="hub-ao-vivo-badge" style="display:none">AO VIVO</span>
       </div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-section">Comunidade</div>
@@ -851,8 +851,12 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
               <div class="form-field"><label class="form-label">Nome</label><input class="form-input" id="p-nome" placeholder="Nome"></div>
               <div class="form-field"><label class="form-label">Sobrenome</label><input class="form-input" id="p-sobrenome" placeholder="Sobrenome"></div>
             </div>
-            <div class="form-field"><label class="form-label">E-mail</label><input class="form-input" id="p-email" placeholder="E-mail" type="email"></div>
-            <div class="form-field"><label class="form-label">Telefone</label><input class="form-input" id="p-tel" placeholder="(11) 9 0000-0000" type="tel"></div>
+            <div class="form-field"><label class="form-label">E-mail</label><input class="form-input" id="p-email" placeholder="E-mail" type="email" readonly style="opacity:.6;cursor:not-allowed"></div>
+            <div class="form-field"><label class="form-label">WhatsApp</label><input class="form-input" id="p-whatsapp" placeholder="(00) 00000-0000" type="tel" oninput="maskWA(this)" maxlength="15"></div>
+            <div class="form-row">
+              <div class="form-field"><label class="form-label">Cidade</label><input class="form-input" id="p-cidade" placeholder="Sua cidade"></div>
+              <div class="form-field"><label class="form-label">Profissão</label><input class="form-input" id="p-profissao" placeholder="Sua profissão"></div>
+            </div>
             <button class="btn btn-gold btn-sm" onclick="salvarPerfil()">Salvar alterações</button>
           </div>
           <div>
@@ -927,10 +931,13 @@ async function loadUserData() {
   let sobrenome = meta.sobrenome || '';
   const email = currentUser.email || '';
 
-  // Prefer profiles.nome from DB
+  // Prefer profiles data from DB
   try {
-    const { data: prof } = await sb.from('profiles').select('nome').eq('id', currentUser.id).maybeSingle();
+    const { data: prof } = await sb.from('profiles').select('nome,whatsapp,cidade,profissao').eq('id', currentUser.id).maybeSingle();
     if (prof?.nome) nome = prof.nome.split(' ')[0];
+    if (prof?.whatsapp) { const wEl = document.getElementById('p-whatsapp'); if (wEl) wEl.value = prof.whatsapp; }
+    if (prof?.cidade)   { const cEl = document.getElementById('p-cidade');   if (cEl) cEl.value = prof.cidade; }
+    if (prof?.profissao){ const pEl = document.getElementById('p-profissao'); if (pEl) pEl.value = prof.profissao; }
   } catch (_) {}
 
   const initials = (nome[0] || 'P').toUpperCase();
@@ -993,7 +1000,7 @@ async function loadProgresso() {
 }
 
 function updateProgressUI(totalDone) {
-  const total = AULAS.length;
+  const total = 7;
   const pct = total ? Math.round((totalDone / total) * 100) : 0;
   const pontos = totalDone * 100;
   const aulaContinuar = AULAS.find(a => a.status === 'active') || AULAS[AULAS.length - 1];
@@ -1103,7 +1110,7 @@ function applyConfiguracoes() {
   const upsellDesc  = cfgVal('descricao_upsell','upsell_descricao') || 'Acompanhamento direto com ' + mentorNome + '. Sessões ao vivo quinzenais.';
   const hubTitulo   = cfgVal('hub_titulo')    || 'Mentoria ' + mentorNome;
   const hubDesc     = cfgVal('hub_descricao') || upsellDesc || mentorBio;
-  const hubLink     = cfgVal('hub_link_sessao','whatsapp_link') || 'https://wa.me/5511999999999';
+  const hubLink     = cfgVal('hub_link_sessao','whatsapp_link') || 'https://wa.me/5513999999999';
   const hubModulos  = cfgVal('hub_num_modulos');
 
   const el = id => document.getElementById(id);
@@ -1113,6 +1120,9 @@ function applyConfiguracoes() {
   if (el('mentoria-desc'))   el('mentoria-desc').textContent  = hubDesc;
   if (el('mentoria-wa-btn')) el('mentoria-wa-btn').href       = hubLink;
   if (el('met-modulos') && hubModulos) el('met-modulos').textContent = hubModulos;
+
+  const aovivoBadge = el('hub-ao-vivo-badge');
+  if (aovivoBadge) aovivoBadge.style.display = CFG['hub_ao_vivo'] === 'true' ? '' : 'none';
 }
 
 // ── AULAS DATA (carregado do Supabase) ──
@@ -1348,7 +1358,23 @@ async function loadRanking() {
     if (error) throw error;
     const rows = data || [];
     if (!rows.length) {
-      container.innerHTML = '<div style="padding:24px;text-align:center;font-size:12px;color:var(--text3)">Nenhum resultado ainda. Complete suas primeiras aulas!</div>';
+      const myNome = document.getElementById('rank-me-name')?.textContent || 'Você';
+      const myInit = (myNome[0] || 'V').toUpperCase();
+      container.innerHTML = `
+        <div style="padding:40px 24px;text-align:center">
+          <div style="font-size:48px;margin-bottom:16px">🏆</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold);margin-bottom:8px">Ranking em breve</div>
+          <div style="font-size:13px;color:var(--text3);line-height:1.7;max-width:380px;margin:0 auto 28px">O ranking será atualizado conforme os alunos concluem aulas</div>
+          <div class="rank-item" style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:var(--r)">
+            <div class="rank-pos">—</div>
+            <div class="rank-avatar me">${myInit}</div>
+            <div class="rank-info">
+              <div class="rank-name">${myNome} (você)</div>
+              <div class="rank-meta">0 aulas concluídas</div>
+            </div>
+            <div class="rank-pts" style="font-size:11px;color:var(--text3)">Em breve</div>
+          </div>
+        </div>`;
       return;
     }
     const posClass = p => p === 1 ? 'top1' : p === 2 ? 'top2' : p === 3 ? 'top3' : '';
@@ -1775,12 +1801,34 @@ async function uploadImage(file) {
   }
 }
 
+function maskWA(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,11);
+  if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+  else if (v.length > 6) v = v.replace(/^(\d{2})(\d{4})(\d*)/,'($1) $2-$3');
+  else if (v.length > 2) v = v.replace(/^(\d{2})(\d*)/,'($1) $2');
+  else if (v.length > 0) v = '(' + v;
+  el.value = v;
+}
+
 // ── PERFIL ──
 async function salvarPerfil() {
-  const nome = document.getElementById('p-nome').value.trim();
-  const sobrenome = document.getElementById('p-sobrenome').value.trim();
+  const nome     = document.getElementById('p-nome').value.trim();
+  const sobrenome= document.getElementById('p-sobrenome').value.trim();
+  const whatsapp = document.getElementById('p-whatsapp')?.value.trim() || '';
+  const cidade   = document.getElementById('p-cidade')?.value.trim() || '';
+  const profissao= document.getElementById('p-profissao')?.value.trim() || '';
+
+  if (!nome) { toast('Nome é obrigatório.','error'); return; }
+
   const { error } = await sb.auth.updateUser({ data: { nome, sobrenome, nome_completo: nome + ' ' + sobrenome } });
   if (error) { toast('Erro ao salvar: ' + error.message,'error'); return; }
+
+  // Save extra fields to profiles table (silently ignores missing columns)
+  try {
+    await sb.from('profiles').update({ nome: nome + (sobrenome ? ' ' + sobrenome : ''), whatsapp, cidade, profissao })
+      .eq('id', currentUser.id);
+  } catch (_) {}
+
   document.getElementById('perfil-nome-display').textContent = nome + ' ' + sobrenome;
   document.getElementById('welcome-title').textContent = 'Bem-vindo, ' + nome;
   document.getElementById('avatarBtn').textContent = nome[0]?.toUpperCase() || 'P';
