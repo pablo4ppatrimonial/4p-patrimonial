@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' unpkg.com cdnjs.cloudflare.com cdn.jsdelivr.net fonts.googleapis.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com fonts.gstatic.com unpkg.com; font-src fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://tiles.stadiamaps.com https://*.basemaps.cartocdn.com">
 <title>Mentoria 4P Patrimonial — Acesso Restrito</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -348,31 +350,66 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .leaflet-popup-tip{background:var(--card)!important}
 .leaflet-popup-content{color:var(--text)!important;font-family:'Inter',system-ui!important;font-size:12px!important}
 
+/* ── MAPA z-index fix ── */
+#mapa-container{z-index:1;position:relative}
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{z-index:1!important}
+.leaflet-top,.leaflet-bottom{z-index:2!important}
+.leaflet-popup{z-index:3!important}
+
+/* ── PERFIL CSS extra ── */
+.perfil-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px}
+.perfil-section-title{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.perfil-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.perfil-field{display:flex;flex-direction:column;gap:6px}
+.perfil-field.full{grid-column:1/-1}
+.perfil-label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.8px;text-transform:uppercase}
+.perfil-input{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);padding:10px 14px;font-size:13px;font-family:'Inter',system-ui;outline:none;transition:border-color var(--trans);width:100%}
+.perfil-input:focus{border-color:rgba(200,169,81,.4)}
+.perfil-input:disabled{opacity:.45;cursor:not-allowed}
+.perfil-input-hint{font-size:10px;color:var(--text3);margin-top:2px}
+.nivel-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(200,169,81,.1);border:1px solid rgba(200,169,81,.25);border-radius:var(--r-full);padding:6px 14px;font-size:12px;font-weight:600;color:var(--gold);margin-top:4px}
+.btn-logout-red{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:none;border:1px solid rgba(224,82,82,.35);border-radius:var(--r-sm);color:var(--red);font-size:13px;font-weight:600;font-family:'Inter',system-ui;cursor:pointer;transition:all var(--trans);margin-top:8px}
+.btn-logout-red:hover{background:rgba(224,82,82,.08);border-color:var(--red)}
+.pat-input-wrap{position:relative;display:flex;align-items:center}
+.pat-input-wrap .perfil-input{padding-left:38px}
+.pat-input-prefix{position:absolute;left:14px;font-size:13px;color:var(--text2);pointer-events:none;font-weight:600}
+
 /* ── MOBILE ── */
-@media(max-width:900px){
-  .sidebar{position:fixed!important;top:var(--topbar);left:0;height:calc(100vh - var(--topbar));z-index:100;transform:translateX(-100%);transition:transform var(--trans);background:rgba(8,8,8,.99)}
+@media(max-width:768px){
+  .sidebar{position:fixed!important;top:0;left:0;height:100vh;z-index:9999!important;transform:translateX(-100%);transition:transform var(--trans);background:rgba(8,8,8,.99)}
   .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{z-index:9998!important}
   .sidebar-overlay.show{display:block}
   .menu-btn{display:flex}
   .content{margin-left:0!important}
-  .screen{padding:16px 18px}
+  .screen{padding:14px 16px}
   .grid-4{grid-template-columns:1fr 1fr!important}
   .grid-3,.grid-2{grid-template-columns:1fr!important}
   .mapa-wrap{grid-template-columns:1fr!important;height:auto}
-  #mapa-container{height:340px}
-  .mapa-panel{max-height:300px}
+  #mapa-container{height:320px}
+  .mapa-panel{max-height:260px}
   .modal-resources{grid-template-columns:1fr!important}
   .perfil-hero{flex-direction:column;text-align:center}
+  .perfil-grid{grid-template-columns:1fr!important}
   .enc-grid{grid-template-columns:1fr!important}
   .levels-grid{grid-template-columns:repeat(2,1fr)!important}
+  .topbar-badge{display:none}
+  .topbar{padding:0 14px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .modal-box{max-height:95vh;border-radius:var(--r) var(--r) 0 0}
+  .calc-tabs{flex-wrap:wrap}
+  .casos-grid{grid-template-columns:1fr!important}
 }
 @media(max-width:480px){
   .grid-4{grid-template-columns:1fr!important}
-  .countdown{gap:6px}
-  .cd-num{font-size:22px}
-  .evento-countdown{gap:8px}
-  .ev-cd-num{font-size:28px}
-  .ev-cd-block{min-width:56px;padding:10px 12px}
+  .countdown{gap:5px}
+  .cd-num{font-size:20px}
+  .evento-countdown{gap:6px}
+  .ev-cd-num{font-size:26px}
+  .ev-cd-block{min-width:52px;padding:8px 10px}
+  .page-title{font-size:18px}
+  .screen{padding:12px}
+  .btn-save{width:100%}
 }
 </style>
 </head>
@@ -691,7 +728,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
       <div class="screen" id="screen-perfil">
         <div class="page-title">Meu Perfil</div>
         <div class="page-sub">Gerencie suas informações de conta.</div>
-        <div class="perfil-hero">
+
+        <!-- Hero -->
+        <div class="perfil-hero" style="margin-bottom:20px">
           <div class="perfil-av-lg" id="perfil-av-lg">M</div>
           <div>
             <div class="perfil-name" id="perfil-nome-disp">Mentorado</div>
@@ -699,25 +738,94 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
             <span class="badge-mentoria">⭐ Mentoria 4P</span>
           </div>
         </div>
-        <div class="card">
-          <div class="form-field">
-            <label class="form-label">Nome</label>
-            <input type="text" class="form-input" id="p-nome" placeholder="Seu nome">
+
+        <!-- Dados pessoais -->
+        <div class="perfil-section">
+          <div class="perfil-section-title">Dados Pessoais</div>
+          <div class="perfil-grid">
+            <div class="perfil-field">
+              <label class="perfil-label">Nome</label>
+              <input type="text" class="perfil-input" id="p-nome" placeholder="Seu nome" maxlength="60">
+            </div>
+            <div class="perfil-field">
+              <label class="perfil-label">Sobrenome</label>
+              <input type="text" class="perfil-input" id="p-sobrenome" placeholder="Seu sobrenome" maxlength="60">
+            </div>
+            <div class="perfil-field">
+              <label class="perfil-label">E-mail</label>
+              <input type="email" class="perfil-input" id="p-email" disabled>
+            </div>
+            <div class="perfil-field">
+              <label class="perfil-label">WhatsApp</label>
+              <input type="tel" class="perfil-input" id="p-whatsapp" placeholder="(11) 99999-9999" maxlength="16" oninput="maskWhatsApp(this)">
+            </div>
+            <div class="perfil-field">
+              <label class="perfil-label">Cidade</label>
+              <input type="text" class="perfil-input" id="p-cidade" placeholder="Sua cidade" maxlength="80">
+            </div>
+            <div class="perfil-field">
+              <label class="perfil-label">Profissão Atual</label>
+              <input type="text" class="perfil-input" id="p-profissao" placeholder="Ex: Engenheiro, Médico..." maxlength="80">
+            </div>
           </div>
-          <div class="form-field">
-            <label class="form-label">Sobrenome</label>
-            <input type="text" class="form-input" id="p-sobrenome" placeholder="Seu sobrenome">
+          <div style="margin-top:16px">
+            <button class="btn-save" onclick="salvarPerfil()" id="btn-salvar-perfil">Salvar alterações</button>
           </div>
-          <div class="form-field">
-            <label class="form-label">E-mail</label>
-            <input type="email" class="form-input" id="p-email" disabled style="opacity:.5;cursor:not-allowed">
-          </div>
-          <div class="form-field">
-            <label class="form-label">Nova senha (deixe em branco para manter)</label>
-            <input type="password" class="form-input" id="p-senha" placeholder="••••••••">
-          </div>
-          <button class="btn-save" onclick="salvarPerfil()">Salvar alterações</button>
         </div>
+
+        <!-- Segurança -->
+        <div class="perfil-section">
+          <div class="perfil-section-title">Segurança da Conta</div>
+          <div class="perfil-grid">
+            <div class="perfil-field">
+              <label class="perfil-label">Nova Senha</label>
+              <input type="password" class="perfil-input" id="p-senha" placeholder="Mínimo 8 caracteres" maxlength="64" oninput="validarSenha()">
+              <span class="perfil-input-hint" id="senha-hint"></span>
+            </div>
+            <div class="perfil-field">
+              <label class="perfil-label">Confirmar Nova Senha</label>
+              <input type="password" class="perfil-input" id="p-senha2" placeholder="Repita a senha" maxlength="64" oninput="validarSenha()">
+              <span class="perfil-input-hint" id="senha2-hint"></span>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn-save" onclick="salvarSenha()" style="background:rgba(200,169,81,.15);border:1px solid rgba(200,169,81,.3);color:var(--gold)">Atualizar senha</button>
+          </div>
+        </div>
+
+        <!-- Patrimônio -->
+        <div class="perfil-section">
+          <div class="perfil-section-title">Patrimônio Declarado</div>
+          <div style="margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6">
+            Informe seu patrimônio atual em imóveis + investimentos para calcular seu nível no ranking.
+          </div>
+          <div class="perfil-field" style="margin-bottom:14px">
+            <label class="perfil-label">Patrimônio Total (R$)</label>
+            <div class="pat-input-wrap">
+              <span class="pat-input-prefix">R$</span>
+              <input type="number" class="perfil-input" id="p-patrimonio" placeholder="Ex: 350000" min="0" step="1000">
+            </div>
+          </div>
+          <div id="perfil-nivel-wrap" style="margin-bottom:14px"></div>
+          <button class="btn-save" onclick="salvarPatrimonioPerfil()">Salvar patrimônio</button>
+        </div>
+
+        <!-- Minha Turma -->
+        <div class="perfil-section">
+          <div class="perfil-section-title">Minha Turma</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:20px">🎓</span>
+              <div>
+                <div style="font-size:14px;font-weight:600;color:var(--gold)">Turma 2026</div>
+                <div style="font-size:12px;color:var(--text2)" id="perfil-entrada-txt">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sair -->
+        <button class="btn-logout-red" onclick="handleLogout()">🚪 Sair da plataforma</button>
       </div>
 
     </div><!-- /content -->
@@ -912,6 +1020,53 @@ function getLevel(p){
   }
 }
 
+// ── SEGURANÇA ──
+
+// Rate limiting
+const _rlCounters = {};
+function rateLimitCheck(key, maxPerMin=10){
+  const now = Date.now();
+  if(!_rlCounters[key]) _rlCounters[key]=[];
+  _rlCounters[key] = _rlCounters[key].filter(t=>now-t<60000);
+  if(_rlCounters[key].length >= maxPerMin) return false;
+  _rlCounters[key].push(now);
+  return true;
+}
+
+// Timeout de inatividade: 30 min
+const INACTIVITY_MS = 30 * 60 * 1000;
+let inactivityTimer = null;
+function resetInactivityTimer(){
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(async()=>{
+    await sb.auth.signOut();
+    window.location.href = '../auth.html?reason=inactivity';
+  }, INACTIVITY_MS);
+}
+['click','keydown','touchstart','mousemove'].forEach(ev=>{
+  document.addEventListener(ev, ()=>resetInactivityTimer(), {passive:true});
+});
+
+// Renovação de sessão a cada 5 min
+setInterval(async()=>{
+  try{
+    const {data:{session}} = await sb.auth.getSession();
+    if(!session){ window.location.href='../auth.html'; return; }
+    await sb.auth.refreshSession();
+  }catch(e){}
+}, 5 * 60 * 1000);
+
+// Sincronização multi-aba via BroadcastChannel
+try{
+  const bc = new BroadcastChannel('4p_mentoria_session');
+  bc.onmessage = e => {
+    if(e.data === 'logout'){ window.location.href='../auth.html'; }
+  };
+  window.addEventListener('beforeunload', ()=>{ /* não enviar logout aqui para não derrubar outras abas */ });
+  const origHandleLogout = typeof handleLogout !== 'undefined' ? handleLogout : null;
+  window._bcChannel = bc;
+}catch(e){}
+
 // ── AUTH ──
 async function init(){
   try{
@@ -941,6 +1096,7 @@ async function init(){
     renderDashboard();
     startTimers();
     createParticles();
+    resetInactivityTimer();
   }catch(e){
     console.error(e);
     document.getElementById('loading').innerHTML='<div style="color:#e05252;font-size:14px">Erro ao carregar. <a href="../auth.html" style="color:#C8A951">Voltar ao login</a></div>';
@@ -997,18 +1153,20 @@ function navigate(screen){
   if(screen==='ranking'){renderRanking();renderLevelsGrid();}
   if(screen==='mapa')initMapa();
   if(screen==='comunidade')loadPosts();
+  if(screen==='perfil')loadPerfilScreen();
+  resetInactivityTimer();
 }
 
 function toggleSidebar(){
   const sb_el=document.getElementById('sidebar');
   const ov=document.getElementById('sidebar-overlay');
-  if(window.innerWidth<=900){
+  if(window.innerWidth<=768){
     sb_el.classList.toggle('open');
     ov.classList.toggle('show',sb_el.classList.contains('open'));
   }
 }
 function closeSidebar(){
-  if(window.innerWidth<=900){
+  if(window.innerWidth<=768){
     document.getElementById('sidebar')?.classList.remove('open');
     document.getElementById('sidebar-overlay')?.classList.remove('show');
   }
@@ -1386,20 +1544,121 @@ async function darLike(id,btn){
 }
 
 // ── PERFIL ──
+function maskWhatsApp(inp){
+  let v=inp.value.replace(/\D/g,'');
+  if(v.length>11)v=v.slice(0,11);
+  if(v.length>6)v=v.replace(/^(\d{2})(\d{5})(\d{0,4}).*/,'($1) $2-$3');
+  else if(v.length>2)v=v.replace(/^(\d{2})(\d{0,5}).*/,'($1) $2');
+  else if(v.length)v=v.replace(/^(\d{0,2}).*/,'($1');
+  inp.value=v;
+}
+
+function validarSenha(){
+  const s1=document.getElementById('p-senha').value;
+  const s2=document.getElementById('p-senha2').value;
+  const h1=document.getElementById('senha-hint');
+  const h2=document.getElementById('senha2-hint');
+  if(!s1){h1.textContent='';h2.textContent='';return true;}
+  const ok=/^(?=.*[a-zA-Z])(?=.*\d).{8,}$/.test(s1);
+  h1.textContent=ok?'✓ Senha válida':'Mínimo 8 caracteres com letras e números';
+  h1.style.color=ok?'var(--green-l)':'var(--red)';
+  if(s2){
+    const match=s1===s2;
+    h2.textContent=match?'✓ Senhas coincidem':'Senhas não coincidem';
+    h2.style.color=match?'var(--green-l)':'var(--red)';
+    return ok&&match;
+  }
+  return ok;
+}
+
+function sanitize(str){
+  return String(str||'').replace(/<[^>]*>/g,'').replace(/[<>"'&;]/g,'').trim();
+}
+
 async function salvarPerfil(){
-  if(!currentUser)return;
-  const nome=document.getElementById('p-nome')?.value.trim()||'';
-  const sobrenome=document.getElementById('p-sobrenome')?.value.trim()||'';
-  const senha=document.getElementById('p-senha')?.value.trim()||'';
+  if(!currentUser){return;}
+  if(!rateLimitCheck('salvarPerfil')){showToast('Muitas tentativas. Aguarde 1 minuto.','error');return;}
+  const btn=document.getElementById('btn-salvar-perfil');
+  btn.disabled=true;btn.textContent='Salvando...';
   try{
-    const upd={data:{nome,sobrenome}};
-    if(senha)upd.password=senha;
-    await sb.auth.updateUser(upd);
+    const nome=sanitize(document.getElementById('p-nome')?.value||'');
+    const sobrenome=sanitize(document.getElementById('p-sobrenome')?.value||'');
+    const whatsapp=sanitize(document.getElementById('p-whatsapp')?.value||'');
+    const cidade=sanitize(document.getElementById('p-cidade')?.value||'');
+    const profissao=sanitize(document.getElementById('p-profissao')?.value||'');
+    const nomeCompleto=(nome+' '+sobrenome).trim();
+    await sb.auth.updateUser({data:{nome,sobrenome}});
+    await sb.from('profiles').update({nome:nomeCompleto,whatsapp,cidade,profissao}).eq('id',currentUser.id);
+    set('perfil-nome-disp',nomeCompleto||nome||'Mentorado');
     showToast('Perfil salvo com sucesso!','success');
-  }catch(e){showToast('Erro ao salvar perfil.','error');}
+  }catch(e){showToast('Erro ao salvar: '+e.message,'error');}
+  finally{btn.disabled=false;btn.textContent='Salvar alterações';}
+}
+
+async function salvarSenha(){
+  if(!currentUser)return;
+  if(!rateLimitCheck('salvarSenha')){showToast('Muitas tentativas. Aguarde 1 minuto.','error');return;}
+  const s1=document.getElementById('p-senha').value;
+  const s2=document.getElementById('p-senha2').value;
+  if(!s1){showToast('Digite a nova senha.','error');return;}
+  if(!validarSenha()){showToast('Corrija os erros na senha.','error');return;}
+  try{
+    await sb.auth.updateUser({password:s1});
+    document.getElementById('p-senha').value='';
+    document.getElementById('p-senha2').value='';
+    document.getElementById('senha-hint').textContent='';
+    document.getElementById('senha2-hint').textContent='';
+    showToast('Senha atualizada!','success');
+  }catch(e){showToast('Erro ao atualizar senha: '+e.message,'error');}
+}
+
+async function salvarPatrimonioPerfil(){
+  if(!currentUser)return;
+  if(!rateLimitCheck('salvarPatrimonio')){showToast('Muitas tentativas.','error');return;}
+  const val=parseInt(document.getElementById('p-patrimonio')?.value||'0')||0;
+  patrimonio=val;
+  localStorage.setItem('4p_ment_patrimonio',String(val));
+  try{
+    await sb.from('profiles').update({patrimonio:val}).eq('id',currentUser.id);
+    renderPerfilNivel();
+    showToast('Patrimônio salvo!','success');
+  }catch(e){showToast('Salvo localmente.','');} // fallback sem erro se coluna não existe
+}
+
+function renderPerfilNivel(){
+  const wrap=document.getElementById('perfil-nivel-wrap');
+  if(!wrap)return;
+  const lv=getLevel(patrimonio);
+  if(!lv)return;
+  wrap.innerHTML=`<div class="nivel-chip">${lv.icon} ${lv.name}</div>${lv.nextLevel?`<div style="font-size:11px;color:var(--text3);margin-top:6px">Próximo nível: ${lv.nextLevel.name} — ${fmtBRLFull(lv.nextLevel.min)}</div>`:''}`;
+}
+
+function loadPerfilScreen(){
+  if(!currentUser)return;
+  const meta=currentUser.user_metadata||{};
+  const nome=meta.nome||'';
+  const sob=meta.sobrenome||'';
+  document.getElementById('p-nome').value=nome;
+  document.getElementById('p-sobrenome').value=sob;
+  document.getElementById('p-email').value=currentUser.email||'';
+  // load from profiles
+  sb.from('profiles').select('whatsapp,cidade,profissao,created_at,patrimonio').eq('id',currentUser.id).maybeSingle().then(({data})=>{
+    if(!data)return;
+    if(document.getElementById('p-whatsapp'))document.getElementById('p-whatsapp').value=data.whatsapp||'';
+    if(document.getElementById('p-cidade'))document.getElementById('p-cidade').value=data.cidade||'';
+    if(document.getElementById('p-profissao'))document.getElementById('p-profissao').value=data.profissao||'';
+    if(data.patrimonio&&data.patrimonio>0){patrimonio=data.patrimonio;localStorage.setItem('4p_ment_patrimonio',String(data.patrimonio));}
+    if(document.getElementById('p-patrimonio'))document.getElementById('p-patrimonio').value=patrimonio||'';
+    if(data.created_at){
+      const d=new Date(data.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+      set('perfil-entrada-txt','Membro desde '+d);
+    }
+  });
+  renderPerfilNivel();
 }
 
 async function handleLogout(){
+  try{ window._bcChannel?.postMessage('logout'); }catch(e){}
   await sb.auth.signOut();
   window.location.href='../auth.html';
 }
