@@ -989,6 +989,27 @@ function fmtBRLFull(v){
 
 function pad2(n){return String(n).padStart(2,'0')}
 
+// Parses 'YYYY-MM-DD' as local midnight — avoids Safari Invalid Date with ISO strings lacking timezone
+function parseDateLocal(s){
+  if(!s)return null;
+  const p=String(s).slice(0,10).split('-');
+  if(p.length!==3)return null;
+  const d=new Date(+p[0],+p[1]-1,+p[2]);
+  return isNaN(d.getTime())?null:d;
+}
+// Parses 'YYYY-MM-DD' + Supabase time string (handles '+00' suffix from timetz columns)
+function parseDateTimeLocal(dateStr,horaStr){
+  const d=parseDateLocal(dateStr);
+  if(!d)return null;
+  const t=String(horaStr||'19:00:00').slice(0,8).split(':');
+  d.setHours(+t[0]||0,+t[1]||0,+t[2]||0,0);
+  return d;
+}
+function fmtDatePT(d,opts){
+  if(!d)return 'Data a confirmar';
+  return d.toLocaleDateString('pt-BR',opts||{day:'2-digit',month:'short',year:'numeric'});
+}
+
 function timeAgo(d){
   const diff=Math.floor((Date.now()-new Date(d))/1000);
   if(diff<60)return 'agora mesmo';
@@ -1133,7 +1154,7 @@ async function loadEncontrosData(){
     const prox=encontrosList.find(e=>e.data>=hoje);
     if(prox){
       const hora=prox.hora||'19:00:00';
-      nextEncDate=new Date(prox.data+'T'+hora+'-03:00');
+      nextEncDate=parseDateTimeLocal(prox.data,hora);
     }
   }catch(e){encontrosList=[];}
 }
@@ -1187,8 +1208,8 @@ function renderDashboard(){
   const hoje=new Date().toISOString().slice(0,10);
   const prox=encontrosList.find(e=>e.data>=hoje);
   if(prox){
-    const d=new Date(prox.data+'T12:00:00');
-    set('stat-enc',d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}));
+    const d=parseDateLocal(prox.data);
+    set('stat-enc',fmtDatePT(d,{day:'2-digit',month:'short'}));
     set('stat-enc-sub',prox.titulo||'Encontro ao vivo');
     set('next-live-name',prox.titulo||'Encontro Semanal');
     document.getElementById('btn-enter-sala').onclick=()=>{if(prox.link)window.open(prox.link,'_blank');else showToast('Link ainda não disponível.','');};
@@ -1231,10 +1252,10 @@ function renderTimeline(){
     const next2=e._next;
     const cls=past2?'done':next2?'next':'future';
     const badge=past2?'<span class="tl-status tl-done">Realizado</span>':next2?'<span class="tl-status tl-next">Próximo</span>':'<span class="tl-status tl-future">Agendado</span>';
-    const d=new Date(e.data+'T12:00:00');
-    const dateStr=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+    const d=parseDateLocal(e.data);
+    const dateStr=fmtDatePT(d,{day:'2-digit',month:'short'});
     const idx=encontrosList.findIndex(x=>x.id===e.id)+1;
-    return `<div class="timeline-item"><div class="tl-dot ${cls}"></div><div class="tl-num">E${String(idx).padStart(2,'0')}</div><div class="tl-title">${e.titulo||ENCONTROS_TEMAS[idx-1]||'Encontro '+idx} <span style="color:var(--text3);font-size:10px">· ${dateStr}</span></div>${badge}</div>`;
+    return `<div class="timeline-item"><div class="tl-dot ${cls}"></div><div class="tl-num">E${String(idx).padStart(2,'0')}</div><div class="tl-title">${e.titulo||'Encontro ao vivo'} <span style="color:var(--text3);font-size:10px">· ${dateStr}</span></div>${badge}</div>`;
   }).join('');
 }
 
@@ -1334,7 +1355,7 @@ function renderEncontros(){
     const data=enc.data||null;
     const isPast=data&&data<hoje;
     const isNext=!isPast&&data&&data===encontrosList.find(e=>e.data&&e.data>=hoje)?.data;
-    const dateStr=data?new Date(data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}):'Data a confirmar';
+    const dateStr=fmtDatePT(parseDateLocal(data));
     let cdHtml='';
     if(isNext&&nextEncDate){
       cdHtml=`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
