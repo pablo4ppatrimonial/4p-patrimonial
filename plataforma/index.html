@@ -679,8 +679,8 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
         </div>
 
         <div class="calc-tabs">
-          <button class="calc-tab active" id="ctab-6m" onclick="setCalcPrazo(6,'6m')">6 meses</button>
-          <button class="calc-tab" id="ctab-1a" onclick="setCalcPrazo(12,'1a')">1 ano</button>
+          <button class="calc-tab" id="ctab-6m" onclick="setCalcPrazo(6,'6m')">6 meses</button>
+          <button class="calc-tab active" id="ctab-1a" onclick="setCalcPrazo(12,'1a')">1 ano</button>
           <button class="calc-tab" id="ctab-3a" onclick="setCalcPrazo(36,'3a')">3 anos</button>
           <button class="calc-tab" id="ctab-5a" onclick="setCalcPrazo(60,'5a')">5 anos</button>
           <button class="calc-tab" id="ctab-10a" onclick="setCalcPrazo(120,'10a')">10 anos</button>
@@ -706,7 +706,7 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
               <div class="calc-cmp-icon">🏗️</div>
               <div>
                 <div class="calc-cmp-label">Método 4P</div>
-                <div class="calc-cmp-sub">47% por ciclo de 6 meses</div>
+                <div class="calc-cmp-sub">47% por ciclo de 12 meses</div>
               </div>
             </div>
             <div class="calc-final-v gold" id="calc-4p-val">—</div>
@@ -1776,7 +1776,7 @@ function toast(msg, type = '') {
 }
 
 // ── CALCULADORA ──
-let calcCapital = 170000, calcMonths = 6;
+let calcCapital = 170000, calcMonths = 12;
 
 function fmtBRL(v) {
   if (v >= 1e9) return 'R$ ' + (v/1e9).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' B';
@@ -1791,7 +1791,7 @@ function bankFinal(cap, months) {
 }
 
 function method4pFinal(cap, months) {
-  return cap * Math.pow(1.47, months / 6);
+  return cap * Math.pow(1.47, months / 12);
 }
 
 function updateCalc() {
