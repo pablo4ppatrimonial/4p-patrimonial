@@ -1179,13 +1179,14 @@ async function loadEncontrosData(){
     const prox=encontrosList.find(e=>e.data&&e.data.substring(0,10)>=hoje);
     if(prox){
       const d=prox.data.substring(0,10);
-      const h=(prox.hora||'19:00').substring(0,5);
+      const h=prox.hora?prox.hora.substring(0,5):'19:00';
       const target=new Date(d+'T'+h+':00-03:00');
       nextEncDate=isNaN(target.getTime())?null:target;
     }else{
       nextEncDate=null;
     }
-  }catch(e){encontrosList=[];}
+    console.log('[4P] encontros carregados:',encontrosList.length,'| prox:',prox?.data,'| hora:',prox?.hora,'| nextEncDate:',nextEncDate);
+  }catch(e){console.error('[4P] loadEncontrosData erro:',e);encontrosList=[];}
 }
 
 // ── NAV ──
@@ -1845,7 +1846,7 @@ function startTimers(){
 function tickTimers(){
   const now=Date.now();
   // Live session countdown
-  if(nextEncDate){
+  if(nextEncDate&&!isNaN(nextEncDate.getTime())){
     const diff=Math.max(0,nextEncDate-now);
     const h=Math.floor(diff/3600000);
     const m=Math.floor(diff%3600000/60000);
@@ -1857,6 +1858,8 @@ function tickTimers(){
     document.querySelectorAll('[class*="enc-cd-h-"]').forEach(el=>{el.textContent=pad2(h);});
     document.querySelectorAll('[class*="enc-cd-m-"]').forEach(el=>{el.textContent=pad2(m);});
     document.querySelectorAll('[class*="enc-cd-s-"]').forEach(el=>{el.textContent=pad2(s);});
+  }else{
+    set('cd-h','Em');set('cd-m','bre');set('cd-s','ve');
   }
   // Evento countdown
   const evDiff=Math.max(0,EVENTO_DATE-now);
