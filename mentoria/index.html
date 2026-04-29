@@ -1176,12 +1176,12 @@ async function loadEncontrosData(){
     const {data}=await sb.from('encontros').select('*').eq('ativo',true).order('data',{ascending:true});
     encontrosList=data||[];
     const hoje=new Date().toISOString().slice(0,10);
-    const prox=encontrosList.find(e=>e.data&&e.data.slice(0,10)>=hoje);
+    const prox=encontrosList.find(e=>e.data&&e.data.substring(0,10)>=hoje);
     if(prox){
-      const dataISO=prox.data.slice(0,10);
-      const horaStr=prox.hora?prox.hora.slice(0,5):'19:00';
-      nextEncDate=new Date(dataISO+'T'+horaStr+':00-03:00');
-      if(isNaN(nextEncDate.getTime()))nextEncDate=null;
+      const d=prox.data.substring(0,10);
+      const h=(prox.hora||'19:00').substring(0,5);
+      const target=new Date(d+'T'+h+':00-03:00');
+      nextEncDate=isNaN(target.getTime())?null:target;
     }else{
       nextEncDate=null;
     }
@@ -1235,15 +1235,14 @@ function renderDashboard(){
   set('stat-dias',dias>0?dias:'0');
 
   const hoje=new Date().toISOString().slice(0,10);
-  const prox=encontrosList.find(e=>e.data&&e.data.slice(0,10)>=hoje);
+  const prox=encontrosList.find(e=>e.data&&e.data.substring(0,10)>=hoje);
   if(prox){
-    // garante que nextEncDate usa o campo "hora" separado, não a hora zerada do timestamp
-    const dataISO=prox.data.slice(0,10);
-    const horaStr=prox.hora?prox.hora.slice(0,5):'19:00';
-    nextEncDate=new Date(dataISO+'T'+horaStr+':00-03:00');
-    if(isNaN(nextEncDate.getTime()))nextEncDate=null;
-    const d=parseDateLocal(prox.data);
-    set('stat-enc',fmtDatePT(d,{day:'2-digit',month:'short'}));
+    const d=prox.data.substring(0,10);
+    const h=(prox.hora||'19:00').substring(0,5);
+    const target=new Date(d+'T'+h+':00-03:00');
+    nextEncDate=isNaN(target.getTime())?null:target;
+    const d2=parseDateLocal(prox.data);
+    set('stat-enc',fmtDatePT(d2,{day:'2-digit',month:'short'}));
     set('stat-enc-sub',prox.titulo||'Encontro ao vivo');
     set('next-live-name',prox.titulo||'Encontro Semanal');
     document.getElementById('btn-enter-sala').onclick=()=>{if(prox.link)window.open(prox.link,'_blank');else showToast('Link ainda não disponível.','');};
@@ -1390,11 +1389,11 @@ function renderEncontros(){
     const data=enc.data?enc.data.slice(0,10):null;
     const isPast=data&&data<hoje;
     const isNext=!isPast&&data&&data===encontrosList.find(e=>e.data&&e.data.slice(0,10)>=hoje)?.data?.slice(0,10)||false;
-    // reconstrói nextEncDate com o campo "hora" separado se este for o próximo
-    if(isNext&&enc.hora){
-      const horaStr=enc.hora.slice(0,5);
-      const dt=new Date(data+'T'+horaStr+':00-03:00');
-      if(!isNaN(dt.getTime()))nextEncDate=dt;
+    if(isNext){
+      const d=enc.data.substring(0,10);
+      const h=(enc.hora||'19:00').substring(0,5);
+      const target=new Date(d+'T'+h+':00-03:00');
+      if(!isNaN(target.getTime()))nextEncDate=target;
     }
     const dateStr=fmtDatePT(parseDateLocal(data));
     let cdHtml='';
