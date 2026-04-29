@@ -96,29 +96,16 @@ Deno.serve(async (req: Request) => {
     });
 
     if (createError) {
-      // Usuário existe no auth mas não tem perfil — busca o ID pelo email
-      if (createError.message.toLowerCase().includes("already")) {
-        const { data: listData, error: listError } = await supabase.auth.admin.listUsers();
-        if (listError) {
-          return new Response(JSON.stringify({ error: listError.message }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
-        const found = listData.users.find((u) => u.email === email);
-        if (!found) {
-          return new Response(JSON.stringify({ error: "User not found after creation conflict" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
-        userId = found.id;
-      } else {
+      // Usuário já existe no auth mas não tem perfil — busca o ID pelo email
+      const { data: listData, error: listError } = await supabase.auth.admin.listUsers();
+      const found = !listError ? listData.users.find((u) => u.email === email) : undefined;
+      if (!found) {
         return new Response(JSON.stringify({ error: createError.message }), {
           status: 500,
           headers: { "Content-Type": "application/json" },
         });
       }
+      userId = found.id;
     } else {
       userId = created.user.id;
       isNewUser = true;
