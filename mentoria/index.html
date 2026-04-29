@@ -638,53 +638,81 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
           <div class="sec-label">Níveis de Investidor</div>
           <div class="levels-grid" id="levels-grid"></div>
 
-          <div class="sec-label" style="margin-top:8px">Tabela de Níveis</div>
-          <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:24px">
-            <div style="display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:8px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border)">
-              <span style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase">Nível</span>
-              <span></span>
-              <span style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase">Patrimônio mínimo</span>
+          <div class="sec-label" style="margin-top:8px">Placas de Nível</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+
+            <!-- Iniciante -->
+            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#2a2a2a,#1a1a1a);border:1px solid #444;box-shadow:0 4px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,transparent 60%);pointer-events:none"></div>
+              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))">🏅</div>
+              <div style="font-size:15px;font-weight:800;color:#aaa;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Iniciante</div>
+              <div style="font-size:10px;font-weight:700;color:#666;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível de entrada</div>
+              <div style="background:rgba(255,255,255,.05);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#888">R$ 0</div>
             </div>
-            <div style="display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)">
-              <span style="font-size:22px">🏅</span>
-              <span style="font-size:13px;font-weight:600;color:#888">Iniciante</span>
-              <span style="font-size:13px;font-weight:700;color:#888">R$ 0</span>
+
+            <!-- Bronze I -->
+            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#3d2010,#1e1008);border:1px solid #7a3d10;box-shadow:0 4px 24px rgba(205,127,50,.25),inset 0 1px 0 rgba(255,180,80,.15);overflow:hidden">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(205,127,50,.15) 0%,transparent 60%);pointer-events:none"></div>
+              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(205,127,50,.5))">🥉</div>
+              <div style="font-size:15px;font-weight:800;color:#CD7F32;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Bronze I</div>
+              <div style="font-size:10px;font-weight:700;color:#8B5A1A;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Bronze</div>
+              <div style="background:rgba(205,127,50,.15);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#CD7F32;border:1px solid rgba(205,127,50,.3)">R$ 250k</div>
             </div>
-            <div style="display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);background:rgba(205,127,50,.04)">
-              <span style="font-size:22px">🥉</span>
-              <span style="font-size:13px;font-weight:600;color:#CD7F32">Bronze I</span>
-              <span style="font-size:13px;font-weight:700;color:#CD7F32">R$ 250k</span>
+
+            <!-- Bronze II -->
+            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#3d2010,#1e1008);border:1px solid #7a3d10;box-shadow:0 4px 24px rgba(205,127,50,.25),inset 0 1px 0 rgba(255,180,80,.15);overflow:hidden">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(205,127,50,.15) 0%,transparent 60%);pointer-events:none"></div>
+              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(205,127,50,.5))">🥉</div>
+              <div style="font-size:15px;font-weight:800;color:#CD7F32;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Bronze II</div>
+              <div style="font-size:10px;font-weight:700;color:#8B5A1A;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Bronze</div>
+              <div style="background:rgba(205,127,50,.15);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#CD7F32;border:1px solid rgba(205,127,50,.3)">R$ 500k</div>
             </div>
-            <div style="display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);background:rgba(205,127,50,.04)">
-              <span style="font-size:22px">🥉</span>
-              <span style="font-size:13px;font-weight:600;color:#CD7F32">Bronze II</span>
-              <span style="font-size:13px;font-weight:700;color:#CD7F32">R$ 500k</span>
+
+            <!-- Prata I -->
+            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#2a2a2e,#16161a);border:1px solid #555;box-shadow:0 4px 24px rgba(192,192,192,.2),inset 0 1px 0 rgba(255,255,255,.12);overflow:hidden">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,192,192,.1) 0%,transparent 60%);pointer-events:none"></div>
+              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(192,192,192,.4))">🥈</div>
+              <div style="font-size:15px;font-weight:800;color:#D8D8D8;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Prata I</div>
+              <div style="font-size:10px;font-weight:700;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Prata</div>
+              <div style="background:rgba(192,192,192,.1);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#C0C0C0;border:1px solid rgba(192,192,192,.25)">R$ 750k</div>
             </div>
-            <div style="display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);background:rgba(192,192,192,.04)">
-              <span style="font-size:22px">🥈</span>
-              <span style="font-size:13px;font-weight:600;color:#C0C0C0">Prata I</span>
-              <span style="font-size:13px;font-weight:700;color:#C0C0C0">R$ 750k</span>
+
+            <!-- Prata II -->
+            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#2a2a2e,#16161a);border:1px solid #555;box-shadow:0 4px 24px rgba(192,192,192,.2),inset 0 1px 0 rgba(255,255,255,.12);overflow:hidden">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,192,192,.1) 0%,transparent 60%);pointer-events:none"></div>
+              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(192,192,192,.4))">🥈</div>
+              <div style="font-size:15px;font-weight:800;color:#D8D8D8;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Prata II</div>
+              <div style="font-size:10px;font-weight:700;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Prata</div>
+              <div style="background:rgba(192,192,192,.1);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#C0C0C0;border:1px solid rgba(192,192,192,.25)">R$ 1M</div>
             </div>
-            <div style="display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);background:rgba(192,192,192,.04)">
-              <span style="font-size:22px">🥈</span>
-              <span style="font-size:13px;font-weight:600;color:#C0C0C0">Prata II</span>
-              <span style="font-size:13px;font-weight:700;color:#C0C0C0">R$ 1M</span>
+
+            <!-- Ouro I -->
+            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#2a2000,#141000);border:1px solid #6b5200;box-shadow:0 4px 28px rgba(200,169,81,.3),inset 0 1px 0 rgba(255,220,80,.18);overflow:hidden">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,169,81,.18) 0%,transparent 60%);pointer-events:none"></div>
+              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 10px rgba(200,169,81,.6))">🥇</div>
+              <div style="font-size:15px;font-weight:800;color:#C8A951;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Ouro I</div>
+              <div style="font-size:10px;font-weight:700;color:#7a6020;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Ouro</div>
+              <div style="background:rgba(200,169,81,.15);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#C8A951;border:1px solid rgba(200,169,81,.35)">R$ 2M</div>
             </div>
-            <div style="display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);background:rgba(200,169,81,.05)">
-              <span style="font-size:22px">🥇</span>
-              <span style="font-size:13px;font-weight:600;color:var(--gold)">Ouro I</span>
-              <span style="font-size:13px;font-weight:700;color:var(--gold)">R$ 2M</span>
+
+            <!-- Ouro II -->
+            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#2a2000,#141000);border:1px solid #6b5200;box-shadow:0 4px 28px rgba(200,169,81,.3),inset 0 1px 0 rgba(255,220,80,.18);overflow:hidden">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,169,81,.18) 0%,transparent 60%);pointer-events:none"></div>
+              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 10px rgba(200,169,81,.6))">🥇</div>
+              <div style="font-size:15px;font-weight:800;color:#C8A951;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Ouro II</div>
+              <div style="font-size:10px;font-weight:700;color:#7a6020;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Ouro</div>
+              <div style="background:rgba(200,169,81,.15);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#C8A951;border:1px solid rgba(200,169,81,.35)">R$ 5M</div>
             </div>
-            <div style="display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);background:rgba(200,169,81,.05)">
-              <span style="font-size:22px">🥇</span>
-              <span style="font-size:13px;font-weight:600;color:var(--gold)">Ouro II</span>
-              <span style="font-size:13px;font-weight:700;color:var(--gold)">R$ 5M</span>
+
+            <!-- Diamante -->
+            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#071a20,#040d12);border:1px solid #1a5a70;box-shadow:0 4px 32px rgba(126,212,232,.3),inset 0 1px 0 rgba(126,212,232,.2);overflow:hidden">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(126,212,232,.12) 0%,transparent 60%);pointer-events:none"></div>
+              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 12px rgba(126,212,232,.7))">💎</div>
+              <div style="font-size:15px;font-weight:800;color:#7ED4E8;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Diamante</div>
+              <div style="font-size:10px;font-weight:700;color:#1a6a80;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Elite</div>
+              <div style="background:rgba(126,212,232,.12);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#7ED4E8;border:1px solid rgba(126,212,232,.3)">R$ 10M+</div>
             </div>
-            <div style="display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:12px 14px;background:rgba(126,212,232,.05)">
-              <span style="font-size:22px">💎</span>
-              <span style="font-size:13px;font-weight:600;color:#7ED4E8">Diamante</span>
-              <span style="font-size:13px;font-weight:700;color:#7ED4E8">R$ 10M+</span>
-            </div>
+
           </div>
         </div>
       </div>
@@ -1066,13 +1094,12 @@ function parseDateLocal(s){
   const d=new Date(+p[0],+p[1]-1,+p[2]);
   return isNaN(d.getTime())?null:d;
 }
-// Parses 'YYYY-MM-DD' + Supabase time string (handles '+00' suffix from timetz columns)
+// Parses 'YYYY-MM-DD' + hora 'HH:MM' (Brasília UTC-3) into a UTC Date
 function parseDateTimeLocal(dateStr,horaStr){
-  const d=parseDateLocal(dateStr);
-  if(!d)return null;
-  const t=String(horaStr||'19:00:00').slice(0,8).split(':');
-  d.setHours(+t[0]||0,+t[1]||0,+t[2]||0,0);
-  return d;
+  if(!dateStr)return null;
+  const time=String(horaStr||'19:00').replace(/[^0-9:]/g,'').slice(0,5);
+  const d=new Date(`${String(dateStr).slice(0,10)}T${time}:00-03:00`);
+  return isNaN(d.getTime())?null:d;
 }
 function fmtDatePT(d,opts){
   if(!d)return 'Data a confirmar';
