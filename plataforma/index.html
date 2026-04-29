@@ -1160,7 +1160,6 @@ async function loadAulasFromDB() {
       status:      'locked',
       url_video:   row.url_video    || null,
       url_pdf:     row.url_pdf      || null,
-      url_planilha:row.url_planilha || null,
       tarefa:      row.tarefa       || null,
       db_id:       row.id,
     }));
@@ -1249,19 +1248,13 @@ function renderPlayerMain() {
 
     <div class="divider"></div>
 
-    ${(a.url_pdf || a.url_planilha) ? `
+    ${a.url_pdf ? `
     <div class="section-label">Materiais de apoio</div>
     <div class="mat-grid" style="margin-bottom:20px">
-      ${a.url_pdf ? `
       <div class="mat-card" onclick="window.open('${a.url_pdf}','_blank')">
         <div class="mat-icon" style="background:rgba(224,82,82,.12);color:#fca5a5">📄</div>
         <div><div class="mat-label">Apostila da aula</div><div class="mat-sub">Clique para abrir PDF</div></div>
-      </div>` : ''}
-      ${a.url_planilha ? `
-      <div class="mat-card" onclick="window.open('${a.url_planilha}','_blank')">
-        <div class="mat-icon" style="background:rgba(82,183,136,.12);color:var(--green-l)">📊</div>
-        <div><div class="mat-label">Planilha prática</div><div class="mat-sub">Clique para abrir</div></div>
-      </div>` : ''}
+      </div>
     </div>` : ''}
 
     ${a.tarefa ? `

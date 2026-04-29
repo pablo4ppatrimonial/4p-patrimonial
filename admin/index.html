@@ -1204,9 +1204,8 @@
       <div class="form-row-1">
         <div class="fg"><label>URL do Vídeo (YouTube ou Vimeo)</label><input class="fi" id="f-url-video" type="url" placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/..."></div>
       </div>
-      <div class="form-row-2">
+      <div class="form-row-1">
         <div class="fg"><label>Link do PDF (material)</label><input class="fi" id="f-url-pdf" type="url" placeholder="https://drive.google.com/..."></div>
-        <div class="fg"><label>Link da Planilha</label><input class="fi" id="f-url-planilha" type="url" placeholder="https://docs.google.com/..."></div>
       </div>
       <div class="form-row-1">
         <div class="fg"><label>Tarefa prática</label><textarea class="fi fi-ta" id="f-tarefa" placeholder="Descreva a tarefa que o aluno deve realizar após assistir a aula..."></textarea></div>
@@ -2045,7 +2044,6 @@
             ${a.duracao       ? `<span class="badge badge-gray">⏱ ${a.duracao}</span>` : ''}
             ${a.url_video     ? `<span class="badge badge-blue">▶ Vídeo</span>` : ''}
             ${a.url_pdf       ? `<span class="badge badge-gray">📄 PDF</span>` : ''}
-            ${a.url_planilha  ? `<span class="badge badge-gray">📊 Plan.</span>` : ''}
             ${a.tarefa        ? `<span class="badge badge-gray">📝 Tarefa</span>` : ''}
             <span class="badge badge-gray" style="margin-left:auto">#${a.ordem}</span>
           </div>
@@ -2072,7 +2070,6 @@
     document.getElementById('f-descricao').value     = a?.descricao   ?? '';
     document.getElementById('f-tarefa').value        = a?.tarefa      ?? '';
     document.getElementById('f-url-pdf').value         = a?.url_pdf        ?? '';
-    document.getElementById('f-url-planilha').value    = a?.url_planilha   ?? '';
     document.getElementById('f-link-whatsapp').value   = a?.link_whatsapp  ?? '';
     document.getElementById('form-overlay').classList.add('open');
     document.getElementById('f-titulo').focus();
@@ -2097,7 +2094,6 @@
       descricao:    document.getElementById('f-descricao').value.trim()  || null,
       tarefa:       document.getElementById('f-tarefa').value.trim()     || null,
       url_pdf:      document.getElementById('f-url-pdf').value.trim()    || null,
-      url_planilha:   document.getElementById('f-url-planilha').value.trim()   || null,
       link_whatsapp:  document.getElementById('f-link-whatsapp').value.trim()  || null,
       updated_at:   new Date().toISOString(),
     };
@@ -2166,11 +2162,10 @@
         <span class="badge badge-gold">✓ Concluir aula</span>
       </div>
       ${a.descricao ? `<p style="font-size:13px;color:var(--text-muted);line-height:1.8;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px">${a.descricao}</p>` : ''}
-      ${(a.url_pdf || a.url_planilha) ? `
+      ${a.url_pdf ? `
         <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;margin-bottom:10px">Materiais de apoio</div>
-        <div style="display:grid;grid-template-columns:${a.url_pdf && a.url_planilha ? '1fr 1fr' : '1fr'};gap:10px;margin-bottom:16px">
-          ${a.url_pdf      ? `<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px"><span>📄</span><div><div style="font-size:12px;font-weight:500">Apostila da aula</div><div style="font-size:10px;color:var(--text-dim)">PDF</div></div></div>` : ''}
-          ${a.url_planilha ? `<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px"><span>📊</span><div><div style="font-size:12px;font-weight:500">Planilha prática</div><div style="font-size:10px;color:var(--text-dim)">XLSX</div></div></div>` : ''}
+        <div style="margin-bottom:16px">
+          <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px"><span>📄</span><div><div style="font-size:12px;font-weight:500">Apostila da aula</div><div style="font-size:10px;color:var(--text-dim)">PDF</div></div></div>
         </div>` : ''}
       ${a.tarefa ? `
         <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;margin-bottom:8px">Tarefa prática</div>

@@ -467,10 +467,7 @@ tbody td{padding:11px 14px;font-size:13px;color:var(--text);vertical-align:middl
     <div class="modal-body">
       <div id="aula-modal-info" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;padding:10px 12px;background:var(--card2);border-radius:8px;border-left:3px solid var(--gold-dim)"></div>
       <div class="fg"><label>URL do Vídeo (YouTube)</label><input class="fi" id="au-video" placeholder="https://www.youtube.com/watch?v=..."/></div>
-      <div class="row2">
-        <div class="fg"><label>URL do PDF</label><input class="fi" id="au-pdf" placeholder="https://..."/></div>
-        <div class="fg"><label>URL da Planilha</label><input class="fi" id="au-planilha" placeholder="https://docs.google.com/..."/></div>
-      </div>
+      <div class="fg"><label>URL do PDF</label><input class="fi" id="au-pdf" placeholder="https://..."/></div>
       <div class="fg"><label>Tarefa / Exercício</label><textarea class="fi fi-ta" id="au-tarefa"></textarea></div>
       <div class="fg"><label>Status</label>
         <select class="fi fi-sel" id="au-status">
@@ -873,7 +870,6 @@ function openAulaModal(aulaId, titulo, moduloNum){
   const db = aulasDb[aulaId]||{};
   document.getElementById('au-video').value = db.url_video||'';
   document.getElementById('au-pdf').value = db.url_pdf||'';
-  document.getElementById('au-planilha').value = db.url_planilha||'';
   document.getElementById('au-tarefa').value = db.tarefa||'';
   document.getElementById('au-status').value = db.status||'inativo';
   document.getElementById('aula-modal').classList.add('open');
@@ -887,7 +883,6 @@ async function saveAula(){
     aula_id: aulaId, modulo_num: moduloNum, titulo,
     url_video: document.getElementById('au-video').value.trim()||null,
     url_pdf: document.getElementById('au-pdf').value.trim()||null,
-    url_planilha: document.getElementById('au-planilha').value.trim()||null,
     tarefa: document.getElementById('au-tarefa').value.trim()||null,
     status: document.getElementById('au-status').value,
     updated_at: new Date().toISOString()
