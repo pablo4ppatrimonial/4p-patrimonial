@@ -17,7 +17,7 @@
   --gold:#C8A951;--gold-l:#E8C96A;--gold-d:#8B6B1F;--gold-bg:rgba(200,169,81,.07);
   --text:#F0F0F0;--text2:#999999;--text3:#555555;
   --green:#1D9E75;--green-l:#2CC494;--red:#E05252;
-  --bronze:#CD7F32;--prata:#C0C0C0;--platino:#B8A9D9;--diamante:#7ED4E8;
+  --bronze:#CD7F32;--prata:#C0C0C0;--platino:#E5E4E2;--diamante:#b9f2ff;
   --r:12px;--r-sm:8px;--r-full:999px;--trans:0.3s ease;
   --sidebar:220px;--topbar:58px;
 }
@@ -635,85 +635,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
             <div style="font-size:10px;color:var(--text3);margin-top:8px">Envie extrato, nota ou documento que comprove seu patrimônio. Após aprovação, seu nível será atualizado.</div>
           </div>
 
-          <div class="sec-label">Níveis de Investidor</div>
-          <div class="levels-grid" id="levels-grid"></div>
-
-          <div class="sec-label" style="margin-top:8px">Placas de Nível</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
-
-            <!-- Iniciante -->
-            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#2a2a2a,#1a1a1a);border:1px solid #444;box-shadow:0 4px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden">
-              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,transparent 60%);pointer-events:none"></div>
-              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))">🏅</div>
-              <div style="font-size:15px;font-weight:800;color:#aaa;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Iniciante</div>
-              <div style="font-size:10px;font-weight:700;color:#666;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível de entrada</div>
-              <div style="background:rgba(255,255,255,.05);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#888">R$ 0</div>
-            </div>
-
-            <!-- Bronze I -->
-            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#3d2010,#1e1008);border:1px solid #7a3d10;box-shadow:0 4px 24px rgba(205,127,50,.25),inset 0 1px 0 rgba(255,180,80,.15);overflow:hidden">
-              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(205,127,50,.15) 0%,transparent 60%);pointer-events:none"></div>
-              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(205,127,50,.5))">🥉</div>
-              <div style="font-size:15px;font-weight:800;color:#CD7F32;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Bronze I</div>
-              <div style="font-size:10px;font-weight:700;color:#8B5A1A;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Bronze</div>
-              <div style="background:rgba(205,127,50,.15);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#CD7F32;border:1px solid rgba(205,127,50,.3)">R$ 250k</div>
-            </div>
-
-            <!-- Bronze II -->
-            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#3d2010,#1e1008);border:1px solid #7a3d10;box-shadow:0 4px 24px rgba(205,127,50,.25),inset 0 1px 0 rgba(255,180,80,.15);overflow:hidden">
-              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(205,127,50,.15) 0%,transparent 60%);pointer-events:none"></div>
-              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(205,127,50,.5))">🥉</div>
-              <div style="font-size:15px;font-weight:800;color:#CD7F32;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Bronze II</div>
-              <div style="font-size:10px;font-weight:700;color:#8B5A1A;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Bronze</div>
-              <div style="background:rgba(205,127,50,.15);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#CD7F32;border:1px solid rgba(205,127,50,.3)">R$ 500k</div>
-            </div>
-
-            <!-- Prata I -->
-            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#2a2a2e,#16161a);border:1px solid #555;box-shadow:0 4px 24px rgba(192,192,192,.2),inset 0 1px 0 rgba(255,255,255,.12);overflow:hidden">
-              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,192,192,.1) 0%,transparent 60%);pointer-events:none"></div>
-              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(192,192,192,.4))">🥈</div>
-              <div style="font-size:15px;font-weight:800;color:#D8D8D8;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Prata I</div>
-              <div style="font-size:10px;font-weight:700;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Prata</div>
-              <div style="background:rgba(192,192,192,.1);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#C0C0C0;border:1px solid rgba(192,192,192,.25)">R$ 750k</div>
-            </div>
-
-            <!-- Prata II -->
-            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#2a2a2e,#16161a);border:1px solid #555;box-shadow:0 4px 24px rgba(192,192,192,.2),inset 0 1px 0 rgba(255,255,255,.12);overflow:hidden">
-              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,192,192,.1) 0%,transparent 60%);pointer-events:none"></div>
-              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(192,192,192,.4))">🥈</div>
-              <div style="font-size:15px;font-weight:800;color:#D8D8D8;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Prata II</div>
-              <div style="font-size:10px;font-weight:700;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Prata</div>
-              <div style="background:rgba(192,192,192,.1);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#C0C0C0;border:1px solid rgba(192,192,192,.25)">R$ 1M</div>
-            </div>
-
-            <!-- Ouro I -->
-            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#2a2000,#141000);border:1px solid #6b5200;box-shadow:0 4px 28px rgba(200,169,81,.3),inset 0 1px 0 rgba(255,220,80,.18);overflow:hidden">
-              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,169,81,.18) 0%,transparent 60%);pointer-events:none"></div>
-              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 10px rgba(200,169,81,.6))">🥇</div>
-              <div style="font-size:15px;font-weight:800;color:#C8A951;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Ouro I</div>
-              <div style="font-size:10px;font-weight:700;color:#7a6020;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Ouro</div>
-              <div style="background:rgba(200,169,81,.15);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#C8A951;border:1px solid rgba(200,169,81,.35)">R$ 2M</div>
-            </div>
-
-            <!-- Ouro II -->
-            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#2a2000,#141000);border:1px solid #6b5200;box-shadow:0 4px 28px rgba(200,169,81,.3),inset 0 1px 0 rgba(255,220,80,.18);overflow:hidden">
-              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,169,81,.18) 0%,transparent 60%);pointer-events:none"></div>
-              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 10px rgba(200,169,81,.6))">🥇</div>
-              <div style="font-size:15px;font-weight:800;color:#C8A951;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Ouro II</div>
-              <div style="font-size:10px;font-weight:700;color:#7a6020;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Ouro</div>
-              <div style="background:rgba(200,169,81,.15);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#C8A951;border:1px solid rgba(200,169,81,.35)">R$ 5M</div>
-            </div>
-
-            <!-- Diamante -->
-            <div style="position:relative;border-radius:14px;padding:22px 12px 18px;text-align:center;background:linear-gradient(160deg,#071a20,#040d12);border:1px solid #1a5a70;box-shadow:0 4px 32px rgba(126,212,232,.3),inset 0 1px 0 rgba(126,212,232,.2);overflow:hidden">
-              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(126,212,232,.12) 0%,transparent 60%);pointer-events:none"></div>
-              <div style="font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 12px rgba(126,212,232,.7))">💎</div>
-              <div style="font-size:15px;font-weight:800;color:#7ED4E8;letter-spacing:.5px;margin-bottom:6px;font-family:'Inter',system-ui">Diamante</div>
-              <div style="font-size:10px;font-weight:700;color:#1a6a80;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Nível Elite</div>
-              <div style="background:rgba(126,212,232,.12);border-radius:20px;padding:5px 10px;display:inline-block;font-size:12px;font-weight:700;color:#7ED4E8;border:1px solid rgba(126,212,232,.3)">R$ 10M+</div>
-            </div>
-
-          </div>
+          <div class="sec-label" style="margin-top:4px">Níveis de Investidor</div>
+          <div id="levels-container" style="margin-bottom:24px"></div>
         </div>
       </div>
 
@@ -1037,20 +960,25 @@ const MODULOS = [
 ];
 
 const LEVELS = [
-  {name:'Bronze I',   tier:'bronze',   icon:'🥉', min:250000,    max:500000,   color:'#CD7F32'},
-  {name:'Bronze II',  tier:'bronze',   icon:'🥉', min:500000,    max:1000000,  color:'#CD7F32'},
-  {name:'Bronze III', tier:'bronze',   icon:'🥉', min:1000000,   max:2000000,  color:'#CD7F32'},
-  {name:'Prata I',    tier:'prata',    icon:'🥈', min:2000000,   max:3500000,  color:'#C0C0C0'},
-  {name:'Prata II',   tier:'prata',    icon:'🥈', min:3500000,   max:5000000,  color:'#C0C0C0'},
-  {name:'Prata III',  tier:'prata',    icon:'🥈', min:5000000,   max:8000000,  color:'#C0C0C0'},
-  {name:'Ouro I',     tier:'ouro',     icon:'🥇', min:8000000,   max:12000000, color:'#C8A951'},
-  {name:'Ouro II',    tier:'ouro',     icon:'🥇', min:12000000,  max:20000000, color:'#C8A951'},
-  {name:'Ouro III',   tier:'ouro',     icon:'🥇', min:20000000,  max:30000000, color:'#C8A951'},
-  {name:'Platino I',  tier:'platino',  icon:'💎', min:30000000,  max:40000000, color:'#B8A9D9'},
-  {name:'Platino II', tier:'platino',  icon:'💎', min:40000000,  max:50000000, color:'#B8A9D9'},
-  {name:'Platino III',tier:'platino',  icon:'💎', min:50000000,  max:70000000, color:'#B8A9D9'},
-  {name:'Diamante I', tier:'diamante', icon:'💠', min:70000000,  max:100000000,color:'#7ED4E8'},
-  {name:'Diamante II',tier:'diamante', icon:'💠', min:100000000, max:Infinity, color:'#7ED4E8'},
+  // BRONZE — Investidor Iniciante
+  {name:'Bronze I',    tier:'bronze',  icon:'🥉', sub:'Primeiro imóvel adquirido',              min:250000,    max:500000,    color:'#CD7F32'},
+  {name:'Bronze II',   tier:'bronze',  icon:'🥉', sub:'Segundo imóvel — carteira em formação',  min:500000,    max:1000000,   color:'#CD7F32'},
+  {name:'Bronze III',  tier:'bronze',  icon:'🥉', sub:'Portfolio consolidado no nível inicial', min:1000000,   max:2000000,   color:'#CD7F32'},
+  // PRATA — Investidor em Crescimento
+  {name:'Prata I',     tier:'prata',   icon:'🥈', sub:'Portfolio em expansão consistente',      min:2000000,   max:3500000,   color:'#C0C0C0'},
+  {name:'Prata II',    tier:'prata',   icon:'🥈', sub:'Múltiplos ativos em carteira',           min:3500000,   max:5000000,   color:'#C0C0C0'},
+  {name:'Prata III',   tier:'prata',   icon:'🥈', sub:'Investidor recorrente e estratégico',    min:5000000,   max:8000000,   color:'#C0C0C0'},
+  // OURO — Investidor Avançado
+  {name:'Ouro I',      tier:'ouro',    icon:'🥇', sub:'Portfolio de alto valor consolidado',    min:8000000,   max:12000000,  color:'#FFD700'},
+  {name:'Ouro II',     tier:'ouro',    icon:'🥇', sub:'Grande carteira diversificada',          min:12000000,  max:20000000,  color:'#FFD700'},
+  {name:'Ouro III',    tier:'ouro',    icon:'🥇', sub:'Investidor de referência no mercado',    min:20000000,  max:30000000,  color:'#FFD700'},
+  // PLATINO — Investidor de Elite
+  {name:'Platino I',   tier:'platino', icon:'💠', sub:'Carteira de impacto no setor',           min:30000000,  max:40000000,  color:'#E5E4E2'},
+  {name:'Platino II',  tier:'platino', icon:'💠', sub:'Portfolio premium e diversificado',      min:40000000,  max:50000000,  color:'#E5E4E2'},
+  {name:'Platino III', tier:'platino', icon:'💠', sub:'Investidor estratégico de alto volume',  min:50000000,  max:70000000,  color:'#E5E4E2'},
+  // DIAMANTE — Investidor Lendário
+  {name:'Diamante I',  tier:'diamante',icon:'💎', sub:'Patrimônio excepcional em imóveis',      min:70000000,  max:100000000, color:'#b9f2ff'},
+  {name:'Diamante II', tier:'diamante',icon:'💎', sub:'Carteira de nível institucional',        min:100000000, max:Infinity,  color:'#b9f2ff'},
 ];
 
 const MARKERS = [
@@ -1513,14 +1441,40 @@ function renderRanking(){
 
 function renderLevelsGrid(){
   const lv=getLevel(patrimonioAprovado);
-  const grid=document.getElementById('levels-grid');
-  if(!grid)return;
-  grid.innerHTML=LEVELS.map(l=>{
-    const active=lv.name===l.name&&patrimonioAprovado>0;
-    return `<div class="level-card${active?' active':''}">
-      <div class="level-card-icon">${l.icon}</div>
-      <div class="level-card-name" style="color:${l.color}">${l.name}</div>
-      <div class="level-card-val">${fmtBRL(l.min)}${l.max===Infinity?'+':' — '+fmtBRL(l.max)}</div>
+  const container=document.getElementById('levels-container');
+  if(!container)return;
+  const TIERS=[
+    {id:'bronze',  label:'BRONZE',  sub:'Investidor Iniciante',     icon:'🥉', color:'#CD7F32', bg1:'#3d2010', bg2:'#1e1008', border:'#7a3d10', glow:'rgba(205,127,50,.28)', shine:'rgba(205,127,50,.14)'},
+    {id:'prata',   label:'PRATA',   sub:'Investidor em Crescimento', icon:'🥈', color:'#C0C0C0', bg1:'#2a2a2e', bg2:'#16161a', border:'#555',    glow:'rgba(192,192,192,.2)',  shine:'rgba(192,192,192,.09)'},
+    {id:'ouro',    label:'OURO',    sub:'Investidor Avançado',       icon:'🥇', color:'#FFD700', bg1:'#2a2000', bg2:'#141000', border:'#6b5200', glow:'rgba(255,215,0,.3)',    shine:'rgba(255,215,0,.16)'},
+    {id:'platino', label:'PLATINO', sub:'Investidor de Elite',       icon:'💠', color:'#E5E4E2', bg1:'#1e1e2a', bg2:'#111118', border:'#4a4a6a', glow:'rgba(229,228,226,.2)',  shine:'rgba(229,228,226,.09)'},
+    {id:'diamante',label:'DIAMANTE',sub:'Investidor Lendário',       icon:'💎', color:'#b9f2ff', bg1:'#071a20', bg2:'#040d12', border:'#1a5a70', glow:'rgba(185,242,255,.28)', shine:'rgba(185,242,255,.11)'},
+  ];
+  container.innerHTML=TIERS.map(tier=>{
+    const tierLevels=LEVELS.filter(l=>l.tier===tier.id);
+    const cols=tierLevels.length;
+    const cards=tierLevels.map(l=>{
+      const active=lv.name===l.name&&patrimonioAprovado>0;
+      return `<div style="position:relative;padding:18px 14px 16px;text-align:center;background:linear-gradient(160deg,${tier.bg1}${active?'':88},${tier.bg2});${active?`box-shadow:inset 0 0 30px ${tier.glow};`:''};transition:all .3s">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,${tier.shine} 0%,transparent 60%);pointer-events:none"></div>
+        ${active?`<div style="position:absolute;top:8px;right:8px;background:${tier.color};color:#000;font-size:8px;font-weight:800;letter-spacing:1px;padding:2px 8px;border-radius:10px">SEU NÍVEL</div>`:''}
+        <div style="font-size:26px;margin-bottom:8px;filter:drop-shadow(0 2px 8px ${tier.glow})">${l.icon}</div>
+        <div style="font-size:13px;font-weight:800;color:${tier.color};letter-spacing:.5px;margin-bottom:5px">${l.name}</div>
+        <div style="font-size:10px;color:${tier.color}99;margin-bottom:10px;line-height:1.4;min-height:28px">${l.sub}</div>
+        <div style="background:${tier.shine};border-radius:16px;padding:4px 10px;display:inline-block;font-size:11px;font-weight:700;color:${tier.color};border:1px solid ${tier.border}">${fmtBRL(l.min)}${l.max===Infinity?'+':''}</div>
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:16px">
+      <div style="background:linear-gradient(135deg,${tier.bg1},${tier.bg2});border:1px solid ${tier.border};border-radius:12px 12px 0 0;padding:13px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 16px ${tier.glow}">
+        <div style="font-size:26px;filter:drop-shadow(0 2px 8px ${tier.glow})">${tier.icon}</div>
+        <div>
+          <div style="font-size:13px;font-weight:800;color:${tier.color};letter-spacing:1.5px">${tier.label}</div>
+          <div style="font-size:10px;color:${tier.color}99;margin-top:2px;font-weight:500">${tier.sub}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:1px;border:1px solid ${tier.border};border-top:none;border-radius:0 0 12px 12px;overflow:hidden">
+        ${cards}
+      </div>
     </div>`;
   }).join('');
 }
