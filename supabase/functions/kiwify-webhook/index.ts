@@ -111,11 +111,9 @@ Deno.serve(async (req: Request) => {
     {
       id: userId,
       email,
-      full_name: name,
+      nome: name,
       plano: "lowticket",
-      produto_id: LOWTICKET_PRODUCT_ID,
       status: "ativo",
-      updated_at: new Date().toISOString(),
     },
     { onConflict: "id" }
   );
