@@ -152,7 +152,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "4P Patrimonial <noreply@4ppatrimonial.com.br>",
+        from: "4P Patrimonial <contato@4ppatrimonial.com.br>",
         to: [email],
         subject: "Seu acesso ao 4P Patrimonial está pronto!",
         html: `
