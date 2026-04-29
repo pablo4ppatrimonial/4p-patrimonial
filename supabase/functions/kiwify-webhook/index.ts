@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
 
     const { error: updateError } = await supabase
       .from("profiles")
-      .update({ status: "inativo", updated_at: new Date().toISOString() })
+      .update({ status: "inativo" })
       .eq("email", email);
 
     if (updateError) {
@@ -96,14 +96,33 @@ Deno.serve(async (req: Request) => {
     });
 
     if (createError) {
-      return new Response(JSON.stringify({ error: createError.message }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      // Usuário existe no auth mas não tem perfil — busca o ID pelo email
+      if (createError.message.toLowerCase().includes("already")) {
+        const { data: listData, error: listError } = await supabase.auth.admin.listUsers();
+        if (listError) {
+          return new Response(JSON.stringify({ error: listError.message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        const found = listData.users.find((u) => u.email === email);
+        if (!found) {
+          return new Response(JSON.stringify({ error: "User not found after creation conflict" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        userId = found.id;
+      } else {
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      userId = created.user.id;
+      isNewUser = true;
     }
-
-    userId = created.user.id;
-    isNewUser = true;
   }
 
   // Upsert profile
