@@ -141,10 +141,10 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // --- E-MAIL DE BOAS-VINDAS: apenas para novos usuários ---
-  if (isNewUser) {
+  // --- E-MAIL DE BOAS-VINDAS: enviado a cada compra paga ---
+  {
     const { data: inviteData, error: inviteError } = await supabase.auth.admin.generateLink({
-      type: "invite",
+      type: isNewUser ? "invite" : "magiclink",
       email,
       options: { redirectTo: "https://4ppatrimonial.com.br" },
     });
