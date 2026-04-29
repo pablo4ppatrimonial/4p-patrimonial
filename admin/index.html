@@ -1199,6 +1199,9 @@
         <div class="fg"><label>Descrição</label><textarea class="fi fi-ta" id="f-descricao" placeholder="Descrição detalhada para o aluno ver na plataforma..."></textarea></div>
       </div>
       <div class="form-row-1">
+        <div class="fg"><label>Link do WhatsApp (Grupo)</label><input class="fi" id="f-link-whatsapp" type="url" placeholder="https://chat.whatsapp.com/..."></div>
+      </div>
+      <div class="form-row-1">
         <div class="fg"><label>URL do Vídeo (YouTube ou Vimeo)</label><input class="fi" id="f-url-video" type="url" placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/..."></div>
       </div>
       <div class="form-row-2">
@@ -2068,8 +2071,9 @@
     document.getElementById('f-ordem').value         = a?.ordem       ?? (cmsAulas.length + 1);
     document.getElementById('f-descricao').value     = a?.descricao   ?? '';
     document.getElementById('f-tarefa').value        = a?.tarefa      ?? '';
-    document.getElementById('f-url-pdf').value       = a?.url_pdf     ?? '';
-    document.getElementById('f-url-planilha').value  = a?.url_planilha ?? '';
+    document.getElementById('f-url-pdf').value         = a?.url_pdf        ?? '';
+    document.getElementById('f-url-planilha').value    = a?.url_planilha   ?? '';
+    document.getElementById('f-link-whatsapp').value   = a?.link_whatsapp  ?? '';
     document.getElementById('form-overlay').classList.add('open');
     document.getElementById('f-titulo').focus();
   }
@@ -2093,7 +2097,8 @@
       descricao:    document.getElementById('f-descricao').value.trim()  || null,
       tarefa:       document.getElementById('f-tarefa').value.trim()     || null,
       url_pdf:      document.getElementById('f-url-pdf').value.trim()    || null,
-      url_planilha: document.getElementById('f-url-planilha').value.trim() || null,
+      url_planilha:   document.getElementById('f-url-planilha').value.trim()   || null,
+      link_whatsapp:  document.getElementById('f-link-whatsapp').value.trim()  || null,
       updated_at:   new Date().toISOString(),
     };
     const btn = document.getElementById('save-aula-btn');
