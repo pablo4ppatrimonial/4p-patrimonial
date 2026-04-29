@@ -97,8 +97,18 @@ Deno.serve(async (req: Request) => {
 
     if (createError) {
       // Usuário já existe no auth mas não tem perfil — busca o ID pelo email
-      const { data: listData, error: listError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      const found = !listError ? listData.users.find((u) => u.email === email) : undefined;
+      const searchRes = await fetch(
+        `${SUPABASE_URL}/auth/v1/admin/users?filter=${encodeURIComponent(email)}&per_page=10`,
+        {
+          headers: {
+            apikey: SUPABASE_SERVICE_ROLE_KEY,
+            Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          },
+        }
+      );
+      const searchData = await searchRes.json();
+      const found = (searchData.users as { id: string; email: string }[] | undefined)
+        ?.find((u) => u.email === email);
       if (!found) {
         return new Response(JSON.stringify({ error: createError.message }), {
           status: 500,
