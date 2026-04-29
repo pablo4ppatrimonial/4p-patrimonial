@@ -1022,12 +1022,12 @@ function parseDateLocal(s){
   const d=new Date(+p[0],+p[1]-1,+p[2]);
   return isNaN(d.getTime())?null:d;
 }
-// Combina 'YYYY-MM-DD...' + 'HH:MM' em datetime local: new Date("2026-05-01T21:00:00")
+// Combina data (timestamp) + hora separada forçando fuso Brasília (UTC-3)
 function parseDateTimeLocal(dateStr,horaStr){
   if(!dateStr)return null;
-  const date=String(dateStr).slice(0,10);
-  const hora=String(horaStr||'19:00').slice(0,5);
-  const d=new Date(date+'T'+hora+':00');
+  const dataStr=String(dateStr).substring(0,10);
+  const hora=horaStr?String(horaStr).substring(0,5):'19:00';
+  const d=new Date(dataStr+'T'+hora+':00-03:00');
   return isNaN(d.getTime())?null:d;
 }
 function fmtDatePT(d,opts){
@@ -1178,8 +1178,9 @@ async function loadEncontrosData(){
     const hoje=new Date().toISOString().slice(0,10);
     const prox=encontrosList.find(e=>String(e.data).slice(0,10)>=hoje);
     if(prox){
-      const hora=String(prox.hora||'19:00').slice(0,5);
-      nextEncDate=new Date(String(prox.data).slice(0,10)+'T'+hora+':00');
+      const dataStr=prox.data.substring(0,10);
+      const horaStr=prox.hora?prox.hora.substring(0,5):'19:00';
+      nextEncDate=new Date(dataStr+'T'+horaStr+':00-03:00');
       if(isNaN(nextEncDate))nextEncDate=null;
     }
   }catch(e){encontrosList=[];}
