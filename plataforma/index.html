@@ -694,12 +694,11 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 
         <div class="calc-slider-wrap">
           <div class="calc-capital-label">Capital inicial: <span id="calc-capital-disp">R$ 170k</span></div>
-          <input type="range" class="calc-range" id="calc-slider" min="50000" max="500000" step="5000" value="170000" oninput="calcOnSlider(this)">
-          <div class="calc-slider-extremes"><span>R$ 50k</span><span>R$ 500k</span></div>
+          <input type="range" class="calc-range" id="calc-slider" min="170000" max="500000" step="5000" value="170000" oninput="calcOnSlider(this)">
+          <div class="calc-slider-extremes"><span>R$ 170k</span><span>R$ 500k</span></div>
         </div>
 
         <div class="calc-tabs">
-          <button class="calc-tab" id="ctab-6m" onclick="setCalcPrazo(6,'6m')">6 meses</button>
           <button class="calc-tab active" id="ctab-1a" onclick="setCalcPrazo(12,'1a')">1 ano</button>
           <button class="calc-tab" id="ctab-3a" onclick="setCalcPrazo(36,'3a')">3 anos</button>
           <button class="calc-tab" id="ctab-5a" onclick="setCalcPrazo(60,'5a')">5 anos</button>
@@ -1850,7 +1849,7 @@ function updateCalc() {
 
   const slider = document.getElementById('calc-slider');
   if (slider) {
-    const pct = ((calcCapital - 50000) / 450000 * 100).toFixed(1);
+    const pct = ((calcCapital - 170000) / 330000 * 100).toFixed(1);
     slider.style.background = `linear-gradient(90deg,#C9A84C ${pct}%,#2e2e2e ${pct}%)`;
   }
 }
