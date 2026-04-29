@@ -488,7 +488,7 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 
         <div class="grid-4">
           <div class="stat-card">
-            <div class="stat-val" id="stat-aulas-val">0/7</div>
+            <div class="stat-val" id="stat-aulas-val">0</div>
             <div class="stat-label">Aulas concluídas</div>
             <div class="stat-delta" id="stat-aulas-delta">Nenhuma concluída ainda</div>
           </div>
@@ -979,7 +979,7 @@ async function loadProgresso() {
 }
 
 function updateProgressUI(totalDone) {
-  const total = 7;
+  const total = AULAS.length;
   const pct = total ? Math.round((totalDone / total) * 100) : 0;
   const pontos = totalDone * 100;
   const aulaContinuar = AULAS.find(a => a.status === 'active') || AULAS[AULAS.length - 1];
