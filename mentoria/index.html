@@ -1022,11 +1022,11 @@ function parseDateLocal(s){
   const d=new Date(+p[0],+p[1]-1,+p[2]);
   return isNaN(d.getTime())?null:d;
 }
-// Parses 'YYYY-MM-DD' + hora 'HH:MM' (Brasília UTC-3) into a UTC Date
+// Parses 'YYYY-MM-DD' + hora 'HH:MM' combinando em datetime local
 function parseDateTimeLocal(dateStr,horaStr){
   if(!dateStr)return null;
-  const time=String(horaStr||'19:00').replace(/[^0-9:]/g,'').slice(0,5);
-  const d=new Date(`${String(dateStr).slice(0,10)}T${time}:00-03:00`);
+  const time=String(horaStr||'19:00').slice(0,5);
+  const d=new Date(String(dateStr).slice(0,10)+'T'+time+':00');
   return isNaN(d.getTime())?null:d;
 }
 function fmtDatePT(d,opts){
@@ -1194,7 +1194,7 @@ function navigate(screen){
   closeSidebar();
   if(screen==='modulos')renderModulos();
   if(screen==='encontros')renderEncontros();
-  if(screen==='ranking'){loadComprovantesStatus();}
+  if(screen==='ranking'){renderLevelsGrid();loadComprovantesStatus();}
   if(screen==='mapa')initMapa();
   if(screen==='comunidade')loadPosts();
   if(screen==='perfil')loadPerfilScreen();
