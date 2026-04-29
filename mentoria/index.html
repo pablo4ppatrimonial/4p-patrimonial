@@ -1022,11 +1022,12 @@ function parseDateLocal(s){
   const d=new Date(+p[0],+p[1]-1,+p[2]);
   return isNaN(d.getTime())?null:d;
 }
-// Parses 'YYYY-MM-DD' + hora 'HH:MM' combinando em datetime local
+// Combina 'YYYY-MM-DD...' + 'HH:MM' em datetime local: new Date("2026-05-01T21:00:00")
 function parseDateTimeLocal(dateStr,horaStr){
   if(!dateStr)return null;
-  const time=String(horaStr||'19:00').slice(0,5);
-  const d=new Date(String(dateStr).slice(0,10)+'T'+time+':00');
+  const date=String(dateStr).slice(0,10);
+  const hora=String(horaStr||'19:00').slice(0,5);
+  const d=new Date(date+'T'+hora+':00');
   return isNaN(d.getTime())?null:d;
 }
 function fmtDatePT(d,opts){
@@ -1175,10 +1176,11 @@ async function loadEncontrosData(){
     const {data}=await sb.from('encontros').select('*').eq('ativo',true).order('data',{ascending:true});
     encontrosList=data||[];
     const hoje=new Date().toISOString().slice(0,10);
-    const prox=encontrosList.find(e=>e.data>=hoje);
+    const prox=encontrosList.find(e=>String(e.data).slice(0,10)>=hoje);
     if(prox){
-      const hora=prox.hora||'19:00:00';
-      nextEncDate=parseDateTimeLocal(prox.data,hora);
+      const hora=String(prox.hora||'19:00').slice(0,5);
+      nextEncDate=new Date(String(prox.data).slice(0,10)+'T'+hora+':00');
+      if(isNaN(nextEncDate))nextEncDate=null;
     }
   }catch(e){encontrosList=[];}
 }
@@ -1230,7 +1232,7 @@ function renderDashboard(){
   set('stat-dias',dias>0?dias:'0');
 
   const hoje=new Date().toISOString().slice(0,10);
-  const prox=encontrosList.find(e=>e.data>=hoje);
+  const prox=encontrosList.find(e=>String(e.data).slice(0,10)>=hoje);
   if(prox){
     const d=parseDateLocal(prox.data);
     set('stat-enc',fmtDatePT(d,{day:'2-digit',month:'short'}));
@@ -1265,14 +1267,15 @@ function renderTimeline(){
   const container=document.getElementById('timeline-list');
   if(!container)return;
   const hoje=new Date().toISOString().slice(0,10);
-  const past=encontrosList.filter(e=>e.data<hoje).slice(-3).reverse();
-  const prox=encontrosList.find(e=>e.data>=hoje);
-  const future=encontrosList.filter(e=>e.data>=(prox?prox.data:hoje)).slice(1,3);
+  const past=encontrosList.filter(e=>String(e.data).slice(0,10)<hoje).slice(-3).reverse();
+  const prox=encontrosList.find(e=>String(e.data).slice(0,10)>=hoje);
+  const proxData=prox?String(prox.data).slice(0,10):hoje;
+  const future=encontrosList.filter(e=>String(e.data).slice(0,10)>=proxData).slice(1,3);
   const items=[...past.slice(-2),(prox&&{...prox,_next:true})||null,...future.slice(0,2)].filter(Boolean);
   if(!items.length){container.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0">Nenhum encontro cadastrado ainda.</div>';return;}
   const hoje2=new Date().toISOString().slice(0,10);
   container.innerHTML=items.map(e=>{
-    const past2=e.data<hoje2;
+    const past2=String(e.data).slice(0,10)<hoje2;
     const next2=e._next;
     const cls=past2?'done':next2?'next':'future';
     const badge=past2?'<span class="tl-status tl-done">Realizado</span>':next2?'<span class="tl-status tl-next">Próximo</span>':'<span class="tl-status tl-future">Agendado</span>';
@@ -1376,9 +1379,9 @@ function renderEncontros(){
     return;
   }
   const html=encontrosList.map((enc,i)=>{
-    const data=enc.data||null;
+    const data=enc.data?String(enc.data).slice(0,10):null;
     const isPast=data&&data<hoje;
-    const isNext=!isPast&&data&&data===encontrosList.find(e=>e.data&&e.data>=hoje)?.data;
+    const isNext=!isPast&&data&&data===encontrosList.find(e=>e.data&&String(e.data).slice(0,10)>=hoje)?.data?.slice(0,10)||false;
     const dateStr=fmtDatePT(parseDateLocal(data));
     let cdHtml='';
     if(isNext&&nextEncDate){
@@ -1412,7 +1415,7 @@ function enterSalaEnc(link){
   else showToast('Link ainda não disponível.','');
 }
 function enterSala(){
-  const prox=encontrosList.find(e=>{const hoje=new Date().toISOString().slice(0,10);return e.data>=hoje;});
+  const prox=encontrosList.find(e=>{const hoje=new Date().toISOString().slice(0,10);return String(e.data).slice(0,10)>=hoje;});
   if(prox?.link)window.open(prox.link,'_blank');
   else showToast('Link ainda não disponível.','');
 }
