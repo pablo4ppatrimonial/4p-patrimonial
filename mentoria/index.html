@@ -419,6 +419,61 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   .screen{padding:12px}
   .btn-save{width:100%}
 }
+/* ── CALCULADORA ── */
+.calc-slider-wrap{margin:20px 0}
+.calc-capital-label{font-size:13px;color:var(--text2);margin-bottom:10px;text-align:center}
+.calc-capital-label span{color:var(--gold);font-weight:700;font-size:20px}
+.calc-range{width:100%;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;outline:none;cursor:pointer;transition:background .1s}
+.calc-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--gold);border:3px solid var(--bg);box-shadow:0 2px 8px rgba(200,169,81,.4);cursor:pointer}
+.calc-range::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);cursor:pointer}
+.calc-slider-extremes{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:5px}
+.calc-tabs{display:flex;gap:6px;margin:16px 0;flex-wrap:wrap}
+.calc-tab{background:var(--card2);border:1px solid var(--border);color:var(--text3);font-family:'Inter',system-ui;font-size:11px;font-weight:600;padding:6px 14px;border-radius:var(--r-full);cursor:pointer;transition:all .2s}
+.calc-tab.active{background:rgba(200,169,81,.12);border-color:var(--gold);color:var(--gold)}
+.calc-tab:hover:not(.active){border-color:var(--border2);color:var(--text2)}
+.calc-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;margin:16px 0}
+.calc-cmp-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.calc-cmp-card.bank{border-color:rgba(224,82,82,.2)}
+.calc-cmp-card.method{border-color:rgba(200,169,81,.2);background:linear-gradient(135deg,rgba(200,169,81,.04),var(--card))}
+.calc-cmp-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.calc-cmp-icon{font-size:22px;flex-shrink:0}
+.calc-cmp-label{font-size:13px;font-weight:700;color:var(--text)}
+.calc-cmp-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.calc-final-v{font-size:clamp(18px,3vw,26px);font-weight:800;color:var(--text);line-height:1;margin-bottom:4px;text-align:center}
+.calc-final-v.gold{color:var(--gold)}
+.calc-final-lbl{font-size:10px;color:var(--text3);margin-bottom:8px;text-align:center}
+.calc-profit{font-size:12px;font-weight:600;margin-bottom:3px;text-align:center}
+.calc-profit.green{color:var(--green-l)}
+.calc-profit.red{color:var(--red)}
+.calc-roi-lbl{font-size:10px;color:var(--text3);text-align:center}
+.calc-vs-lbl{font-size:11px;font-weight:800;color:var(--text3);text-align:center;flex-shrink:0}
+.calc-diff-bar{background:linear-gradient(135deg,rgba(44,196,148,.07),rgba(44,196,148,.03));border:1px solid rgba(44,196,148,.2);border-radius:var(--r);padding:14px 20px;text-align:center;font-size:13px;color:var(--text2);margin:14px 0}
+.calc-diff-bar strong{color:var(--green-l);font-size:16px}
+.calc-horizon-wrap{margin-top:24px}
+.calc-horizon-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;text-align:center;margin-bottom:12px}
+.calc-h-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.calc-h-card{background:var(--card);border:1px solid rgba(200,169,81,.1);border-radius:var(--r);padding:14px;text-align:center}
+.calc-h-period{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.calc-h-val{font-size:clamp(13px,2vw,18px);font-weight:800;color:var(--text);margin-bottom:3px}
+.calc-h-gain{font-size:10px;color:var(--green-l)}
+.calc-cases-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+.calc-case-card{background:var(--card);border:1px solid rgba(200,169,81,.15);border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
+.calc-case-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-d),var(--gold))}
+.calc-case-tag{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:7px}
+.calc-case-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px}
+.calc-case-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:7px}
+.calc-case-nums{display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:10px;gap:4px}
+.calc-case-num-item{text-align:center;flex:1}
+.calc-case-num-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.calc-case-num-val{font-size:12px;font-weight:700;color:var(--text)}
+.calc-case-num-val.green{color:var(--green-l)}
+.calc-note{font-size:10px;color:var(--text3);text-align:center;margin-top:16px;line-height:1.7}
+@media(max-width:700px){
+  .calc-compare{grid-template-columns:1fr}
+  .calc-vs-lbl{display:none}
+  .calc-cases-grid{grid-template-columns:1fr}
+  .calc-h-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
@@ -488,6 +543,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
       </div>
       <div class="nav-item" id="nav-evento" onclick="navigate('evento')">
         <span class="nav-icon">📅</span> Evento Presencial
+      </div>
+      <div class="nav-item" id="nav-calculadora" onclick="navigate('calculadora')">
+        <span class="nav-icon">🧮</span> Calculadora
       </div>
       <div class="nav-item" id="nav-perfil" onclick="navigate('perfil')">
         <span class="nav-icon">⚙️</span> Meu Perfil
@@ -727,6 +785,117 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- ── CALCULADORA ── -->
+      <div class="screen" id="screen-calculadora">
+        <div class="page-title">Calculadora Patrimonial</div>
+        <div class="page-sub">Compare o banco com o Método 4P e veja o potencial do seu capital.</div>
+
+        <div class="calc-slider-wrap">
+          <div class="calc-capital-label">Capital inicial: <span id="calc-capital-disp">R$ 170k</span></div>
+          <input type="range" class="calc-range" id="calc-slider" min="170000" max="500000" step="5000" value="170000" oninput="calcOnSlider(this)">
+          <div class="calc-slider-extremes"><span>R$ 170k</span><span>R$ 500k</span></div>
+        </div>
+
+        <div class="calc-tabs">
+          <button class="calc-tab active" id="ctab-1a" onclick="setCalcPrazo(12,'1a')">1 ano</button>
+          <button class="calc-tab" id="ctab-3a" onclick="setCalcPrazo(36,'3a')">3 anos</button>
+          <button class="calc-tab" id="ctab-5a" onclick="setCalcPrazo(60,'5a')">5 anos</button>
+          <button class="calc-tab" id="ctab-10a" onclick="setCalcPrazo(120,'10a')">10 anos</button>
+        </div>
+
+        <div class="calc-compare">
+          <div class="calc-cmp-card bank">
+            <div class="calc-cmp-header">
+              <div class="calc-cmp-icon">🏦</div>
+              <div>
+                <div class="calc-cmp-label">Banco</div>
+                <div class="calc-cmp-sub">CDB 12% a.a. com IR</div>
+              </div>
+            </div>
+            <div class="calc-final-v" id="calc-bank-val">—</div>
+            <div class="calc-final-lbl">valor final</div>
+            <div class="calc-profit red" id="calc-bank-profit">—</div>
+            <div class="calc-roi-lbl" id="calc-bank-roi">—</div>
+          </div>
+          <div class="calc-vs-lbl">VS</div>
+          <div class="calc-cmp-card method">
+            <div class="calc-cmp-header">
+              <div class="calc-cmp-icon">🏗️</div>
+              <div>
+                <div class="calc-cmp-label">Método 4P</div>
+                <div class="calc-cmp-sub">47% por ciclo de 12 meses</div>
+              </div>
+            </div>
+            <div class="calc-final-v gold" id="calc-4p-val">—</div>
+            <div class="calc-final-lbl">valor final</div>
+            <div class="calc-profit green" id="calc-4p-profit">—</div>
+            <div class="calc-roi-lbl" id="calc-4p-roi">—</div>
+          </div>
+        </div>
+
+        <div class="calc-diff-bar">
+          🏆 Com o Método 4P você teria <strong id="calc-diff-val">R$ 0</strong> a mais neste período
+        </div>
+
+        <div class="calc-horizon-wrap">
+          <div class="calc-horizon-lbl">Visão de longo prazo — Método 4P reinvestindo todo lucro</div>
+          <div class="calc-h-grid">
+            <div class="calc-h-card">
+              <div class="calc-h-period">3 anos</div>
+              <div class="calc-h-val" id="h-3a">—</div>
+              <div class="calc-h-gain" id="h-3a-gain">—</div>
+            </div>
+            <div class="calc-h-card">
+              <div class="calc-h-period">5 anos</div>
+              <div class="calc-h-val" id="h-5a">—</div>
+              <div class="calc-h-gain" id="h-5a-gain">—</div>
+            </div>
+            <div class="calc-h-card">
+              <div class="calc-h-period">10 anos</div>
+              <div class="calc-h-val" id="h-10a">—</div>
+              <div class="calc-h-gain" id="h-10a-gain">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px">
+          <div class="sec-label">Cases reais de Pablo Dantas</div>
+          <div class="calc-cases-grid">
+            <div class="calc-case-card">
+              <div class="calc-case-tag">Case 01</div>
+              <div class="calc-case-title">Compra e venda residencial</div>
+              <p class="calc-case-desc">Adquiriu imóvel por R$170k, reformou e vendeu por R$250k em 6 meses.</p>
+              <div class="calc-case-nums">
+                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Investido</div><div class="calc-case-num-val">R$ 170k</div></div>
+                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Vendido</div><div class="calc-case-num-val">R$ 250k</div></div>
+                <div class="calc-case-num-item"><div class="calc-case-num-lbl">ROI</div><div class="calc-case-num-val green">+47%</div></div>
+              </div>
+            </div>
+            <div class="calc-case-card">
+              <div class="calc-case-tag">Case 02</div>
+              <div class="calc-case-title">Terreno → 2 casas</div>
+              <p class="calc-case-desc">Comprou terreno por R$370k, construiu 2 casas e vendeu cada uma por R$350k.</p>
+              <div class="calc-case-nums">
+                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Investido</div><div class="calc-case-num-val">R$ 370k</div></div>
+                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Vendido</div><div class="calc-case-num-val">R$ 700k</div></div>
+                <div class="calc-case-num-item"><div class="calc-case-num-lbl">ROI</div><div class="calc-case-num-val green">+89%</div></div>
+              </div>
+            </div>
+            <div class="calc-case-card">
+              <div class="calc-case-tag">Case 03</div>
+              <div class="calc-case-title">Sociedade patrimonial</div>
+              <p class="calc-case-desc">Entrada R$150k por sócio. Construíram 2 casas e venderam por R$250k cada.</p>
+              <div class="calc-case-nums">
+                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Entrada/sócio</div><div class="calc-case-num-val">R$ 150k</div></div>
+                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Venda/unid.</div><div class="calc-case-num-val">R$ 250k</div></div>
+                <div class="calc-case-num-item"><div class="calc-case-num-lbl">ROI</div><div class="calc-case-num-val green">+167%</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="calc-note">⚠️ Simulação com base em cases reais. Rentabilidades passadas não garantem resultados futuros. Valores meramente ilustrativos.</p>
       </div>
 
       <!-- ── PERFIL ── -->
@@ -1178,14 +1347,13 @@ async function loadEncontrosData(){
     const hoje=new Date().toISOString().slice(0,10);
     const prox=encontrosList.find(e=>e.data&&e.data.substring(0,10)>=hoje);
     if(prox){
-      const d=prox.data.substring(0,10);
-      const h=prox.hora?prox.hora.substring(0,5):'19:00';
-      const target=new Date(d+'T'+h+':00-03:00');
-      nextEncDate=isNaN(target.getTime())?null:target;
+      const dataStr=String(prox.data).substring(0,10);
+      const horaStr=prox.hora?String(prox.hora).substring(0,5):'19:00';
+      nextEncDate=new Date(dataStr+'T'+horaStr+':00-03:00');
     }else{
       nextEncDate=null;
     }
-    console.log('[4P] encontros carregados:',encontrosList.length,'| prox:',prox?.data,'| hora:',prox?.hora,'| nextEncDate:',nextEncDate);
+    console.log('[4P] encontros:',encontrosList.length,'| prox:',prox?.data,'| hora:',prox?.hora,'| nextEncDate:',nextEncDate);
   }catch(e){console.error('[4P] loadEncontrosData erro:',e);encontrosList=[];}
 }
 
@@ -1203,6 +1371,7 @@ function navigate(screen){
   if(screen==='ranking'){renderLevelsGrid();loadComprovantesStatus();}
   if(screen==='mapa')initMapa();
   if(screen==='comunidade')loadPosts();
+  if(screen==='calculadora')updateCalc();
   if(screen==='perfil')loadPerfilScreen();
   resetInactivityTimer();
 }
@@ -1238,10 +1407,9 @@ function renderDashboard(){
   const hoje=new Date().toISOString().slice(0,10);
   const prox=encontrosList.find(e=>e.data&&e.data.substring(0,10)>=hoje);
   if(prox){
-    const d=prox.data.substring(0,10);
-    const h=(prox.hora||'19:00').substring(0,5);
-    const target=new Date(d+'T'+h+':00-03:00');
-    nextEncDate=isNaN(target.getTime())?null:target;
+    const dataStr=String(prox.data).substring(0,10);
+    const horaStr=prox.hora?String(prox.hora).substring(0,5):'19:00';
+    nextEncDate=new Date(dataStr+'T'+horaStr+':00-03:00');
     const d2=parseDateLocal(prox.data);
     set('stat-enc',fmtDatePT(d2,{day:'2-digit',month:'short'}));
     set('stat-enc-sub',prox.titulo||'Encontro ao vivo');
@@ -1391,10 +1559,9 @@ function renderEncontros(){
     const isPast=data&&data<hoje;
     const isNext=!isPast&&data&&data===encontrosList.find(e=>e.data&&e.data.slice(0,10)>=hoje)?.data?.slice(0,10)||false;
     if(isNext){
-      const d=enc.data.substring(0,10);
-      const h=(enc.hora||'19:00').substring(0,5);
-      const target=new Date(d+'T'+h+':00-03:00');
-      if(!isNaN(target.getTime()))nextEncDate=target;
+      const dataStr=String(enc.data).substring(0,10);
+      const horaStr=enc.hora?String(enc.hora).substring(0,5):'19:00';
+      nextEncDate=new Date(dataStr+'T'+horaStr+':00-03:00');
     }
     const dateStr=fmtDatePT(parseDateLocal(data));
     let cdHtml='';
@@ -1834,6 +2001,58 @@ async function handleLogout(){
   try{ window._bcChannel?.postMessage('logout'); }catch(e){}
   await sb.auth.signOut();
   window.location.href='../auth.html';
+}
+
+// ── CALCULADORA ──
+let calcCapital=170000,calcMonths=12;
+
+function bankFinal(cap,months){
+  const gross=cap*(Math.pow(1.12,months/12)-1);
+  const ir=months<=6?0.225:months<=12?0.20:months<=24?0.175:0.15;
+  return cap+gross*(1-ir);
+}
+function method4pFinal(cap,months){
+  return cap*Math.pow(1.47,months/12);
+}
+function updateCalc(){
+  const bank=bankFinal(calcCapital,calcMonths);
+  const m4p=method4pFinal(calcCapital,calcMonths);
+  const bGain=bank-calcCapital;
+  const mGain=m4p-calcCapital;
+  const bRoi=(bGain/calcCapital*100).toFixed(1);
+  const mRoi=(mGain/calcCapital*100).toFixed(1);
+  const diff=m4p-bank;
+  const $c=id=>document.getElementById(id);
+  if(!$c('calc-bank-val'))return;
+  $c('calc-bank-val').textContent=fmtBRL(bank);
+  $c('calc-bank-profit').textContent='+'+fmtBRL(bGain)+' de lucro líquido';
+  $c('calc-bank-roi').textContent='+'+bRoi+'% de retorno';
+  $c('calc-4p-val').textContent=fmtBRL(m4p);
+  $c('calc-4p-profit').textContent='+'+fmtBRL(mGain)+' de lucro';
+  $c('calc-4p-roi').textContent='+'+mRoi+'% de retorno';
+  $c('calc-diff-val').textContent=fmtBRL(diff);
+  [3,5,10].forEach(y=>{
+    const val=method4pFinal(calcCapital,y*12);
+    const gain=val-calcCapital;
+    $c('h-'+y+'a').textContent=fmtBRL(val);
+    $c('h-'+y+'a-gain').textContent='+'+fmtBRL(gain)+' de lucro';
+  });
+  const slider=document.getElementById('calc-slider');
+  if(slider){
+    const pct=((calcCapital-170000)/330000*100).toFixed(1);
+    slider.style.background=`linear-gradient(90deg,#C8A951 ${pct}%,#1A1A1A ${pct}%)`;
+  }
+}
+function setCalcPrazo(months,tabId){
+  calcMonths=months;
+  document.querySelectorAll('.calc-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('ctab-'+tabId).classList.add('active');
+  updateCalc();
+}
+function calcOnSlider(inp){
+  calcCapital=parseInt(inp.value);
+  document.getElementById('calc-capital-disp').textContent='R$ '+(calcCapital/1000).toFixed(0)+'k';
+  updateCalc();
 }
 
 // ── TIMERS ──
