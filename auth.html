@@ -326,6 +326,24 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ── TIMEOUT HELPER ── (12s — cobre conexões 5G lentas)
+function sbCall(promise) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('__timeout__')), 12000)
+    )
+  ]);
+}
+function handleNetErr(err, btnId) {
+  setLoading(btnId, false);
+  if (err.message === '__timeout__') {
+    showAlert('Sem resposta do servidor. Verifique sua conexão e tente novamente.', 'error');
+  } else {
+    showAlert(err.message || 'Erro inesperado.', 'error');
+  }
+}
+
 // ── LOGIN ──
 async function handleLogin(e) {
   e.preventDefault();
@@ -334,16 +352,19 @@ async function handleLogin(e) {
   const senha = document.getElementById('login-senha').value;
 
   setLoading('btn-login', true);
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
+  let res;
+  try {
+    res = await sbCall(sb.auth.signInWithPassword({ email, password: senha }));
+  } catch (err) { handleNetErr(err, 'btn-login'); return; }
   setLoading('btn-login', false);
 
-  if (error) {
+  if (res.error) {
     const msgs = {
       'Invalid login credentials': 'E-mail ou senha incorretos.',
       'Email not confirmed': 'Confirme seu e-mail antes de entrar.',
       'Too many requests': 'Muitas tentativas. Aguarde alguns minutos.',
     };
-    showAlert(msgs[error.message] || error.message, 'error');
+    showAlert(msgs[res.error.message] || res.error.message, 'error');
     return;
   }
   window.location.href = 'plataforma/index.html';
@@ -356,21 +377,18 @@ async function handleCriarSenha(e) {
   const senha = document.getElementById('nova-senha').value;
   const conf  = document.getElementById('conf-senha').value;
 
-  if (senha !== conf) {
-    showAlert('As senhas não coincidem.', 'error');
-    return;
-  }
-  if (senha.length < 6) {
-    showAlert('A senha deve ter pelo menos 6 caracteres.', 'error');
-    return;
-  }
+  if (senha !== conf) { showAlert('As senhas não coincidem.', 'error'); return; }
+  if (senha.length < 6) { showAlert('A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
 
   setLoading('btn-criar', true);
-  const { error } = await sb.auth.updateUser({ password: senha });
+  let res;
+  try {
+    res = await sbCall(sb.auth.updateUser({ password: senha }));
+  } catch (err) { handleNetErr(err, 'btn-criar'); return; }
   setLoading('btn-criar', false);
 
-  if (error) {
-    const msg = error.message;
+  if (res.error) {
+    const msg = res.error.message;
     const isExpired = /expired|invalid|session missing/i.test(msg);
     showAlert(
       isExpired
@@ -390,14 +408,14 @@ async function handleRecuperar(e) {
   clearAlert();
   const email = document.getElementById('rec-email').value.trim();
   setLoading('btn-rec', true);
-  const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/auth.html'
-  });
+  let res;
+  try {
+    res = await sbCall(sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/auth.html'
+    }));
+  } catch (err) { handleNetErr(err, 'btn-rec'); return; }
   setLoading('btn-rec', false);
-  if (error) {
-    showAlert(error.message, 'error');
-    return;
-  }
+  if (res.error) { showAlert(res.error.message, 'error'); return; }
   showAlert('E-mail enviado! Verifique sua caixa de entrada (e spam) para redefinir a senha.', 'success');
   document.getElementById('form-recuperar').reset();
 }

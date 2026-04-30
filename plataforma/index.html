@@ -931,7 +931,10 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
 
 // ── AUTH GUARD ──
-sb.auth.getSession().then(async ({ data }) => {
+Promise.race([
+  sb.auth.getSession(),
+  new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000))
+]).then(async ({ data }) => {
   if (!data.session) { window.location.href = '../auth.html'; return; }
   currentUser = data.session.user;
   await Promise.all([loadAulasFromDB(), loadConfiguracoes()]);
@@ -939,6 +942,8 @@ sb.auth.getSession().then(async ({ data }) => {
   loadNotificacoes();
   loadDashboardPosts();
   initPopup();
+}).catch(() => {
+  document.getElementById('conn-error').style.display = 'flex';
 });
 sb.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT') window.location.href = '../auth.html';
