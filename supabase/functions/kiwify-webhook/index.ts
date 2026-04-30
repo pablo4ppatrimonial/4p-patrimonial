@@ -184,6 +184,22 @@ Deno.serve(async (req: Request) => {
               Após criar sua senha, você poderá entrar a qualquer momento em
               <a href="https://4ppatrimonial.com.br">4ppatrimonial.com.br</a>.
             </p>
+            <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:14px 18px;margin:20px 0;">
+              <p style="margin:0 0 8px 0;color:#92400e;font-weight:bold;">📬 Não encontrou este e-mail?</p>
+              <p style="margin:0;color:#78350f;font-size:14px;">
+                Verifique também a sua <strong>caixa de spam</strong> ou lixo eletrônico —
+                às vezes ele pode cair por lá.
+              </p>
+            </div>
+            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px 18px;margin:20px 0;">
+              <p style="margin:0 0 8px 0;color:#166534;font-weight:bold;">🔑 O link não funcionou?</p>
+              <p style="margin:0;color:#15803d;font-size:14px;">
+                Sem problema! Acesse <a href="https://4ppatrimonial.com.br" style="color:#15803d;font-weight:bold;">4ppatrimonial.com.br</a>,
+                clique em <strong>"Recuperar senha"</strong> e informe o mesmo e-mail
+                que você usou na compra (<strong>${email}</strong>).
+                Você receberá um novo link para criar sua senha.
+              </p>
+            </div>
             <p style="color:#555;">Se você não reconhece esta compra, ignore este e-mail.</p>
             <hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
             <p style="color:#999;font-size:12px;">4P Patrimonial — Método de investimento patrimonial</p>
