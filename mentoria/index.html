@@ -419,60 +419,102 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   .screen{padding:12px}
   .btn-save{width:100%}
 }
-/* ── CALCULADORA ── */
-.calc-slider-wrap{margin:20px 0}
-.calc-capital-label{font-size:13px;color:var(--text2);margin-bottom:10px;text-align:center}
-.calc-capital-label span{color:var(--gold);font-weight:700;font-size:20px}
-.calc-range{width:100%;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;outline:none;cursor:pointer;transition:background .1s}
-.calc-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--gold);border:3px solid var(--bg);box-shadow:0 2px 8px rgba(200,169,81,.4);cursor:pointer}
-.calc-range::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);cursor:pointer}
-.calc-slider-extremes{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:5px}
-.calc-tabs{display:flex;gap:6px;margin:16px 0;flex-wrap:wrap}
-.calc-tab{background:var(--card2);border:1px solid var(--border);color:var(--text3);font-family:'Inter',system-ui;font-size:11px;font-weight:600;padding:6px 14px;border-radius:var(--r-full);cursor:pointer;transition:all .2s}
-.calc-tab.active{background:rgba(200,169,81,.12);border-color:var(--gold);color:var(--gold)}
-.calc-tab:hover:not(.active){border-color:var(--border2);color:var(--text2)}
-.calc-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;margin:16px 0}
-.calc-cmp-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px}
-.calc-cmp-card.bank{border-color:rgba(224,82,82,.2)}
-.calc-cmp-card.method{border-color:rgba(200,169,81,.2);background:linear-gradient(135deg,rgba(200,169,81,.04),var(--card))}
-.calc-cmp-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.calc-cmp-icon{font-size:22px;flex-shrink:0}
-.calc-cmp-label{font-size:13px;font-weight:700;color:var(--text)}
-.calc-cmp-sub{font-size:10px;color:var(--text3);margin-top:2px}
-.calc-final-v{font-size:clamp(18px,3vw,26px);font-weight:800;color:var(--text);line-height:1;margin-bottom:4px;text-align:center}
-.calc-final-v.gold{color:var(--gold)}
-.calc-final-lbl{font-size:10px;color:var(--text3);margin-bottom:8px;text-align:center}
-.calc-profit{font-size:12px;font-weight:600;margin-bottom:3px;text-align:center}
-.calc-profit.green{color:var(--green-l)}
-.calc-profit.red{color:var(--red)}
-.calc-roi-lbl{font-size:10px;color:var(--text3);text-align:center}
-.calc-vs-lbl{font-size:11px;font-weight:800;color:var(--text3);text-align:center;flex-shrink:0}
-.calc-diff-bar{background:linear-gradient(135deg,rgba(44,196,148,.07),rgba(44,196,148,.03));border:1px solid rgba(44,196,148,.2);border-radius:var(--r);padding:14px 20px;text-align:center;font-size:13px;color:var(--text2);margin:14px 0}
-.calc-diff-bar strong{color:var(--green-l);font-size:16px}
-.calc-horizon-wrap{margin-top:24px}
-.calc-horizon-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;text-align:center;margin-bottom:12px}
+/* ── CALCULADORA ELITE ── */
+.calc-hero{background:linear-gradient(135deg,#0f0900,#1a1200,#0a0a0a);border:1px solid rgba(200,169,81,.2);border-radius:16px;padding:28px 24px 22px;margin-bottom:20px;text-align:center;position:relative;overflow:hidden}
+.calc-hero::before{content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:280px;height:280px;background:radial-gradient(circle,rgba(200,169,81,.12) 0%,transparent 70%);pointer-events:none}
+.calc-hero-badge{display:inline-block;background:rgba(200,169,81,.1);border:1px solid rgba(200,169,81,.3);border-radius:999px;padding:4px 14px;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:14px}
+.calc-hero-title{font-size:clamp(22px,4vw,32px);font-weight:800;color:var(--text);line-height:1.15;margin-bottom:8px}
+.calc-hero-title span{background:linear-gradient(90deg,#C8A951,#FFE08A,#C8A951);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.calc-hero-sub{font-size:12px;color:var(--text3);line-height:1.6;max-width:380px;margin:0 auto}
+
+.calc-panel{background:linear-gradient(135deg,#141414,#0f0f0f);border:1px solid rgba(200,169,81,.15);border-radius:14px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
+.calc-panel::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,81,.4),transparent)}
+.calc-panel-label{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;opacity:.8}
+.calc-capital-big{font-size:clamp(36px,6vw,52px);font-weight:800;color:var(--gold);text-align:center;line-height:1;margin-bottom:4px;font-variant-numeric:tabular-nums;text-shadow:0 0 40px rgba(200,169,81,.3)}
+.calc-capital-sub{font-size:11px;color:var(--text3);text-align:center;margin-bottom:20px}
+.calc-range{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;outline:none;cursor:pointer;transition:background .05s}
+.calc-range::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#FFE08A,#C8A951);border:3px solid #0a0a0a;box-shadow:0 0 12px rgba(200,169,81,.6),0 2px 6px rgba(0,0,0,.5);cursor:pointer;transition:box-shadow .2s}
+.calc-range::-webkit-slider-thumb:hover{box-shadow:0 0 20px rgba(200,169,81,.9),0 2px 8px rgba(0,0,0,.6)}
+.calc-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#FFE08A,#C8A951);border:3px solid #0a0a0a;cursor:pointer}
+.calc-slider-extremes{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:8px;letter-spacing:.5px}
+
+.calc-periods{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.calc-period-btn{background:#111;border:1px solid #2a2a2a;color:var(--text3);font-size:12px;font-weight:700;padding:10px 0;border-radius:10px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.calc-period-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,169,81,.08),transparent);opacity:0;transition:opacity .2s}
+.calc-period-btn.active{background:linear-gradient(135deg,rgba(200,169,81,.18),rgba(200,169,81,.06));border-color:rgba(200,169,81,.5);color:var(--gold);box-shadow:0 0 16px rgba(200,169,81,.15)}
+.calc-period-btn.active::before{opacity:1}
+.calc-period-btn:hover:not(.active){border-color:#444;color:var(--text2)}
+.calc-period-sub{display:block;font-size:8px;font-weight:500;color:inherit;opacity:.6;margin-top:2px;letter-spacing:.5px}
+
+.calc-battle{display:grid;grid-template-columns:1fr 56px 1fr;gap:12px;align-items:stretch;margin:20px 0}
+.calc-battle-card{border-radius:14px;padding:22px 18px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:0}
+.calc-battle-card.bank{background:linear-gradient(160deg,#130808,#0d0d0d);border:1px solid rgba(224,82,82,.2)}
+.calc-battle-card.method{background:linear-gradient(160deg,#0f0c00,#121200,#0d0d0d);border:1px solid rgba(200,169,81,.35);box-shadow:0 0 40px rgba(200,169,81,.08)}
+.calc-battle-card.method::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.calc-battle-shine{position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle at top right,rgba(200,169,81,.08),transparent 70%);pointer-events:none}
+.calc-battle-icon{font-size:28px;margin-bottom:12px}
+.calc-battle-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px}
+.calc-battle-sub{font-size:9px;color:var(--text3);letter-spacing:.5px;margin-bottom:18px}
+.calc-battle-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);margin:0 -18px 16px}
+.calc-result-lbl{font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.calc-result-val{font-size:clamp(20px,3.5vw,30px);font-weight:800;line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.calc-result-val.bank-color{color:#ccc}
+.calc-result-val.gold{color:var(--gold);text-shadow:0 0 20px rgba(200,169,81,.4)}
+.calc-result-gain{font-size:11px;font-weight:600;margin-bottom:2px}
+.calc-result-gain.red{color:var(--red)}
+.calc-result-gain.green{color:var(--green-l)}
+.calc-result-roi{font-size:10px;color:var(--text3)}
+.calc-roi-pill{display:inline-block;background:rgba(44,196,148,.12);border:1px solid rgba(44,196,148,.25);border-radius:999px;padding:3px 10px;font-size:10px;font-weight:700;color:var(--green-l);margin-top:8px}
+.calc-roi-pill.red{background:rgba(224,82,82,.1);border-color:rgba(224,82,82,.2);color:var(--red)}
+.calc-vs-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.calc-vs-circle{width:40px;height:40px;border-radius:50%;background:#111;border:1px solid #2a2a2a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--text3);letter-spacing:1px}
+
+.calc-winner{background:linear-gradient(135deg,rgba(200,169,81,.08),rgba(200,169,81,.03));border:1px solid rgba(200,169,81,.25);border-radius:14px;padding:20px 24px;text-align:center;margin-bottom:20px;position:relative;overflow:hidden}
+.calc-winner::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.calc-winner-label{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.calc-winner-val{font-size:clamp(24px,5vw,36px);font-weight:800;color:var(--green-l);font-variant-numeric:tabular-nums;text-shadow:0 0 30px rgba(44,196,148,.3);line-height:1;margin-bottom:4px}
+.calc-winner-sub{font-size:11px;color:var(--text3)}
+.calc-winner-sub strong{color:var(--text2)}
+
+.calc-horizon{background:linear-gradient(135deg,#0e0e0e,#0a0a0a);border:1px solid rgba(200,169,81,.1);border-radius:14px;padding:22px;margin-bottom:20px}
+.calc-horizon-header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.calc-horizon-icon{width:36px;height:36px;border-radius:10px;background:rgba(200,169,81,.1);border:1px solid rgba(200,169,81,.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.calc-horizon-ttl{font-size:13px;font-weight:700;color:var(--text)}
+.calc-horizon-desc{font-size:10px;color:var(--text3);margin-top:2px}
 .calc-h-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.calc-h-card{background:var(--card);border:1px solid rgba(200,169,81,.1);border-radius:var(--r);padding:14px;text-align:center}
-.calc-h-period{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
-.calc-h-val{font-size:clamp(13px,2vw,18px);font-weight:800;color:var(--text);margin-bottom:3px}
-.calc-h-gain{font-size:10px;color:var(--green-l)}
-.calc-cases-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
-.calc-case-card{background:var(--card);border:1px solid rgba(200,169,81,.15);border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
-.calc-case-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-d),var(--gold))}
-.calc-case-tag{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:7px}
-.calc-case-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px}
-.calc-case-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:7px}
-.calc-case-nums{display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:10px;gap:4px}
-.calc-case-num-item{text-align:center;flex:1}
-.calc-case-num-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
-.calc-case-num-val{font-size:12px;font-weight:700;color:var(--text)}
-.calc-case-num-val.green{color:var(--green-l)}
-.calc-note{font-size:10px;color:var(--text3);text-align:center;margin-top:16px;line-height:1.7}
+.calc-h-card{background:linear-gradient(160deg,#141400,#0d0d0d);border:1px solid rgba(200,169,81,.12);border-radius:12px;padding:16px 12px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s}
+.calc-h-card:hover{border-color:rgba(200,169,81,.3)}
+.calc-h-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,81,.3),transparent)}
+.calc-h-period{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;opacity:.8}
+.calc-h-val{font-size:clamp(14px,2.5vw,20px);font-weight:800;color:var(--text);margin-bottom:4px;font-variant-numeric:tabular-nums}
+.calc-h-gain{font-size:10px;color:var(--green-l);font-weight:600}
+.calc-h-mult{font-size:9px;color:var(--text3);margin-top:3px}
+
+.calc-cases-section{margin-top:4px}
+.calc-cases-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.calc-cases-title{font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase}
+.calc-cases-badge{font-size:9px;background:rgba(200,169,81,.1);border:1px solid rgba(200,169,81,.2);border-radius:999px;padding:3px 10px;color:var(--gold);font-weight:600;letter-spacing:.5px}
+.calc-cases-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.calc-case-card{background:linear-gradient(160deg,#131300,#0d0d0d);border:1px solid rgba(200,169,81,.15);border-radius:12px;padding:18px;position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.calc-case-card:hover{border-color:rgba(200,169,81,.35);box-shadow:0 4px 24px rgba(200,169,81,.08)}
+.calc-case-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-d),var(--gold),var(--gold-d))}
+.calc-case-num{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;opacity:.7}
+.calc-case-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.3}
+.calc-case-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:14px}
+.calc-case-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:rgba(0,0,0,.3);border-radius:8px;padding:10px 8px}
+.calc-case-stat{text-align:center}
+.calc-case-stat-lbl{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.calc-case-stat-val{font-size:11px;font-weight:800;color:var(--text)}
+.calc-case-stat-val.gold{color:var(--gold)}
+.calc-case-stat-val.green{color:var(--green-l)}
+.calc-disclaimer{font-size:10px;color:var(--text3);text-align:center;margin-top:20px;line-height:1.7;padding:12px 16px;border:1px dashed rgba(255,255,255,.06);border-radius:8px}
 @media(max-width:700px){
-  .calc-compare{grid-template-columns:1fr}
-  .calc-vs-lbl{display:none}
+  .calc-battle{grid-template-columns:1fr}
+  .calc-vs-col{flex-direction:row;padding:8px 0}
+  .calc-vs-circle{width:36px;height:36px}
   .calc-cases-grid{grid-template-columns:1fr}
-  .calc-h-grid{grid-template-columns:1fr 1fr}
+  .calc-h-grid{grid-template-columns:repeat(3,1fr)}
+  .calc-periods{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -789,113 +831,150 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
       <!-- ── CALCULADORA ── -->
       <div class="screen" id="screen-calculadora">
-        <div class="page-title">Calculadora Patrimonial</div>
-        <div class="page-sub">Compare o banco com o Método 4P e veja o potencial do seu capital.</div>
 
-        <div class="calc-slider-wrap">
-          <div class="calc-capital-label">Capital inicial: <span id="calc-capital-disp">R$ 170k</span></div>
+        <!-- Hero -->
+        <div class="calc-hero">
+          <div class="calc-hero-badge">Ferramenta Exclusiva · Mentoria 4P</div>
+          <div class="calc-hero-title">Quanto seu capital<br>pode virar com o <span>Método 4P</span>?</div>
+          <div class="calc-hero-sub">Compare o rendimento do banco com operações imobiliárias reais e veja a diferença em números.</div>
+        </div>
+
+        <!-- Capital + Slider -->
+        <div class="calc-panel">
+          <div class="calc-panel-label">Capital disponível para investir</div>
+          <div class="calc-capital-big" id="calc-capital-disp">R$ 170k</div>
+          <div class="calc-capital-sub">Arraste para ajustar o valor inicial</div>
           <input type="range" class="calc-range" id="calc-slider" min="170000" max="500000" step="5000" value="170000" oninput="calcOnSlider(this)">
           <div class="calc-slider-extremes"><span>R$ 170k</span><span>R$ 500k</span></div>
         </div>
 
-        <div class="calc-tabs">
-          <button class="calc-tab active" id="ctab-1a" onclick="setCalcPrazo(12,'1a')">1 ano</button>
-          <button class="calc-tab" id="ctab-3a" onclick="setCalcPrazo(36,'3a')">3 anos</button>
-          <button class="calc-tab" id="ctab-5a" onclick="setCalcPrazo(60,'5a')">5 anos</button>
-          <button class="calc-tab" id="ctab-10a" onclick="setCalcPrazo(120,'10a')">10 anos</button>
+        <!-- Período -->
+        <div class="calc-periods">
+          <button class="calc-period-btn active" id="ctab-1a" onclick="setCalcPrazo(12,'1a')">
+            1 ano<span class="calc-period-sub">1 ciclo</span>
+          </button>
+          <button class="calc-period-btn" id="ctab-3a" onclick="setCalcPrazo(36,'3a')">
+            3 anos<span class="calc-period-sub">3 ciclos</span>
+          </button>
+          <button class="calc-period-btn" id="ctab-5a" onclick="setCalcPrazo(60,'5a')">
+            5 anos<span class="calc-period-sub">5 ciclos</span>
+          </button>
+          <button class="calc-period-btn" id="ctab-10a" onclick="setCalcPrazo(120,'10a')">
+            10 anos<span class="calc-period-sub">10 ciclos</span>
+          </button>
         </div>
 
-        <div class="calc-compare">
-          <div class="calc-cmp-card bank">
-            <div class="calc-cmp-header">
-              <div class="calc-cmp-icon">🏦</div>
-              <div>
-                <div class="calc-cmp-label">Banco</div>
-                <div class="calc-cmp-sub">CDB 12% a.a. com IR</div>
-              </div>
-            </div>
-            <div class="calc-final-v" id="calc-bank-val">—</div>
-            <div class="calc-final-lbl">valor final</div>
-            <div class="calc-profit red" id="calc-bank-profit">—</div>
-            <div class="calc-roi-lbl" id="calc-bank-roi">—</div>
+        <!-- Batalha -->
+        <div class="calc-battle">
+          <div class="calc-battle-card bank">
+            <div class="calc-battle-icon">🏦</div>
+            <div class="calc-battle-title">Banco</div>
+            <div class="calc-battle-sub">CDB · 12% a.a. com IR</div>
+            <div class="calc-battle-divider"></div>
+            <div class="calc-result-lbl">Valor final estimado</div>
+            <div class="calc-result-val bank-color" id="calc-bank-val">—</div>
+            <div class="calc-result-gain red" id="calc-bank-profit">—</div>
+            <div class="calc-result-roi" id="calc-bank-roi">—</div>
+            <span class="calc-roi-pill red" id="calc-bank-pill">—</span>
           </div>
-          <div class="calc-vs-lbl">VS</div>
-          <div class="calc-cmp-card method">
-            <div class="calc-cmp-header">
-              <div class="calc-cmp-icon">🏗️</div>
-              <div>
-                <div class="calc-cmp-label">Método 4P</div>
-                <div class="calc-cmp-sub">47% por ciclo de 12 meses</div>
-              </div>
-            </div>
-            <div class="calc-final-v gold" id="calc-4p-val">—</div>
-            <div class="calc-final-lbl">valor final</div>
-            <div class="calc-profit green" id="calc-4p-profit">—</div>
-            <div class="calc-roi-lbl" id="calc-4p-roi">—</div>
+
+          <div class="calc-vs-col">
+            <div class="calc-vs-circle">VS</div>
+          </div>
+
+          <div class="calc-battle-card method">
+            <div class="calc-battle-shine"></div>
+            <div class="calc-battle-icon">🏗️</div>
+            <div class="calc-battle-title">Método 4P</div>
+            <div class="calc-battle-sub">Imóveis · 47% por ciclo</div>
+            <div class="calc-battle-divider"></div>
+            <div class="calc-result-lbl">Valor final estimado</div>
+            <div class="calc-result-val gold" id="calc-4p-val">—</div>
+            <div class="calc-result-gain green" id="calc-4p-profit">—</div>
+            <div class="calc-result-roi" id="calc-4p-roi">—</div>
+            <span class="calc-roi-pill" id="calc-4p-pill">—</span>
           </div>
         </div>
 
-        <div class="calc-diff-bar">
-          🏆 Com o Método 4P você teria <strong id="calc-diff-val">R$ 0</strong> a mais neste período
+        <!-- Vantagem -->
+        <div class="calc-winner">
+          <div class="calc-winner-label">Com o Método 4P você teria a mais</div>
+          <div class="calc-winner-val" id="calc-diff-val">—</div>
+          <div class="calc-winner-sub">em relação ao <strong>melhor investimento bancário</strong> no mesmo período</div>
         </div>
 
-        <div class="calc-horizon-wrap">
-          <div class="calc-horizon-lbl">Visão de longo prazo — Método 4P reinvestindo todo lucro</div>
+        <!-- Visão de longo prazo -->
+        <div class="calc-horizon">
+          <div class="calc-horizon-header">
+            <div class="calc-horizon-icon">📈</div>
+            <div>
+              <div class="calc-horizon-ttl">Projeção de longo prazo</div>
+              <div class="calc-horizon-desc">Método 4P · reinvestindo 100% do lucro a cada ciclo</div>
+            </div>
+          </div>
           <div class="calc-h-grid">
             <div class="calc-h-card">
               <div class="calc-h-period">3 anos</div>
               <div class="calc-h-val" id="h-3a">—</div>
               <div class="calc-h-gain" id="h-3a-gain">—</div>
+              <div class="calc-h-mult" id="h-3a-mult">—</div>
             </div>
             <div class="calc-h-card">
               <div class="calc-h-period">5 anos</div>
               <div class="calc-h-val" id="h-5a">—</div>
               <div class="calc-h-gain" id="h-5a-gain">—</div>
+              <div class="calc-h-mult" id="h-5a-mult">—</div>
             </div>
             <div class="calc-h-card">
               <div class="calc-h-period">10 anos</div>
               <div class="calc-h-val" id="h-10a">—</div>
               <div class="calc-h-gain" id="h-10a-gain">—</div>
+              <div class="calc-h-mult" id="h-10a-mult">—</div>
             </div>
           </div>
         </div>
 
-        <div style="margin-top:24px">
-          <div class="sec-label">Cases reais de Pablo Dantas</div>
+        <!-- Cases reais -->
+        <div class="calc-cases-section">
+          <div class="calc-cases-header">
+            <div class="calc-cases-title">Cases reais · Pablo Dantas</div>
+            <div class="calc-cases-badge">Operações verificadas</div>
+          </div>
           <div class="calc-cases-grid">
             <div class="calc-case-card">
-              <div class="calc-case-tag">Case 01</div>
-              <div class="calc-case-title">Compra e venda residencial</div>
-              <p class="calc-case-desc">Adquiriu imóvel por R$170k, reformou e vendeu por R$250k em 6 meses.</p>
-              <div class="calc-case-nums">
-                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Investido</div><div class="calc-case-num-val">R$ 170k</div></div>
-                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Vendido</div><div class="calc-case-num-val">R$ 250k</div></div>
-                <div class="calc-case-num-item"><div class="calc-case-num-lbl">ROI</div><div class="calc-case-num-val green">+47%</div></div>
+              <div class="calc-case-num">Case 01</div>
+              <div class="calc-case-title">Compra, reforma e venda residencial</div>
+              <div class="calc-case-desc">Imóvel adquirido, reformado e vendido em 6 meses na Baixada Santista.</div>
+              <div class="calc-case-stats">
+                <div class="calc-case-stat"><div class="calc-case-stat-lbl">Investido</div><div class="calc-case-stat-val">R$ 170k</div></div>
+                <div class="calc-case-stat"><div class="calc-case-stat-lbl">Vendido</div><div class="calc-case-stat-val">R$ 250k</div></div>
+                <div class="calc-case-stat"><div class="calc-case-stat-lbl">ROI</div><div class="calc-case-stat-val green">+47%</div></div>
               </div>
             </div>
             <div class="calc-case-card">
-              <div class="calc-case-tag">Case 02</div>
-              <div class="calc-case-title">Terreno → 2 casas</div>
-              <p class="calc-case-desc">Comprou terreno por R$370k, construiu 2 casas e vendeu cada uma por R$350k.</p>
-              <div class="calc-case-nums">
-                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Investido</div><div class="calc-case-num-val">R$ 370k</div></div>
-                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Vendido</div><div class="calc-case-num-val">R$ 700k</div></div>
-                <div class="calc-case-num-item"><div class="calc-case-num-lbl">ROI</div><div class="calc-case-num-val green">+89%</div></div>
+              <div class="calc-case-num">Case 02</div>
+              <div class="calc-case-title">Terreno → 2 casas MCMV</div>
+              <div class="calc-case-desc">Terreno transformado em 2 residências MCMV, ambas vendidas acima do esperado.</div>
+              <div class="calc-case-stats">
+                <div class="calc-case-stat"><div class="calc-case-stat-lbl">Investido</div><div class="calc-case-stat-val">R$ 370k</div></div>
+                <div class="calc-case-stat"><div class="calc-case-stat-lbl">Vendido</div><div class="calc-case-stat-val">R$ 700k</div></div>
+                <div class="calc-case-stat"><div class="calc-case-stat-lbl">ROI</div><div class="calc-case-stat-val green">+89%</div></div>
               </div>
             </div>
             <div class="calc-case-card">
-              <div class="calc-case-tag">Case 03</div>
-              <div class="calc-case-title">Sociedade patrimonial</div>
-              <p class="calc-case-desc">Entrada R$150k por sócio. Construíram 2 casas e venderam por R$250k cada.</p>
-              <div class="calc-case-nums">
-                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Entrada/sócio</div><div class="calc-case-num-val">R$ 150k</div></div>
-                <div class="calc-case-num-item"><div class="calc-case-num-lbl">Venda/unid.</div><div class="calc-case-num-val">R$ 250k</div></div>
-                <div class="calc-case-num-item"><div class="calc-case-num-lbl">ROI</div><div class="calc-case-num-val green">+167%</div></div>
+              <div class="calc-case-num">Case 03</div>
+              <div class="calc-case-title">Sociedade patrimonial 2 sócios</div>
+              <div class="calc-case-desc">Dois sócios, um terreno, duas casas. Cada unidade vendida por R$250k.</div>
+              <div class="calc-case-stats">
+                <div class="calc-case-stat"><div class="calc-case-stat-lbl">Entrada/sócio</div><div class="calc-case-stat-val">R$ 150k</div></div>
+                <div class="calc-case-stat"><div class="calc-case-stat-lbl">Venda/unid.</div><div class="calc-case-stat-val">R$ 250k</div></div>
+                <div class="calc-case-stat"><div class="calc-case-stat-lbl">ROI</div><div class="calc-case-stat-val green">+167%</div></div>
               </div>
             </div>
           </div>
         </div>
-        <p class="calc-note">⚠️ Simulação com base em cases reais. Rentabilidades passadas não garantem resultados futuros. Valores meramente ilustrativos.</p>
+
+        <div class="calc-disclaimer">⚠️ Simulação com base em cases reais de Pablo Dantas. Rentabilidades passadas não garantem resultados futuros. Valores meramente ilustrativos — não constitui oferta de investimento.</div>
       </div>
 
       <!-- ── PERFIL ── -->
@@ -2026,26 +2105,31 @@ function updateCalc(){
   if(!$c('calc-bank-val'))return;
   $c('calc-bank-val').textContent=fmtBRL(bank);
   $c('calc-bank-profit').textContent='+'+fmtBRL(bGain)+' de lucro líquido';
-  $c('calc-bank-roi').textContent='+'+bRoi+'% de retorno';
+  $c('calc-bank-roi').textContent='Retorno: +'+bRoi+'%';
+  $c('calc-bank-pill').textContent='+'+bRoi+'% a.a.';
   $c('calc-4p-val').textContent=fmtBRL(m4p);
   $c('calc-4p-profit').textContent='+'+fmtBRL(mGain)+' de lucro';
-  $c('calc-4p-roi').textContent='+'+mRoi+'% de retorno';
+  $c('calc-4p-roi').textContent='Retorno: +'+mRoi+'%';
+  $c('calc-4p-pill').textContent='+'+mRoi+'% total';
   $c('calc-diff-val').textContent=fmtBRL(diff);
   [3,5,10].forEach(y=>{
     const val=method4pFinal(calcCapital,y*12);
     const gain=val-calcCapital;
+    const mult=(val/calcCapital).toFixed(1);
     $c('h-'+y+'a').textContent=fmtBRL(val);
     $c('h-'+y+'a-gain').textContent='+'+fmtBRL(gain)+' de lucro';
+    $c('h-'+y+'a-mult').textContent=mult+'× o capital inicial';
   });
   const slider=document.getElementById('calc-slider');
   if(slider){
     const pct=((calcCapital-170000)/330000*100).toFixed(1);
-    slider.style.background=`linear-gradient(90deg,#C8A951 ${pct}%,#1A1A1A ${pct}%)`;
+    slider.style.background=`linear-gradient(90deg,#C8A951 ${pct}%,#1e1e1e ${pct}%)`;
   }
 }
+
 function setCalcPrazo(months,tabId){
   calcMonths=months;
-  document.querySelectorAll('.calc-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.calc-period-btn').forEach(t=>t.classList.remove('active'));
   document.getElementById('ctab-'+tabId).classList.add('active');
   updateCalc();
 }
