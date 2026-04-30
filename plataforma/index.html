@@ -401,6 +401,13 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 </head>
 <body>
 
+<!-- Loading inicial — some quando o SDK carrega -->
+<div id="sdk-load" style="position:fixed;inset:0;z-index:10000;background:#0F0F0F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+  <div style="width:32px;height:32px;border:3px solid #2a2a2a;border-top-color:#C9A84C;border-radius:50%;animation:_sp .7s linear infinite"></div>
+  <div style="color:#A89F8C;font-size:13px;font-family:system-ui,sans-serif">Carregando...</div>
+  <style>@keyframes _sp{to{transform:rotate(360deg)}}</style>
+</div>
+
 <!-- ── MODAL WHATSAPP ── -->
 <div id="wpp-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--dark2);border:1px solid #2e2e2e;border-radius:18px;padding:32px 28px;max-width:380px;width:100%;text-align:center">
@@ -926,17 +933,23 @@ var sb;
   var urls = ['/vendor/supabase.js', 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'];
   var i = 0;
   function tryNext() {
-    if (i >= urls.length) { document.getElementById('conn-error').style.display = 'flex'; return; }
+    if (i >= urls.length) {
+      var l = document.getElementById('sdk-load'); if (l) l.remove();
+      document.getElementById('conn-error').style.display = 'flex';
+      return;
+    }
     var s = document.createElement('script');
     s.src = urls[i++];
-    s.onload = initApp;
-    s.onerror = tryNext;
+    var t = setTimeout(function() { if (s.parentNode) s.parentNode.removeChild(s); tryNext(); }, 8000);
+    s.onload = function() { clearTimeout(t); initApp(); };
+    s.onerror = function() { clearTimeout(t); tryNext(); };
     document.head.appendChild(s);
   }
   tryNext();
 })();
 
 function initApp() {
+  var l = document.getElementById('sdk-load'); if (l) l.remove();
   sb = supabase.createClient(
     'https://vfmtntdaohuwitajxyqc.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI'
