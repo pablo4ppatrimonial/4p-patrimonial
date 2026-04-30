@@ -69,15 +69,22 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // 1. Gera o link de convite via admin — cria o usuário se não existir.
-  //    Usamos sempre type "invite" para que auth.html mostre o formulário
-  //    "Criar senha". O Supabase NÃO envia e-mail por aqui; o envio fica
-  //    100% a cargo do Resend abaixo, sem rate limit.
-  const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+  // 1. Gera link via admin sem enviar e-mail pelo Supabase.
+  //    "invite" cria o usuário se não existir; se já existir, usa "magiclink".
+  //    Ambos os tipos fazem auth.html exibir o formulário "Criar senha".
+  let { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
     type: "invite",
     email,
     options: { redirectTo: "https://4ppatrimonial.com.br" },
   });
+
+  if (linkError?.message?.includes("already been registered")) {
+    ({ data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+      options: { redirectTo: "https://4ppatrimonial.com.br" },
+    }));
+  }
 
   if (linkError) {
     return new Response(JSON.stringify({ error: linkError.message }), {
