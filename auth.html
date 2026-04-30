@@ -219,9 +219,11 @@ const SUPABASE_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI';
 
 // Captura o hash ANTES do SDK limpar a URL (createClient pode apagar o hash)
-const _rawHash = new URLSearchParams(window.location.hash.slice(1));
-const _isSetup  = !!_rawHash.get('access_token') &&
-                  ['invite','magiclink'].includes(_rawHash.get('type'));
+const _rawHash   = new URLSearchParams(window.location.hash.slice(1));
+const _tokenType = _rawHash.get('type');
+// invite/magiclink = boas-vindas | recovery = redefinir senha
+const _isSetup   = !!_rawHash.get('access_token') &&
+                   ['invite','magiclink','recovery'].includes(_tokenType);
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -285,7 +287,10 @@ window.addEventListener('DOMContentLoaded', () => {
   // _isSetup foi capturado antes do createClient() limpar o hash
   if (_isSetup) {
     showCriarSenha();
-    showAlert('Bem-vindo! Escolha uma senha para ativar seu acesso.', 'info');
+    const msg = _tokenType === 'recovery'
+      ? 'Defina sua nova senha abaixo.'
+      : 'Bem-vindo! Escolha uma senha para ativar seu acesso.';
+    showAlert(msg, 'info');
   } else {
     // Verifica se já está logado
     sb.auth.getSession().then(({ data }) => {
@@ -298,7 +303,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (event === 'SIGNED_IN' && session && !_isSetup) {
       window.location.href = 'plataforma/index.html';
     }
-    if (event === 'PASSWORD_RECOVERY') {
+    if (event === 'PASSWORD_RECOVERY' && !_isSetup) {
+      // Fallback: recovery token processado pelo SDK após DOMContentLoaded
       showCriarSenha();
       showAlert('Defina sua nova senha abaixo.', 'info');
     }
@@ -349,7 +355,15 @@ async function handleCriarSenha(e) {
   setLoading('btn-criar', false);
 
   if (error) {
-    showAlert(error.message, 'error');
+    const msg = error.message;
+    const isExpired = /expired|invalid|session missing/i.test(msg);
+    showAlert(
+      isExpired
+        ? 'Seu link de acesso expirou. Clique em "Recuperar senha" e informe o e-mail da sua compra para receber um novo link.'
+        : msg,
+      'error'
+    );
+    if (isExpired) setTimeout(() => showTab('recuperar'), 3500);
     return;
   }
   window.location.href = 'plataforma/index.html';

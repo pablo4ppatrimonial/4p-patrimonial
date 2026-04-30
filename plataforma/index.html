@@ -937,7 +937,12 @@ async function loadUserData() {
 
   // Prefer profiles data from DB
   try {
-    const { data: prof } = await sb.from('profiles').select('nome,whatsapp,cidade,profissao').eq('id', currentUser.id).maybeSingle();
+    const { data: prof } = await sb.from('profiles').select('nome,whatsapp,cidade,profissao,status').eq('id', currentUser.id).maybeSingle();
+    if (prof?.status === 'inativo') {
+      await sb.auth.signOut();
+      window.location.href = '../auth.html';
+      return;
+    }
     if (prof?.nome) nome = prof.nome.split(' ')[0];
     if (prof?.whatsapp) { const wEl = document.getElementById('p-whatsapp'); if (wEl) wEl.value = prof.whatsapp; }
     if (prof?.cidade)   { const cEl = document.getElementById('p-cidade');   if (cEl) cEl.value = prof.cidade; }
