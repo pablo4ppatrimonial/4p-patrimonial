@@ -123,7 +123,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .prog-pct{font-size:22px;font-weight:800;color:var(--gold)}
 
 .next-live{background:var(--card);border:2px solid var(--gold);border-radius:var(--r);padding:20px;position:relative;overflow:hidden}
-.next-live::before{content:'AO VIVO';position:absolute;top:10px;right:12px;background:var(--red);color:#fff;font-size:8px;font-weight:700;letter-spacing:1.5px;padding:3px 8px;border-radius:var(--r-full)}
+.next-live.is-live::before{content:'AO VIVO';position:absolute;top:10px;right:12px;background:var(--red);color:#fff;font-size:8px;font-weight:700;letter-spacing:1.5px;padding:3px 8px;border-radius:var(--r-full)}
 @keyframes pulse-border{0%,100%{border-color:var(--gold);box-shadow:0 0 0 rgba(200,169,81,0)}50%{border-color:var(--gold-l);box-shadow:0 0 24px rgba(200,169,81,.2)}}
 .next-live.pulse{animation:pulse-border 2.5s ease-in-out infinite}
 .live-title{font-size:12px;font-weight:600;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
@@ -2149,19 +2149,35 @@ function startTimers(){
 function tickTimers(){
   const now=Date.now();
   // Live session countdown
+  const liveCard=document.getElementById('next-live-card');
   if(nextEncDate&&!isNaN(nextEncDate.getTime())){
-    const diff=Math.max(0,nextEncDate-now);
-    const h=Math.floor(diff/3600000);
-    const m=Math.floor(diff%3600000/60000);
-    const s=Math.floor(diff%60000/1000);
-    set('cd-h',pad2(h));
-    set('cd-m',pad2(m));
-    set('cd-s',pad2(s));
-    // enc grid countdowns
-    document.querySelectorAll('[class*="enc-cd-h-"]').forEach(el=>{el.textContent=pad2(h);});
-    document.querySelectorAll('[class*="enc-cd-m-"]').forEach(el=>{el.textContent=pad2(m);});
-    document.querySelectorAll('[class*="enc-cd-s-"]').forEach(el=>{el.textContent=pad2(s);});
+    const diff=nextEncDate-now;
+    const ONE_HOUR=3600000;
+    if(diff>ONE_HOUR){
+      if(liveCard)liveCard.classList.remove('is-live');
+      const h=Math.floor(diff/3600000);
+      const m=Math.floor(diff%3600000/60000);
+      const s=Math.floor(diff%60000/1000);
+      set('cd-h',pad2(h));set('cd-m',pad2(m));set('cd-s',pad2(s));
+      document.querySelectorAll('[class*="enc-cd-h-"]').forEach(el=>{el.textContent=pad2(h);});
+      document.querySelectorAll('[class*="enc-cd-m-"]').forEach(el=>{el.textContent=pad2(m);});
+      document.querySelectorAll('[class*="enc-cd-s-"]').forEach(el=>{el.textContent=pad2(s);});
+    }else if(diff>=-ONE_HOUR){
+      if(liveCard)liveCard.classList.add('is-live');
+      set('cd-h','AO');set('cd-m','VI');set('cd-s','VO');
+      document.querySelectorAll('[class*="enc-cd-h-"]').forEach(el=>{el.textContent='AO';});
+      document.querySelectorAll('[class*="enc-cd-m-"]').forEach(el=>{el.textContent='VI';});
+      document.querySelectorAll('[class*="enc-cd-s-"]').forEach(el=>{el.textContent='VO';});
+    }else{
+      if(liveCard)liveCard.classList.remove('is-live');
+      const lc=document.getElementById('live-countdown');
+      if(lc)lc.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--text3);padding:8px 0">✅ Realizado</div>';
+      document.querySelectorAll('[class*="enc-cd-h-"]').forEach(el=>{el.textContent='--';});
+      document.querySelectorAll('[class*="enc-cd-m-"]').forEach(el=>{el.textContent='--';});
+      document.querySelectorAll('[class*="enc-cd-s-"]').forEach(el=>{el.textContent='--';});
+    }
   }else{
+    if(liveCard)liveCard.classList.remove('is-live');
     set('cd-h','Em');set('cd-m','bre');set('cd-s','ve');
   }
   // Evento countdown
