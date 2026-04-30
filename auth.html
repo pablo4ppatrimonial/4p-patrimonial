@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>4P Patrimonial — Acesso</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window._sbErr=true"></script>
+<script>if(window._sbErr){document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');}</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -118,6 +119,14 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 </head>
 <body>
 
+<!-- Overlay de erro de conexão — fica oculto até ser necessário -->
+<div id="conn-error" style="display:none;position:fixed;inset:0;background:#0F0F0F;z-index:9999;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:'Sora',sans-serif">
+  <div style="font-size:48px;margin-bottom:16px">📡</div>
+  <div style="font-size:18px;font-weight:600;color:#F0EDE6;margin-bottom:8px">Erro ao carregar</div>
+  <div style="font-size:13px;color:#A89F8C;margin-bottom:28px;max-width:300px;line-height:1.6">Verifique sua conexão com a internet e tente novamente.</div>
+  <button onclick="location.reload()" style="background:linear-gradient(135deg,#8B6914,#C9A84C);color:#0F0F0F;border:none;border-radius:999px;padding:13px 32px;font-size:14px;font-weight:700;cursor:pointer">Recarregar página</button>
+</div>
+
 <div class="bg-orbs">
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
@@ -217,6 +226,12 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 <script>
 const SUPABASE_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI';
+
+// Aborta imediatamente se o SDK do Supabase não carregou (CDN bloqueado)
+if (typeof supabase === 'undefined') {
+  document.getElementById('conn-error').style.display = 'flex';
+  throw new Error('Supabase SDK não carregou.');
+}
 
 // Captura o hash ANTES do SDK limpar a URL (createClient pode apagar o hash)
 const _rawHash   = new URLSearchParams(window.location.hash.slice(1));
