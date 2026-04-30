@@ -2152,8 +2152,14 @@ function tickTimers(){
   const liveCard=document.getElementById('next-live-card');
   if(nextEncDate&&!isNaN(nextEncDate.getTime())){
     const diff=nextEncDate-now;
-    const ONE_HOUR=3600000;
-    if(diff>ONE_HOUR){
+    const THIRTY_MIN=1800000;   // 30 minutos antes → começa AO VIVO
+    const TWO_HOURS =7200000;   // 2 horas depois  → encerra AO VIVO
+    // Verifica se o encontro é hoje (horário Brasília UTC-3)
+    const todayBRT=new Date(now-3*3600000).toISOString().slice(0,10);
+    const encBRT  =new Date(nextEncDate.getTime()-3*3600000).toISOString().slice(0,10);
+    const isToday =(todayBRT===encBRT);
+    if(diff>THIRTY_MIN){
+      // Mais de 30min antes — countdown normal
       if(liveCard)liveCard.classList.remove('is-live');
       const h=Math.floor(diff/3600000);
       const m=Math.floor(diff%3600000/60000);
@@ -2162,13 +2168,15 @@ function tickTimers(){
       document.querySelectorAll('[class*="enc-cd-h-"]').forEach(el=>{el.textContent=pad2(h);});
       document.querySelectorAll('[class*="enc-cd-m-"]').forEach(el=>{el.textContent=pad2(m);});
       document.querySelectorAll('[class*="enc-cd-s-"]').forEach(el=>{el.textContent=pad2(s);});
-    }else if(diff>=-ONE_HOUR){
+    }else if(isToday&&diff>=-TWO_HOURS){
+      // Janela AO VIVO: 30min antes até 2h depois, e é hoje
       if(liveCard)liveCard.classList.add('is-live');
       set('cd-h','AO');set('cd-m','VI');set('cd-s','VO');
       document.querySelectorAll('[class*="enc-cd-h-"]').forEach(el=>{el.textContent='AO';});
       document.querySelectorAll('[class*="enc-cd-m-"]').forEach(el=>{el.textContent='VI';});
       document.querySelectorAll('[class*="enc-cd-s-"]').forEach(el=>{el.textContent='VO';});
     }else{
+      // Passou (mais de 2h) ou não é hoje
       if(liveCard)liveCard.classList.remove('is-live');
       const lc=document.getElementById('live-countdown');
       if(lc)lc.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--text3);padding:8px 0">✅ Realizado</div>';

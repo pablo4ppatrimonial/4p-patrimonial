@@ -217,6 +217,12 @@ body{font-family:'Sora',sans-serif;background:var(--dark);color:var(--text);min-
 <script>
 const SUPABASE_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI';
+
+// Captura o hash ANTES do SDK limpar a URL (createClient pode apagar o hash)
+const _rawHash = new URLSearchParams(window.location.hash.slice(1));
+const _isSetup  = !!_rawHash.get('access_token') &&
+                  ['invite','magiclink'].includes(_rawHash.get('type'));
+
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -276,14 +282,10 @@ window.addEventListener('DOMContentLoaded', () => {
     if (el) el.dataset.orig = el.textContent;
   });
 
-  // Detecta token de convite ou magic link na URL
-  const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const tokenType  = hashParams.get('type');
-  const hasToken   = !!hashParams.get('access_token');
-  const isSetup    = hasToken && (tokenType === 'invite' || tokenType === 'magiclink');
-
-  if (isSetup) {
+  // _isSetup foi capturado antes do createClient() limpar o hash
+  if (_isSetup) {
     showCriarSenha();
+    showAlert('Bem-vindo! Escolha uma senha para ativar seu acesso.', 'info');
   } else {
     // Verifica se já está logado
     sb.auth.getSession().then(({ data }) => {
@@ -293,11 +295,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Auth state change
   sb.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session && !isSetup) {
+    if (event === 'SIGNED_IN' && session && !_isSetup) {
       window.location.href = 'plataforma/index.html';
     }
     if (event === 'PASSWORD_RECOVERY') {
-      showTab('recuperar');
+      showCriarSenha();
       showAlert('Defina sua nova senha abaixo.', 'info');
     }
   });
