@@ -8,8 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1143,6 +1141,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window._sbErr=true"></script>
+<script>if(window._sbErr){document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');}</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ── CONSTANTES ──
 const SUPABASE_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
