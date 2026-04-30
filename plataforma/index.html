@@ -1209,8 +1209,9 @@ async function loadAulasFromDB() {
       desc:        row.descricao    || '',
       status:      'locked',
       url_video:   row.url_video    || null,
-      url_pdf:     row.url_pdf      || null,
-      tarefa:      row.tarefa       || null,
+      url_pdf:        row.url_pdf        || null,
+      link_whatsapp:  row.link_whatsapp  || null,
+      tarefa:         row.tarefa         || null,
       db_id:       row.id,
     }));
     if (AULAS.length) { AULAS[0].status = 'active'; aulaAtiva = AULAS[0].id; }
@@ -1298,14 +1299,17 @@ function renderPlayerMain() {
 
     <div class="divider"></div>
 
-    ${a.url_pdf ? `
     <div class="section-label">Materiais de apoio</div>
     <div class="mat-grid" style="margin-bottom:20px">
-      <div class="mat-card" onclick="window.open('${a.url_pdf}','_blank')">
+      ${a.url_pdf ? `<div class="mat-card" onclick="window.open('${a.url_pdf}','_blank')">
         <div class="mat-icon" style="background:rgba(224,82,82,.12);color:#fca5a5">📄</div>
         <div><div class="mat-label">Apostila da aula</div><div class="mat-sub">Clique para abrir PDF</div></div>
-      </div>
-    </div>` : ''}
+      </div>` : ''}
+      <a href="${a.link_whatsapp || 'https://chat.whatsapp.com/Jyp47f7xE5aD6ct1JjKi4Q?mode=gi_t'}" target="_blank" rel="noopener" class="mat-card" style="text-decoration:none;color:inherit">
+        <div class="mat-icon" style="background:rgba(37,211,102,.12);color:#25D366">💬</div>
+        <div><div class="mat-label">Grupo do WhatsApp</div><div class="mat-sub">Entrar na comunidade</div></div>
+      </a>
+    </div>
 
     ${a.tarefa ? `
     <div class="section-label">Tarefa desta aula</div>
