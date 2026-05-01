@@ -1242,7 +1242,20 @@ function renderAulas() {
   renderPlayerMain();
 }
 
+function mostrarToastBloqueio() {
+  const t = document.createElement('div');
+  t.textContent = '🔒 Conclua a aula anterior para desbloquear esta';
+  t.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#f5c842;padding:14px 24px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;border:1px solid #f5c842;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
 function selectAula(id) {
+  const aulaEl = Array.from(document.querySelectorAll('.aula-item')).find((el, i) => AULAS[i] && AULAS[i].id === id);
+  if (aulaEl && aulaEl.querySelector('.aula-num').classList.contains('num-lock')) {
+    mostrarToastBloqueio();
+    return;
+  }
   aulaAtiva = id;
   document.querySelectorAll('.aula-item').forEach((el, i) => {
     const a = AULAS[i];
