@@ -1953,6 +1953,7 @@ async function initPopup() {
     const now = Date.now();
     const popup = data.find(p => {
       if (p.publico !== 'todos' && p.publico !== plano) return false;
+      if (p.frequencia === 'agora') return true;
       const gap = FREQ_GAP[p.frequencia] ?? FREQ_GAP['2dias'];
       if (gap === 0) return true;
       const last = parseInt(localStorage.getItem(`popup_${p.id}_visto`) || '0', 10);
