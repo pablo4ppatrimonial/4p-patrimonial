@@ -1369,6 +1369,22 @@
   </div>
 </div>
 
+<!-- ── POPUP VIEWS MODAL ── -->
+<div class="modal-lg-overlay" id="popup-views-overlay">
+  <div class="modal-lg" style="max-width:560px">
+    <div class="modal-lg-head">
+      <h3 id="popup-views-title">👁 Quem viu</h3>
+      <button class="x-btn" onclick="closePopupViews()">✕</button>
+    </div>
+    <div class="modal-lg-body" id="popup-views-body" style="padding:24px">
+      <div style="text-align:center;color:var(--text-dim)">Carregando…</div>
+    </div>
+    <div class="modal-lg-foot">
+      <button class="btn btn-outline" onclick="closePopupViews()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CONFIRM -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
@@ -2706,7 +2722,8 @@
             <span style="color:${p.ativo ? 'var(--success,#2ecc71)' : 'var(--text-dim)'}">● ${p.ativo ? 'Ativo' : 'Inativo'}</span>
           </div>
         </div>
-        <div style="display:flex;gap:8px;flex-shrink:0">
+        <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap">
+          <button class="btn btn-sm btn-outline" onclick="openPopupViews('${p.id}','${p.titulo.replace(/'/g,"\\'")}')">👁 Ver quem viu</button>
           <button class="btn btn-sm btn-outline" onclick="openPopupForm('${p.id}')">Editar</button>
           <button class="btn btn-sm ${p.ativo ? 'btn-outline' : 'btn-gold'}" onclick="togglePopupAtivo('${p.id}',${!p.ativo})">${p.ativo ? 'Desativar' : 'Ativar'}</button>
           <button class="btn btn-sm btn-danger-outline" onclick="deletePopup('${p.id}','${p.titulo.replace(/'/g,"\\'")}')">✕</button>
@@ -2739,6 +2756,37 @@
   function closePopupModal() {
     document.getElementById('popup-overlay-admin').classList.remove('open');
     popupEditId = null;
+  }
+
+  async function openPopupViews(popupId, titulo) {
+    document.getElementById('popup-views-title').textContent = `👁 Quem viu: ${titulo}`;
+    document.getElementById('popup-views-body').innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:16px">Carregando…</div>';
+    document.getElementById('popup-views-overlay').classList.add('open');
+    const { data, error } = await sb.from('popup_views')
+      .select('user_email, user_nome, visto_em')
+      .eq('popup_id', popupId)
+      .order('visto_em', { ascending: false });
+    if (error || !data) {
+      document.getElementById('popup-views-body').innerHTML = `<div style="color:var(--danger)">Erro ao carregar: ${error?.message || 'desconhecido'}</div>`;
+      return;
+    }
+    const fmt = ts => ts ? new Date(ts).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+    const rows = data.length
+      ? data.map(v => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">${v.user_nome || v.user_email}</div>
+            <div style="font-size:11px;color:var(--text-dim)">${v.user_email}</div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;margin-left:12px">${fmt(v.visto_em)}</div>
+        </div>`).join('')
+      : '<div style="color:var(--text-dim);text-align:center;padding:24px">Nenhum aluno visualizou ainda.</div>';
+    document.getElementById('popup-views-body').innerHTML = `
+      <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:16px">👁 ${data.length} aluno${data.length !== 1 ? 's' : ''} ${data.length !== 1 ? 'viram' : 'viu'}</div>
+      ${rows}`;
+  }
+
+  function closePopupViews() {
+    document.getElementById('popup-views-overlay').classList.remove('open');
   }
 
   async function savePopup() {

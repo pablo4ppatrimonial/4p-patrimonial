@@ -1980,6 +1980,12 @@ function showPopup(popup) {
   const overlay = document.getElementById('pu-overlay');
   overlay.dataset.pid = popup.id;
   overlay.classList.add('open');
+  sb.from('popup_views').upsert({
+    popup_id: popup.id,
+    user_id: currentUser.id,
+    user_email: currentUser.email,
+    user_nome: currentUser.user_metadata?.nome || currentUser.email
+  }, { onConflict: 'popup_id,user_id' });
 }
 
 function popupRedirect() {
