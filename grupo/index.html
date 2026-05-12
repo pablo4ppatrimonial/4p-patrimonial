@@ -168,6 +168,108 @@
       margin-bottom: 6px;
     }
 
+    /* ── CASES ── */
+    .cases-section {
+      padding: 0 0 56px;
+    }
+
+    .cases-label {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .cases-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .cases-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .cases-grid { grid-template-columns: 1fr; }
+    }
+
+    .case-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 4px;
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .case-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #8B6914, var(--gold), #e2c47a);
+    }
+
+    .case-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .case-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .case-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .case-nums {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--card-border);
+      padding-top: 14px;
+      gap: 4px;
+    }
+
+    .case-num-item { text-align: center; flex: 1; }
+
+    .case-num-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 4px;
+    }
+
+    .case-num-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .case-num-val.green { color: #4ade80; }
+
     /* ── BIO ── */
     .bio-section {
       padding: 72px 0 48px;
@@ -300,7 +402,78 @@
     </div>
   </div>
 
-  <!-- BLOCO 3 — Bio -->
+  <!-- BLOCO 3 — Cases -->
+  <section class="cases-section">
+    <div class="container">
+      <div class="cases-label">Operações reais · Números abertos</div>
+      <h2 class="cases-title">Os cases que você vai conhecer por dentro do grupo</h2>
+      <div class="cases-grid">
+
+        <div class="case-card">
+          <div class="case-tag">Case 01</div>
+          <div class="case-title">Compra, reforma e venda residencial</div>
+          <p class="case-desc">Imóvel adquirido, reformado e vendido em 9 meses na Baixada Santista.</p>
+          <div class="case-nums">
+            <div class="case-num-item">
+              <div class="case-num-label">Investido</div>
+              <div class="case-num-val">R$ 170k</div>
+            </div>
+            <div class="case-num-item">
+              <div class="case-num-label">Vendido</div>
+              <div class="case-num-val">R$ 250k</div>
+            </div>
+            <div class="case-num-item">
+              <div class="case-num-label">ROI</div>
+              <div class="case-num-val green">+47%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-tag">Case 02</div>
+          <div class="case-title">Terreno + construção de 2 casas</div>
+          <p class="case-desc">Terreno comprado, duas unidades construídas e vendidas individualmente.</p>
+          <div class="case-nums">
+            <div class="case-num-item">
+              <div class="case-num-label">Investido</div>
+              <div class="case-num-val">R$ 370k</div>
+            </div>
+            <div class="case-num-item">
+              <div class="case-num-label">Vendido</div>
+              <div class="case-num-val">R$ 700k</div>
+            </div>
+            <div class="case-num-item">
+              <div class="case-num-label">ROI</div>
+              <div class="case-num-val green">+89%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-tag">Case 03</div>
+          <div class="case-title">Sociedade patrimonial</div>
+          <p class="case-desc">Operação em sociedade: entrada dividida, 2 casas construídas e vendidas por R$250k cada.</p>
+          <div class="case-nums">
+            <div class="case-num-item">
+              <div class="case-num-label">Entrada/sócio</div>
+              <div class="case-num-val">R$ 150k</div>
+            </div>
+            <div class="case-num-item">
+              <div class="case-num-label">Venda/unid.</div>
+              <div class="case-num-val">R$ 250k</div>
+            </div>
+            <div class="case-num-item">
+              <div class="case-num-label">ROI</div>
+              <div class="case-num-val green">+167%</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCO 4 — Bio -->
   <section class="bio-section">
     <div class="container">
       <div class="bio-inner">
