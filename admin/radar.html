@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Radar — Admin · 4P Patrimonial</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --gold-l: #e2c47a;
+      --gold-d: #8a6e2f;
+      --gold-bg: rgba(201,168,76,.08);
+      --bg: #080808;
+      --surface: #111111;
+      --card: #181818;
+      --card2: #1f1f1f;
+      --border: #2a2a2a;
+      --border-gold: #3a2e10;
+      --text: #e8e8e8;
+      --text2: #aaa;
+      --text3: #666;
+      --danger: #e05252;
+      --danger-bg: rgba(224,82,82,.1);
+      --success: #4ade80;
+      --success-bg: rgba(74,222,128,.1);
+      --warn: #fbbf24;
+      --warn-bg: rgba(251,191,36,.1);
+      --blue: #60a5fa;
+      --blue-bg: rgba(96,165,250,.1);
+      --radius: 10px;
+      --radius-sm: 6px;
+      --radius-full: 999px;
+      --sidebar: 240px;
+      --trans: .18s ease;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at center, #1a1200 0%, #080808 70%);
+    }
+
+    .login-box {
+      width: 380px;
+      background: var(--card);
+      border: 1px solid var(--border-gold);
+      border-radius: 16px;
+      padding: 48px 40px;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(201,168,76,.08);
+    }
+
+    .login-logo { font-size: 26px; font-weight: 800; letter-spacing: 2px; color: var(--gold); margin-bottom: 4px; }
+    .login-sub  { color: var(--text3); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 32px; }
+
+    .login-box label {
+      display: block;
+      text-align: left;
+      font-size: 11px;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .login-box input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      outline: none;
+      transition: border-color .2s;
+      font-family: inherit;
+    }
+
+    .login-box input:focus { border-color: var(--gold-d); }
+
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      color: #000;
+      font-weight: 700;
+      font-size: 14px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      letter-spacing: .5px;
+      transition: opacity .2s;
+    }
+
+    .btn-login:hover { opacity: .88; }
+    #login-error { font-size: 12px; margin-top: 12px; display: none; color: #e74c3c; }
+
+    /* ── LAYOUT ── */
+    #admin-panel { display: none; min-height: 100vh; }
+
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar);
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .sidebar-logo { padding: 28px 20px 20px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo span { font-size: 18px; font-weight: 800; color: var(--gold); letter-spacing: 1.5px; }
+    .sidebar-logo small { display: block; font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+    .sidebar nav { flex: 1; padding: 16px 0; overflow-y: auto; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 20px;
+      color: var(--text2);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all var(--trans);
+      font-size: 13px;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .nav-item:hover { color: var(--text); background: var(--gold-bg); }
+    .nav-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--gold-bg); }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+    }
+
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+
+    .btn-logout {
+      width: 100%;
+      padding: 9px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 12px;
+      transition: all .2s;
+      font-family: inherit;
+    }
+
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── MAIN ── */
+    .main { margin-left: var(--sidebar); padding: 32px; min-height: 100vh; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .page-title { font-size: 22px; font-weight: 700; color: var(--text); }
+    .page-title span { color: var(--gold); }
+
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      padding: 9px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: opacity var(--trans);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: linear-gradient(135deg, var(--gold-d), var(--gold)); color: #000; }
+    .btn-ghost   { background: none; border: 1px solid var(--border); color: var(--text2); }
+    .btn-ghost:hover { border-color: var(--gold-d); color: var(--text); }
+    .btn-ai      { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #3a3a6e; color: #a78bfa; font-size: 12px; }
+    .btn-ai:hover { border-color: #a78bfa; }
+    .btn-success { background: var(--success-bg); border: 1px solid rgba(74,222,128,.25); color: var(--success); font-size: 12px; }
+    .btn-danger  { background: var(--danger-bg);  border: 1px solid rgba(224,82,82,.25);  color: var(--danger);  font-size: 12px; }
+    .btn-blue    { background: var(--blue-bg);    border: 1px solid rgba(96,165,250,.25);  color: var(--blue);    font-size: 12px; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    /* ── STATS ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .stat-val   { font-size: 28px; font-weight: 800; color: var(--gold); line-height: 1; }
+    .stat-val.green  { color: var(--success); }
+    .stat-val.red    { color: var(--danger); }
+    .stat-val.yellow { color: var(--warn); }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: all var(--trans);
+      margin-bottom: -1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    .tab-count {
+      background: var(--card2);
+      color: var(--text3);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+    }
+
+    .tab-count.warn { background: var(--warn-bg); color: var(--warn); }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      background: var(--card2);
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text3);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody tr { border-bottom: 1px solid var(--border); transition: background var(--trans); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.02); }
+
+    td {
+      padding: 13px 14px;
+      font-size: 13px;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    td.muted { color: var(--text2); font-size: 12px; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .badge-alto    { background: var(--success-bg); color: var(--success); border: 1px solid rgba(74,222,128,.25); }
+    .badge-medio   { background: var(--warn-bg);    color: var(--warn);    border: 1px solid rgba(251,191,36,.25); }
+    .badge-baixo   { background: var(--danger-bg);  color: var(--danger);  border: 1px solid rgba(224,82,82,.25); }
+    .badge-pending { background: var(--warn-bg);    color: var(--warn);    border: 1px solid rgba(251,191,36,.25); }
+    .badge-aprovado{ background: var(--success-bg); color: var(--success); border: 1px solid rgba(74,222,128,.25); }
+    .badge-reprovado{background: var(--danger-bg);  color: var(--danger);  border: 1px solid rgba(224,82,82,.25); }
+
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── EMPTY ── */
+    .table-empty { padding: 60px 20px; text-align: center; color: var(--text3); font-size: 13px; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 200;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border-gold);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 680px;
+      padding: 32px;
+      position: relative;
+      margin: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .modal-title { font-size: 18px; font-weight: 700; color: var(--text); }
+
+    .modal-close {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text2);
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--trans);
+    }
+
+    .modal-close:hover { border-color: var(--danger); color: var(--danger); }
+
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .form-full { grid-column: 1 / -1; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .form-group label {
+      font-size: 11px;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--gold-d); }
+
+    .form-group textarea { resize: vertical; min-height: 80px; }
+
+    .form-group select option { background: #1a1a1a; }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      font-size: 13px;
+      color: var(--text);
+      max-width: 340px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .25s ease;
+      z-index: 300;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.green { border-left-color: var(--success); }
+    .toast.red   { border-left-color: var(--danger); }
+
+    /* ── LOADING ── */
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 40px auto;
+      display: block;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 20px 16px; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <div class="login-logo">4P</div>
+      <div class="login-sub">Admin · Radar</div>
+      <label>Senha de acesso</label>
+      <input type="password" id="login-pwd" placeholder="••••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+      <button class="btn-login" onclick="doLogin()">Entrar</button>
+      <div id="login-error">Senha incorreta.</div>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div id="admin-panel">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <span>4P Admin</span>
+        <small>Radar de Oportunidades</small>
+      </div>
+      <nav>
+        <a class="nav-item" href="/admin/">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a class="nav-item active" href="/admin/radar.html">
+          <span class="nav-icon">🗺️</span> Radar
+          <span class="nav-badge" id="sidebar-badge" style="display:none">0</span>
+        </a>
+        <a class="nav-item" href="/admin/mentoria.html">
+          <span class="nav-icon">🎓</span> Mentoria
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-logout" onclick="doLogout()">← Sair</button>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <div class="page-header">
+        <div class="page-title">Radar — <span>Gestão de Oportunidades</span></div>
+        <div class="header-actions">
+          <button class="btn btn-ai" onclick="buscarComIA()">🤖 Buscar com IA</button>
+          <button class="btn btn-primary" onclick="abrirModal()">+ Nova Oportunidade</button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Pendentes</div>
+          <div class="stat-val yellow" id="s-pendentes">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Aprovadas</div>
+          <div class="stat-val green" id="s-aprovadas">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Reprovadas</div>
+          <div class="stat-val red" id="s-reprovadas">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Interesses</div>
+          <div class="stat-val" id="s-interesses">—</div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('pendente')" id="tab-pendente">
+          Pendentes <span class="tab-count warn" id="tc-pendente">0</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('aprovado')" id="tab-aprovado">
+          Aprovadas <span class="tab-count" id="tc-aprovado">0</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('reprovado')" id="tab-reprovado">
+          Reprovadas <span class="tab-count" id="tc-reprovado">0</span>
+        </button>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-wrap">
+        <div id="table-loading"><div class="spinner"></div></div>
+        <table id="ops-table" style="display:none">
+          <thead>
+            <tr>
+              <th>Título / Tipo</th>
+              <th>Cidade · Bairro</th>
+              <th>Valor</th>
+              <th>ROI Est.</th>
+              <th>Potencial</th>
+              <th>Data</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="ops-tbody"></tbody>
+        </table>
+        <div id="table-empty" class="table-empty" style="display:none">Nenhuma oportunidade nesta categoria.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL NOVA OPORTUNIDADE -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title-text">Nova Oportunidade</div>
+        <button class="modal-close" onclick="fecharModal()">✕</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label>Título *</label>
+          <input type="text" id="f-titulo" placeholder="Ex: Terreno 400m² em Praia Grande" />
+        </div>
+        <div class="form-group form-full">
+          <label>Descrição</label>
+          <textarea id="f-descricao" placeholder="Descreva a oportunidade..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Cidade *</label>
+          <select id="f-cidade">
+            <option value="">Selecione...</option>
+            <option value="Praia Grande">Praia Grande</option>
+            <option value="Santos">Santos</option>
+            <option value="São Vicente">São Vicente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Bairro</label>
+          <input type="text" id="f-bairro" placeholder="Ex: Tupi" />
+        </div>
+        <div class="form-group">
+          <label>Tipo *</label>
+          <select id="f-tipo">
+            <option value="">Selecione...</option>
+            <option value="terreno">Terreno</option>
+            <option value="casa">Casa</option>
+            <option value="apartamento">Apartamento</option>
+            <option value="comercial">Comercial</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Potencial *</label>
+          <select id="f-potencial">
+            <option value="">Selecione...</option>
+            <option value="ALTO">ALTO</option>
+            <option value="MÉDIO">MÉDIO</option>
+            <option value="BAIXO">BAIXO</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <input type="number" id="f-valor" placeholder="Ex: 450000" />
+        </div>
+        <div class="form-group">
+          <label>Área (m²)</label>
+          <input type="number" id="f-area" placeholder="Ex: 400" />
+        </div>
+        <div class="form-group">
+          <label>ROI Estimado (%)</label>
+          <input type="number" id="f-roi" placeholder="Ex: 47" step="0.1" />
+        </div>
+        <div class="form-group">
+          <label>Prazo (meses)</label>
+          <input type="number" id="f-prazo" placeholder="Ex: 12" />
+        </div>
+        <div class="form-group form-full">
+          <label>Link Original / Fonte</label>
+          <input type="url" id="f-link" placeholder="https://..." />
+        </div>
+        <div class="form-group form-full">
+          <label>URL da Imagem</label>
+          <input type="url" id="f-imagem" placeholder="https://..." />
+        </div>
+        <div class="form-group">
+          <label>Latitude</label>
+          <input type="text" id="f-lat" placeholder="-24.008" />
+        </div>
+        <div class="form-group">
+          <label>Longitude</label>
+          <input type="text" id="f-lng" placeholder="-46.402" />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-primary" id="btn-salvar" onclick="salvarOportunidade()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const SUPA_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI';
+    const ADMIN_PASS = '4P@admin2025';
+
+    let supa = null;
+    let allOps = [];
+    let currentTab = 'pendente';
+    let editingId = null;
+
+    // ── LOGIN ──
+    function doLogin() {
+      const pwd = document.getElementById('login-pwd').value;
+      const err = document.getElementById('login-error');
+      if (pwd === ADMIN_PASS) {
+        sessionStorage.setItem('radar_admin', '1');
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+        supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+        loadAll();
+      } else {
+        err.style.display = 'block';
+        document.getElementById('login-pwd').value = '';
+      }
+    }
+
+    function doLogout() {
+      sessionStorage.removeItem('radar_admin');
+      location.reload();
+    }
+
+    // Auto-login se já autenticado na sessão
+    window.addEventListener('DOMContentLoaded', () => {
+      if (sessionStorage.getItem('radar_admin') === '1') {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+        supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+        loadAll();
+      }
+    });
+
+    // ── LOAD ALL ──
+    async function loadAll() {
+      const [opsRes, intRes] = await Promise.all([
+        supa.from('radar_oportunidades').select('*').order('created_at', { ascending: false }),
+        supa.from('radar_interesses').select('id', { count: 'exact', head: true })
+      ]);
+
+      allOps = opsRes.data || [];
+
+      const pend = allOps.filter(o => o.status === 'pendente').length;
+      const apro = allOps.filter(o => o.status === 'aprovado').length;
+      const repr = allOps.filter(o => o.status === 'reprovado').length;
+
+      document.getElementById('s-pendentes').textContent  = pend;
+      document.getElementById('s-aprovadas').textContent  = apro;
+      document.getElementById('s-reprovadas').textContent = repr;
+      document.getElementById('s-interesses').textContent = intRes.count ?? '—';
+
+      document.getElementById('tc-pendente').textContent  = pend;
+      document.getElementById('tc-aprovado').textContent  = apro;
+      document.getElementById('tc-reprovado').textContent = repr;
+
+      const badge = document.getElementById('sidebar-badge');
+      if (pend > 0) { badge.textContent = pend; badge.style.display = 'inline-block'; }
+      else { badge.style.display = 'none'; }
+
+      renderTable();
+    }
+
+    // ── RENDER TABLE ──
+    function renderTable() {
+      const filtered = allOps.filter(o => o.status === currentTab);
+      const tbody = document.getElementById('ops-tbody');
+      const empty = document.getElementById('table-empty');
+
+      document.getElementById('table-loading').style.display = 'none';
+      document.getElementById('ops-table').style.display = filtered.length ? 'table' : 'none';
+      empty.style.display = filtered.length ? 'none' : 'block';
+
+      tbody.innerHTML = filtered.map(op => {
+        const pot  = (op.potencial || '').toLowerCase().replace('é','e');
+        const potBadge = `<span class="badge badge-${pot}">${op.potencial || '—'}</span>`;
+        const data = op.created_at ? new Date(op.created_at).toLocaleDateString('pt-BR') : '—';
+        const valor = op.valor ? `R$ ${Number(op.valor).toLocaleString('pt-BR')}` : '—';
+        const roi   = op.roi_estimado ? `+${op.roi_estimado}%` : '—';
+
+        let actions = '';
+        if (op.status === 'pendente') {
+          actions += `<button class="btn btn-success btn-sm" onclick="mudarStatus('${op.id}','aprovado')">✓ Aprovar</button>`;
+          actions += `<button class="btn btn-danger btn-sm"  onclick="mudarStatus('${op.id}','reprovado')">✕ Reprovar</button>`;
+        } else if (op.status === 'aprovado') {
+          actions += `<button class="btn btn-danger btn-sm" onclick="mudarStatus('${op.id}','reprovado')">Reprovar</button>`;
+        } else {
+          actions += `<button class="btn btn-success btn-sm" onclick="mudarStatus('${op.id}','aprovado')">Reativar</button>`;
+        }
+
+        actions += `<button class="btn btn-blue btn-sm" onclick="editarOp('${op.id}')">✏️</button>`;
+        actions += `<button class="btn btn-ghost btn-sm" onclick="excluirOp('${op.id}')">🗑️</button>`;
+
+        return `<tr>
+          <td>
+            <div style="font-weight:600;color:var(--text)">${escHtml(op.titulo || '—')}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px">${escHtml(op.tipo || '')}</div>
+          </td>
+          <td class="muted">${escHtml(op.cidade || '—')}${op.bairro ? '<br>' + escHtml(op.bairro) : ''}</td>
+          <td style="font-weight:600;color:var(--gold)">${valor}</td>
+          <td style="color:var(--success);font-weight:600">${roi}</td>
+          <td>${potBadge}</td>
+          <td class="muted">${data}</td>
+          <td><div class="actions">${actions}</div></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ── TABS ──
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('table-loading').style.display = 'none';
+      renderTable();
+    }
+
+    // ── APROVAR/REPROVAR ──
+    async function mudarStatus(id, status) {
+      const { error } = await supa
+        .from('radar_oportunidades')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) { showToast('Erro ao atualizar.', 'red'); return; }
+      showToast(status === 'aprovado' ? 'Oportunidade aprovada!' : 'Oportunidade reprovada.', status === 'aprovado' ? 'green' : '');
+      loadAll();
+    }
+
+    // ── EXCLUIR ──
+    async function excluirOp(id) {
+      if (!confirm('Excluir esta oportunidade permanentemente?')) return;
+      const { error } = await supa.from('radar_oportunidades').delete().eq('id', id);
+      if (error) { showToast('Erro ao excluir.', 'red'); return; }
+      showToast('Excluída.');
+      loadAll();
+    }
+
+    // ── MODAL ──
+    function abrirModal(op) {
+      editingId = op ? op.id : null;
+      document.getElementById('modal-title-text').textContent = op ? 'Editar Oportunidade' : 'Nova Oportunidade';
+
+      const fields = { titulo:'', descricao:'', cidade:'', bairro:'', tipo:'', potencial:'', valor:'', area_m2:'', roi_estimado:'', prazo_meses:'', link_original:'', imagem_url:'', lat:'', lng:'' };
+      if (op) Object.assign(fields, { ...op, lat: op.lat || '', lng: op.lng || '' });
+
+      document.getElementById('f-titulo').value    = fields.titulo;
+      document.getElementById('f-descricao').value = fields.descricao;
+      document.getElementById('f-cidade').value    = fields.cidade;
+      document.getElementById('f-bairro').value    = fields.bairro;
+      document.getElementById('f-tipo').value      = fields.tipo;
+      document.getElementById('f-potencial').value = fields.potencial;
+      document.getElementById('f-valor').value     = fields.valor;
+      document.getElementById('f-area').value      = fields.area_m2;
+      document.getElementById('f-roi').value       = fields.roi_estimado;
+      document.getElementById('f-prazo').value     = fields.prazo_meses;
+      document.getElementById('f-link').value      = fields.link_original;
+      document.getElementById('f-imagem').value    = fields.imagem_url;
+      document.getElementById('f-lat').value       = fields.lat;
+      document.getElementById('f-lng').value       = fields.lng;
+
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+      editingId = null;
+    }
+
+    function editarOp(id) {
+      const op = allOps.find(o => o.id === id);
+      if (op) abrirModal(op);
+    }
+
+    document.getElementById('modal-overlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) fecharModal();
+    });
+
+    // ── SALVAR ──
+    async function salvarOportunidade() {
+      const titulo    = document.getElementById('f-titulo').value.trim();
+      const cidade    = document.getElementById('f-cidade').value;
+      const tipo      = document.getElementById('f-tipo').value;
+      const potencial = document.getElementById('f-potencial').value;
+
+      if (!titulo || !cidade || !tipo || !potencial) {
+        showToast('Preencha os campos obrigatórios (*).', 'red');
+        return;
+      }
+
+      const payload = {
+        titulo,
+        descricao:     document.getElementById('f-descricao').value.trim() || null,
+        cidade,
+        bairro:        document.getElementById('f-bairro').value.trim()    || null,
+        tipo,
+        potencial,
+        valor:         document.getElementById('f-valor').value    || null,
+        area_m2:       document.getElementById('f-area').value     || null,
+        roi_estimado:  document.getElementById('f-roi').value      || null,
+        prazo_meses:   document.getElementById('f-prazo').value    || null,
+        link_original: document.getElementById('f-link').value.trim()   || null,
+        imagem_url:    document.getElementById('f-imagem').value.trim()  || null,
+        lat:           document.getElementById('f-lat').value.trim()     || null,
+        lng:           document.getElementById('f-lng').value.trim()     || null,
+        status:        editingId ? undefined : 'pendente',
+      };
+
+      if (!editingId) delete payload.status; // será 'pendente' por default na tabela
+
+      const btn = document.getElementById('btn-salvar');
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+
+      let error;
+      if (editingId) {
+        ({ error } = await supa.from('radar_oportunidades').update(payload).eq('id', editingId));
+      } else {
+        payload.status = 'pendente';
+        ({ error } = await supa.from('radar_oportunidades').insert(payload));
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Salvar';
+
+      if (error) { showToast('Erro ao salvar: ' + error.message, 'red'); return; }
+
+      showToast(editingId ? 'Oportunidade atualizada!' : 'Oportunidade criada!', 'green');
+      fecharModal();
+      loadAll();
+    }
+
+    // ── IA BUTTON ──
+    function buscarComIA() {
+      showToast('Em breve: IA buscando oportunidades automaticamente.');
+    }
+
+    // ── TOAST ──
+    let toastTimer;
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.className = 'toast'; }, 3500);
+    }
+
+    function escHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>

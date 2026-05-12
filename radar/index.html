@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Radar de Oportunidades — 4P Patrimonial</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --gold-l: #e2c47a;
+      --gold-d: #8B6914;
+      --gold-bg: rgba(201,168,76,.08);
+      --bg: #0A0A0A;
+      --surface: #111111;
+      --card: #181818;
+      --card2: #1f1f1f;
+      --border: #222222;
+      --border-gold: #2e2610;
+      --text: #f0ede6;
+      --text2: #a89f8c;
+      --text3: #666;
+      --green: #4ade80;
+      --green-bg: rgba(74,222,128,.12);
+      --yellow: #fbbf24;
+      --yellow-bg: rgba(251,191,36,.12);
+      --red: #f87171;
+      --red-bg: rgba(248,113,113,.12);
+      --r: 10px;
+      --r-sm: 6px;
+      --r-full: 999px;
+      --trans: .18s ease;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-back {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      border-radius: var(--r-sm);
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all var(--trans);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-back:hover { border-color: var(--gold); color: var(--gold); }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge-ai {
+      background: linear-gradient(135deg, rgba(74,222,128,.15), rgba(74,222,128,.06));
+      border: 1px solid rgba(74,222,128,.3);
+      color: #4ade80;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 3px 10px;
+      border-radius: var(--r-full);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .badge-ai::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .5; transform: scale(.8); }
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+
+    .page-lead {
+      margin-bottom: 28px;
+    }
+
+    .page-lead h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .page-lead p {
+      font-size: 13px;
+      color: var(--text2);
+    }
+
+    /* ── FILTROS ── */
+    .filters {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--text3);
+      text-transform: uppercase;
+      margin-right: 2px;
+      white-space: nowrap;
+    }
+
+    .filter-sep {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+
+    .filter-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      border-radius: var(--r-full);
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all var(--trans);
+      white-space: nowrap;
+    }
+
+    .filter-btn:hover { border-color: var(--gold-d); color: var(--text); }
+
+    .filter-btn.active {
+      background: var(--gold-bg);
+      border-color: var(--gold);
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-full);
+      padding: 8px 18px;
+      font-size: 12px;
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-pill strong { color: var(--gold); font-size: 15px; font-weight: 700; }
+
+    /* ── GRID ── */
+    .ops-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 36px;
+    }
+
+    @media (max-width: 900px) { .ops-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .ops-grid { grid-template-columns: 1fr; } }
+
+    /* ── CARD ── */
+    .op-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color var(--trans), transform var(--trans);
+    }
+
+    .op-card:hover { border-color: #333; transform: translateY(-2px); }
+
+    .op-card-img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      background: linear-gradient(135deg, #1a1500, #0f0f0f);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: var(--gold-d);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .op-card-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .op-card-img .img-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1500 0%, #111 100%);
+      font-size: 40px;
+    }
+
+    .badge-pot {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: var(--r-full);
+    }
+
+    .badge-pot.alto   { background: var(--green-bg);  color: var(--green);  border: 1px solid rgba(74,222,128,.35); }
+    .badge-pot.medio  { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(251,191,36,.35); }
+    .badge-pot.baixo  { background: var(--red-bg);    color: var(--red);    border: 1px solid rgba(248,113,113,.35); }
+
+    .op-card-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .op-type-badge {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: var(--gold-bg);
+      border-radius: var(--r-full);
+      padding: 2px 8px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .op-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .op-location {
+      font-size: 12px;
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .op-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .op-metric {
+      background: var(--card2);
+      border-radius: var(--r-sm);
+      padding: 8px 10px;
+    }
+
+    .op-metric-label {
+      font-size: 9px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 3px;
+    }
+
+    .op-metric-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .op-metric-val.green { color: var(--green); }
+    .op-metric-val.gold  { color: var(--gold); }
+
+    .btn-interesse {
+      width: 100%;
+      padding: 11px;
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      color: #000;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      letter-spacing: .5px;
+      transition: opacity var(--trans);
+      margin-top: auto;
+    }
+
+    .btn-interesse:hover { opacity: .88; }
+    .btn-interesse:disabled { opacity: .5; cursor: default; }
+    .btn-interesse.done {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid rgba(74,222,128,.3);
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      display: none;
+    }
+
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: .5; }
+
+    .empty-state h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 8px;
+    }
+
+    .empty-state p { font-size: 13px; color: var(--text3); max-width: 400px; margin: 0 auto; line-height: 1.7; }
+
+    /* ── MAPA ── */
+    .map-section {
+      margin-top: 8px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .map-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+
+    .map-wrap iframe {
+      width: 100%;
+      height: 420px;
+      border: none;
+      display: block;
+      filter: invert(90%) hue-rotate(180deg);
+    }
+
+    /* ── LOADING ── */
+    .loading-wrap {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 14px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-wrap p { font-size: 13px; color: var(--text3); }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      border-radius: var(--r-sm);
+      padding: 14px 18px;
+      font-size: 13px;
+      color: var(--text);
+      max-width: 320px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all .25s ease;
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.green { border-left-color: var(--green); }
+    .toast.red    { border-left-color: var(--red); }
+
+    @media (max-width: 600px) {
+      .header { padding: 0 16px; }
+      .main { padding: 18px 14px 48px; }
+      .filters { gap: 10px; }
+      .filter-sep { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <a href="/plataforma/" class="header-back">← Plataforma</a>
+      <div class="header-title">
+        🗺️ Radar de Oportunidades
+      </div>
+    </div>
+    <div class="badge-ai">IA Monitorando</div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="page-lead">
+      <h1>Oportunidades Selecionadas</h1>
+      <p>Imóveis e terrenos com potencial de valorização analisados e aprovados pelo Método 4P.</p>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters">
+      <div class="filter-group">
+        <span class="filter-label">Cidade</span>
+        <button class="filter-btn active" data-filter="cidade" data-value="todos">Todos</button>
+        <button class="filter-btn" data-filter="cidade" data-value="Praia Grande">Praia Grande</button>
+        <button class="filter-btn" data-filter="cidade" data-value="Santos">Santos</button>
+        <button class="filter-btn" data-filter="cidade" data-value="São Vicente">São Vicente</button>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <span class="filter-label">Tipo</span>
+        <button class="filter-btn active" data-filter="tipo" data-value="todos">Todos</button>
+        <button class="filter-btn" data-filter="tipo" data-value="terreno">Terreno</button>
+        <button class="filter-btn" data-filter="tipo" data-value="casa">Casa</button>
+        <button class="filter-btn" data-filter="tipo" data-value="apartamento">Apartamento</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-bar" id="stats-bar" style="display:none">
+      <div class="stat-pill"><strong id="count-total">0</strong> oportunidades</div>
+      <div class="stat-pill"><strong id="count-alto">0</strong> potencial ALTO</div>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading-wrap" id="loading">
+      <div class="spinner"></div>
+      <p>Carregando oportunidades...</p>
+    </div>
+
+    <!-- GRID -->
+    <div class="ops-grid" id="ops-grid"></div>
+
+    <!-- EMPTY -->
+    <div class="empty-state" id="empty-state">
+      <div class="icon">🔍</div>
+      <h3>Nenhuma oportunidade encontrada</h3>
+      <p>Nenhuma oportunidade disponível no momento. Você será notificado por email quando uma nova surgir.</p>
+    </div>
+
+    <!-- MAPA -->
+    <div class="map-section" id="map-section" style="display:none">
+      <div class="section-label">📍 Localização das Oportunidades</div>
+      <div class="map-wrap">
+        <iframe
+          id="map-frame"
+          src="https://www.google.com/maps/embed/v1/view?key=AIzaSyD-placeholder&center=-24.008,-46.402&zoom=11&maptype=roadmap"
+          allowfullscreen
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const SUPA_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI';
+    const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    let allOps = [];
+    let activeFilters = { cidade: 'todos', tipo: 'todos' };
+    let userEmail = null;
+
+    // ── INIT ──
+    async function init() {
+      const { data: { session } } = await supa.auth.getSession();
+      if (session?.user) userEmail = session.user.email;
+      await loadOportunidades();
+      bindFilters();
+    }
+
+    // ── LOAD ──
+    async function loadOportunidades() {
+      const { data, error } = await supa
+        .from('radar_oportunidades')
+        .select('*')
+        .eq('status', 'aprovado')
+        .order('created_at', { ascending: false });
+
+      document.getElementById('loading').style.display = 'none';
+
+      if (error) { showToast('Erro ao carregar oportunidades.', 'red'); return; }
+
+      allOps = data || [];
+      renderGrid();
+      if (allOps.length > 0) {
+        document.getElementById('stats-bar').style.display = 'flex';
+        document.getElementById('map-section').style.display = 'block';
+      }
+    }
+
+    // ── RENDER ──
+    function renderGrid() {
+      const filtered = allOps.filter(op => {
+        const cidadeOk = activeFilters.cidade === 'todos' || op.cidade === activeFilters.cidade;
+        const tipoOk   = activeFilters.tipo   === 'todos' || op.tipo   === activeFilters.tipo;
+        return cidadeOk && tipoOk;
+      });
+
+      const grid = document.getElementById('ops-grid');
+      const empty = document.getElementById('empty-state');
+
+      // stats
+      document.getElementById('count-total').textContent = filtered.length;
+      document.getElementById('count-alto').textContent  = filtered.filter(o => o.potencial?.toUpperCase() === 'ALTO').length;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      grid.innerHTML = filtered.map(op => cardHTML(op)).join('');
+    }
+
+    function cardHTML(op) {
+      const pot = (op.potencial || 'medio').toLowerCase();
+      const potLabel = pot === 'alto' ? 'ALTO' : pot === 'baixo' ? 'BAIXO' : 'MÉDIO';
+
+      const imgEl = op.imagem_url
+        ? `<img src="${escHtml(op.imagem_url)}" alt="${escHtml(op.titulo)}" onerror="this.parentElement.innerHTML='<div class=\\'img-placeholder\\'>🏗️</div>'">`
+        : `<div class="img-placeholder">🏗️</div>`;
+
+      const valor = op.valor ? `R$ ${Number(op.valor).toLocaleString('pt-BR')}` : '—';
+      const area  = op.area_m2 ? `${op.area_m2} m²` : '—';
+      const roi   = op.roi_estimado ? `+${op.roi_estimado}%` : '—';
+      const prazo = op.prazo_meses ? `${op.prazo_meses} meses` : '—';
+
+      return `
+        <div class="op-card">
+          <div class="op-card-img">
+            ${imgEl}
+            <span class="badge-pot ${pot}">${potLabel}</span>
+          </div>
+          <div class="op-card-body">
+            <span class="op-type-badge">${escHtml(op.tipo || 'imóvel')}</span>
+            <div class="op-title">${escHtml(op.titulo || 'Oportunidade')}</div>
+            <div class="op-location">📍 ${escHtml(op.cidade || '')}${op.bairro ? ' · ' + escHtml(op.bairro) : ''}</div>
+            <div class="op-metrics">
+              <div class="op-metric">
+                <div class="op-metric-label">Valor</div>
+                <div class="op-metric-val gold">${valor}</div>
+              </div>
+              <div class="op-metric">
+                <div class="op-metric-label">Área</div>
+                <div class="op-metric-val">${area}</div>
+              </div>
+              <div class="op-metric">
+                <div class="op-metric-label">ROI Est.</div>
+                <div class="op-metric-val green">${roi}</div>
+              </div>
+              <div class="op-metric">
+                <div class="op-metric-label">Prazo</div>
+                <div class="op-metric-val">${prazo}</div>
+              </div>
+            </div>
+            <button class="btn-interesse" onclick="registrarInteresse(this, '${escHtml(op.id)}')">
+              Tenho Interesse
+            </button>
+          </div>
+        </div>`;
+    }
+
+    // ── INTERESSE ──
+    async function registrarInteresse(btn, opId) {
+      btn.disabled = true;
+      btn.textContent = 'Registrando...';
+
+      const payload = {
+        oportunidade_id: opId,
+        user_email: userEmail || 'anonimo',
+        created_at: new Date().toISOString()
+      };
+
+      const { error } = await supa
+        .from('radar_interesses')
+        .upsert(payload, { onConflict: 'oportunidade_id,user_email' });
+
+      if (error) {
+        showToast('Erro ao registrar interesse.', 'red');
+        btn.disabled = false;
+        btn.textContent = 'Tenho Interesse';
+      } else {
+        btn.classList.add('done');
+        btn.textContent = '✓ Interesse Registrado';
+        showToast('Interesse registrado! Pablo entrará em contato em breve.', 'green');
+      }
+    }
+
+    // ── FILTROS ──
+    function bindFilters() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const group = btn.dataset.filter;
+          const value = btn.dataset.value;
+          activeFilters[group] = value;
+
+          document.querySelectorAll(`.filter-btn[data-filter="${group}"]`).forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          renderGrid();
+        });
+      });
+    }
+
+    // ── TOAST ──
+    let toastTimer;
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.className = 'toast'; }, 3500);
+    }
+
+    function escHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    init();
+  </script>
+</body>
+</html>
