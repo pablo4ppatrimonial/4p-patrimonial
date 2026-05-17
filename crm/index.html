@@ -611,6 +611,8 @@ async function api(path, method = 'GET', body = null, extra = {}) {
       'Content-Type': 'application/json',
       'apikey': SERVICE_KEY,
       'Authorization': `Bearer ${SERVICE_KEY}`,
+      'Accept-Profile': 'public',
+      'Content-Profile': 'public',
       'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal',
       ...extra
     }
