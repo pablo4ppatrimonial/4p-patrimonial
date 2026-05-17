@@ -153,21 +153,16 @@
     }
 
     .pablo-photo {
-      width: 200px;
-      height: 200px;
+      width: 320px;
+      height: 320px;
       border-radius: 50%;
       border: 3px solid var(--gold);
       object-fit: cover;
+      object-position: center top;
       margin: 0 auto 40px;
       display: block;
       box-shadow: 0 0 40px rgba(201,168,76,0.2);
-    }
-
-    @media (min-width: 640px) {
-      .pablo-photo { width: 260px; height: 260px; }
-    }
-    @media (min-width: 1024px) {
-      .pablo-photo { width: 280px; height: 280px; }
+      overflow: hidden;
     }
 
     .numeros {
@@ -543,14 +538,13 @@
   <!-- HEADER -->
   <header>
     <a class="logo" href="/">4P Patrimonial</a>
-    <a class="btn-investidor" href="/auth.html">Já sou investidor →</a>
   </header>
 
   <!-- HERO -->
   <section class="hero">
     <span class="badge">Investimento Imobiliário · Baixada Santista</span>
     <h1>Transforme seu capital em patrimônio real — com <em>quem já fez isso</em></h1>
-    <p class="hero-sub">Seleciono pessoalmente investidores para operar junto comigo no modelo 4P. Capital a partir de R$150 mil. Vagas extremamente limitadas.</p>
+    <p class="hero-sub">Seleciono pessoalmente investidores para operar junto comigo no modelo 4P. Capital a partir de R$200 mil. Vagas extremamente limitadas.</p>
     <img class="pablo-photo" src="/assets/pablo.jpg" alt="Pablo — 4P Patrimonial" />
     <div class="numeros">
       <div class="numero-item">
