@@ -690,12 +690,12 @@ async function renderDashboard() {
   mc.innerHTML = `<div class="topbar"><h1>Dashboard</h1></div><div class="content"><div class="empty-state">Carregando...</div></div>`;
   try {
     const [leads, tasks, tickets] = await Promise.all([
-      api('crm_leads?select=*&order=created_at.desc'),
+      api('crm_leads?select=*&order=criado_em.desc'),
       api('crm_tarefas?select=*'),
       api('crm_tickets?select=*')
     ]);
     const hoje = new Date().toISOString().split('T')[0];
-    const novosHoje = (leads||[]).filter(l => l.created_at && l.created_at.startsWith(hoje)).length;
+    const novosHoje = (leads||[]).filter(l => l.criado_em && l.criado_em.startsWith(hoje)).length;
     const emNeg = (leads||[]).filter(l => ['proposta','negociacao'].includes(l.etapa)).length;
     const fechados = (leads||[]).filter(l => l.etapa === 'fechado').length;
     const total = (leads||[]).length;
@@ -709,7 +709,7 @@ async function renderDashboard() {
     for (let i=6;i>=0;i--) {
       const d = new Date(); d.setDate(d.getDate()-i);
       const ds = d.toISOString().split('T')[0];
-      days.push({ label: d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}), count: (leads||[]).filter(l=>l.created_at&&l.created_at.startsWith(ds)).length });
+      days.push({ label: d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}), count: (leads||[]).filter(l=>l.criado_em&&l.criado_em.startsWith(ds)).length });
     }
     const maxDay = Math.max(...days.map(d=>d.count), 1);
     const bars = days.map(d => `<div class="bar-group"><div class="bar" title="${d.count} leads" style="height:${Math.max(8,Math.round(d.count/maxDay*90))}px"></div><div class="bar-label">${d.label}</div></div>`).join('');
@@ -773,7 +773,7 @@ async function renderLeads() {
   const mc = document.getElementById('mainContent');
   mc.innerHTML = `<div class="topbar"><h1>Leads</h1><div class="actions"><button class="btn btn-primary" onclick="openNewLead()">+ Novo Lead</button></div></div><div class="content"><div class="empty-state">Carregando...</div></div>`;
   try {
-    allLeads = await api('crm_leads?select=*&order=created_at.desc') || [];
+    allLeads = await api('crm_leads?select=*&order=criado_em.desc') || [];
     renderLeadsTable(allLeads);
   } catch(e) { toast('Erro ao carregar leads: '+e.message,'error'); }
 }
@@ -985,9 +985,9 @@ async function loadLeadAtiv(leadId) {
   const el = document.getElementById(`ativList-${leadId}`);
   if (!el) return;
   try {
-    const rows = await api(`crm_atividades?lead_id=eq.${leadId}&order=created_at.desc`) || [];
+    const rows = await api(`crm_atividades?lead_id=eq.${leadId}&order=criado_em.desc`) || [];
     el.innerHTML = rows.length === 0 ? '<div class="empty-state">Nenhuma atividade registrada</div>' :
-      rows.map(a => `<div class="activity-item"><div class="a-type">${a.tipo||'nota'}</div><div class="a-desc">${a.descricao||''}</div><div class="a-date">${fmt(a.created_at)}</div></div>`).join('');
+      rows.map(a => `<div class="activity-item"><div class="a-type">${a.tipo||'nota'}</div><div class="a-desc">${a.descricao||''}</div><div class="a-date">${fmt(a.criado_em)}</div></div>`).join('');
   } catch { el.innerHTML = '<div class="empty-state">Erro ao carregar</div>'; }
 }
 
@@ -1008,10 +1008,10 @@ async function loadLeadNegs(leadId) {
   const el = document.getElementById(`negList-${leadId}`);
   if (!el) return;
   try {
-    const rows = await api(`crm_negocios?lead_id=eq.${leadId}&order=created_at.desc`) || [];
+    const rows = await api(`crm_negocios?lead_id=eq.${leadId}&order=criado_em.desc`) || [];
     el.innerHTML = rows.length === 0 ? '<div class="empty-state">Nenhum negócio vinculado</div>' :
       `<div class="table-wrap"><table><thead><tr><th>Título</th><th>Valor</th><th>Status</th><th>Data</th></tr></thead><tbody>
-      ${rows.map(n=>`<tr><td>${n.titulo||'—'}</td><td>${fmtR(n.valor)}</td><td>${etapaBadge(n.status)}</td><td>${fmt(n.created_at)}</td></tr>`).join('')}
+      ${rows.map(n=>`<tr><td>${n.titulo||'—'}</td><td>${fmtR(n.valor)}</td><td>${etapaBadge(n.status)}</td><td>${fmt(n.criado_em)}</td></tr>`).join('')}
       </tbody></table></div>`;
   } catch { el.innerHTML = '<div class="empty-state">Erro ao carregar</div>'; }
 }
@@ -1034,7 +1034,7 @@ async function loadLeadTickets(leadId) {
   const el = document.getElementById(`tickListLead-${leadId}`);
   if (!el) return;
   try {
-    const rows = await api(`crm_tickets?lead_id=eq.${leadId}&order=created_at.desc`) || [];
+    const rows = await api(`crm_tickets?lead_id=eq.${leadId}&order=criado_em.desc`) || [];
     el.innerHTML = rows.length === 0 ? '<div class="empty-state">Nenhum ticket</div>' :
       rows.map(t=>`<div class="task-row"><span class="t-title">${t.titulo||'—'}</span>${statusBadge(t.status)}${priorBadge(t.prioridade)}</div>`).join('');
   } catch { el.innerHTML = '<div class="empty-state">Erro ao carregar</div>'; }
@@ -1057,7 +1057,7 @@ async function renderPipeline() {
   const mc = document.getElementById('mainContent');
   mc.innerHTML = `<div class="topbar"><h1>Pipeline</h1><div class="actions"><input class="filter-input" id="pipeResp" placeholder="Filtrar por responsável" oninput="filterPipeline()" style="min-width:200px"/></div></div><div class="content"><div class="empty-state">Carregando...</div></div>`;
   try {
-    allLeads = await api('crm_leads?select=*&order=created_at.desc') || [];
+    allLeads = await api('crm_leads?select=*&order=criado_em.desc') || [];
     renderKanban(allLeads);
   } catch(e) { toast('Erro: '+e.message,'error'); }
 }
@@ -1218,7 +1218,7 @@ async function renderTickets() {
   const mc = document.getElementById('mainContent');
   mc.innerHTML = `<div class="topbar"><h1>Tickets</h1><div class="actions"><button class="btn btn-primary" onclick="openNewTicket()">+ Novo Ticket</button></div></div><div class="content"><div class="empty-state">Carregando...</div></div>`;
   try {
-    allTickets = await api('crm_tickets?select=*&order=created_at.desc') || [];
+    allTickets = await api('crm_tickets?select=*&order=criado_em.desc') || [];
     const content = document.querySelector('#mainContent .content');
     content.innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>#</th><th>Lead</th><th>Título</th><th>Status</th><th>Prioridade</th><th>Responsável</th><th>Data</th><th>Ações</th></tr></thead>
@@ -1230,7 +1230,7 @@ async function renderTickets() {
           <td>${statusBadge(t.status||'aberto')}</td>
           <td>${priorBadge(t.prioridade)}</td>
           <td>${t.responsavel||'—'}</td>
-          <td>${fmt(t.created_at)}</td>
+          <td>${fmt(t.criado_em)}</td>
           <td style="white-space:nowrap">
             <button class="btn btn-ghost btn-sm" onclick="viewTicket(${t.id})">Ver</button>
             <button class="btn btn-danger btn-sm" onclick="deleteTicket(${t.id})">Excluir</button>
@@ -1311,9 +1311,9 @@ async function loadTicketReplies(ticketId) {
   const el = document.getElementById(`ticketReplies-${ticketId}`);
   if (!el) return;
   try {
-    const rows = await api(`crm_ticket_respostas?ticket_id=eq.${ticketId}&order=created_at.asc`) || [];
+    const rows = await api(`crm_ticket_respostas?ticket_id=eq.${ticketId}&order=criado_em.asc`) || [];
     el.innerHTML = rows.length === 0 ? '<div class="empty-state">Nenhuma resposta ainda</div>' :
-      rows.map(r=>`<div class="ticket-reply"><div class="r-author">${r.autor||'Equipe'}</div><div class="r-text">${r.texto||''}</div><div class="r-date">${fmt(r.created_at)}</div></div>`).join('');
+      rows.map(r=>`<div class="ticket-reply"><div class="r-author">${r.autor||'Equipe'}</div><div class="r-text">${r.texto||''}</div><div class="r-date">${fmt(r.criado_em)}</div></div>`).join('');
   } catch { el.innerHTML = '<div class="empty-state">Erro ao carregar</div>'; }
 }
 
@@ -1368,8 +1368,8 @@ async function loadRelatorios() {
   try {
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - relPeriod);
     const [leads, negocios] = await Promise.all([
-      api(`crm_leads?select=*&created_at=gte.${cutoff.toISOString()}&order=created_at.desc`),
-      api(`crm_negocios?select=*&order=created_at.desc`)
+      api(`crm_leads?select=*&criado_em=gte.${cutoff.toISOString()}&order=criado_em.desc`),
+      api(`crm_negocios?select=*&order=criado_em.desc`)
     ]);
     const allL = leads || [];
     const total = allL.length;
