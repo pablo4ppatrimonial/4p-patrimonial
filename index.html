@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4P Patrimonial — Investimento Imobiliário Real</title>
+  <meta name="description" content="Seleciono pessoalmente investidores para operar junto comigo no modelo 4P. Capital a partir de R$150 mil. Vagas extremamente limitadas." />
+
+  <!-- Meta Pixel -->
+  <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1602962360794047');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1602962360794047&ev=PageView&noscript=1" /></noscript>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #e0c06a;
+      --gold-dark: #a8832a;
+      --bg: #0A0A0A;
+      --bg-card: #111111;
+      --bg-card2: #181818;
+      --text: #F0EDE8;
+      --text-muted: #888880;
+      --border: rgba(201,168,76,0.25);
+      --radius: 12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* HEADER */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-investidor {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-investidor:hover {
+      background: var(--gold);
+      color: #0A0A0A;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(201,168,76,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      background: rgba(201,168,76,0.06);
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      font-weight: 700;
+      line-height: 1.2;
+      max-width: 800px;
+      margin: 0 auto 20px;
+      color: #fff;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--gold);
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+
+    .pablo-photo {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      border: 3px solid var(--gold);
+      object-fit: cover;
+      margin: 0 auto 40px;
+      display: block;
+      box-shadow: 0 0 40px rgba(201,168,76,0.2);
+    }
+
+    @media (min-width: 640px) {
+      .pablo-photo { width: 260px; height: 260px; }
+    }
+    @media (min-width: 1024px) {
+      .pablo-photo { width: 280px; height: 280px; }
+    }
+
+    .numeros {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px 32px;
+      margin-top: 8px;
+    }
+
+    .numero-item {
+      text-align: center;
+    }
+
+    .numero-item .valor {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-weight: 700;
+      color: var(--gold);
+      display: block;
+    }
+
+    .numero-item .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .numero-sep {
+      width: 1px;
+      background: var(--border);
+      align-self: stretch;
+      min-height: 40px;
+    }
+
+    /* FORM SECTION */
+    .form-section {
+      padding: 80px 24px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .form-card {
+      width: 100%;
+      max-width: 520px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      box-shadow: 0 0 60px rgba(201,168,76,0.06);
+    }
+
+    .form-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .form-card .form-sub {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #c8c4bc;
+      margin-bottom: 7px;
+      letter-spacing: 0.03em;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 13px 16px;
+      background: var(--bg-card2);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+      outline: none;
+      appearance: none;
+    }
+
+    .form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888880' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+      cursor: pointer;
+    }
+
+    .form-group select option {
+      background: #181818;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--gold);
+    }
+
+    .form-group input::placeholder {
+      color: #555;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 15px 24px;
+      background: var(--gold);
+      color: #0A0A0A;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .form-privacy {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 32px 0;
+    }
+
+    .form-success .success-icon {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    .form-success h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .form-success p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .form-error {
+      display: none;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #f87171;
+      font-size: 0.85rem;
+      margin-top: 12px;
+    }
+
+    /* HOW IT WORKS */
+    .section {
+      padding: 80px 24px;
+    }
+
+    .section-label {
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+      font-weight: 700;
+      text-align: center;
+      color: #fff;
+      margin-bottom: 48px;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 640px) {
+      .steps-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (min-width: 1024px) {
+      .steps-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      transition: border-color 0.2s;
+    }
+
+    .step-card:hover { border-color: var(--gold); }
+
+    .step-icon {
+      font-size: 1.8rem;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .step-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .step-card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* CASES */
+    .cases-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 640px) {
+      .cases-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .case-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .case-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    }
+
+    .case-num {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .case-values {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .case-meta {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .case-roi {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(201,168,76,0.12);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    /* CTA BOTTOM */
+    .cta-bottom {
+      padding: 80px 24px;
+      text-align: center;
+    }
+
+    .cta-bottom h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .cta-bottom p {
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      font-size: 1rem;
+    }
+
+    .btn-cta {
+      display: inline-block;
+      padding: 16px 36px;
+      background: var(--gold);
+      color: #0A0A0A;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-cta:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+    }
+
+    /* DIVIDER */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 0 24px;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 32px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <a class="logo" href="/">4P Patrimonial</a>
+    <a class="btn-investidor" href="/auth.html">Já sou investidor →</a>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <span class="badge">Investimento Imobiliário · Baixada Santista</span>
+    <h1>Transforme seu capital em patrimônio real — com <em>quem já fez isso</em></h1>
+    <p class="hero-sub">Seleciono pessoalmente investidores para operar junto comigo no modelo 4P. Capital a partir de R$150 mil. Vagas extremamente limitadas.</p>
+    <img class="pablo-photo" src="/assets/pablo.jpg" alt="Pablo — 4P Patrimonial" />
+    <div class="numeros">
+      <div class="numero-item">
+        <span class="valor">+47%</span>
+        <span class="label">em 9 meses</span>
+      </div>
+      <div class="numero-sep"></div>
+      <div class="numero-item">
+        <span class="valor">+89%</span>
+        <span class="label">em 14 meses</span>
+      </div>
+      <div class="numero-sep"></div>
+      <div class="numero-item">
+        <span class="valor">+66%</span>
+        <span class="label">em 12 meses</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- FORMULÁRIO -->
+  <section class="form-section" id="formulario">
+    <div class="form-card">
+      <h2>Quero conhecer o modelo</h2>
+      <p class="form-sub">Preencha abaixo. Nossa equipe entrará em contato em até 24h.</p>
+
+      <div id="formWrapper">
+        <form id="leadForm" novalidate>
+          <div class="form-group">
+            <label for="nome">Nome completo</label>
+            <input type="text" id="nome" name="nome" placeholder="Seu nome completo" required />
+          </div>
+          <div class="form-group">
+            <label for="whatsapp">WhatsApp</label>
+            <input type="tel" id="whatsapp" name="whatsapp" placeholder="(11) 99999-9999" required maxlength="15" />
+          </div>
+          <div class="form-group">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" placeholder="seu@email.com" required />
+          </div>
+          <div class="form-group">
+            <label for="capital">Capital disponível para investir</label>
+            <select id="capital" name="capital" required>
+              <option value="">Selecione...</option>
+              <option value="R$150k a R$300k">R$150k a R$300k</option>
+              <option value="R$300k a R$500k">R$300k a R$500k</option>
+              <option value="R$500k a R$1M">R$500k a R$1M</option>
+              <option value="Acima de R$1M">Acima de R$1M</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cidade">Cidade</label>
+            <input type="text" id="cidade" name="cidade" placeholder="Sua cidade" required />
+          </div>
+
+          <button type="submit" class="btn-submit" id="submitBtn">
+            QUERO CONHECER O MODELO →
+          </button>
+
+          <div class="form-error" id="formError"></div>
+        </form>
+        <p class="form-privacy">🔒 Seus dados são confidenciais. Sem spam.</p>
+      </div>
+
+      <div class="form-success" id="formSuccess">
+        <span class="success-icon">✅</span>
+        <h3>Cadastro recebido!</h3>
+        <p>Nossa equipe entrará em contato em até 24h pelo WhatsApp.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- COMO FUNCIONA -->
+  <section class="section">
+    <p class="section-label">O processo</p>
+    <h2 class="section-title">Como funciona</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="step-icon">🎯</span>
+        <h3>Análise</h3>
+        <p>Avaliamos seu perfil e capital disponível</p>
+      </div>
+      <div class="step-card">
+        <span class="step-icon">📞</span>
+        <h3>Conversa</h3>
+        <p>Nossa equipe agenda uma call com Pablo</p>
+      </div>
+      <div class="step-card">
+        <span class="step-icon">📋</span>
+        <h3>Proposta</h3>
+        <p>Você recebe uma operação real para analisar</p>
+      </div>
+      <div class="step-card">
+        <span class="step-icon">🏗️</span>
+        <h3>Operação</h3>
+        <p>Entramos juntos no investimento</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CASES -->
+  <section class="section">
+    <p class="section-label">Resultados reais</p>
+    <h2 class="section-title">Cases de operações</h2>
+    <div class="cases-grid">
+      <div class="case-card">
+        <div class="case-num">Case 01</div>
+        <div class="case-values">R$170k → R$250k</div>
+        <div class="case-meta">9 meses · Baixada Santista</div>
+        <span class="case-roi">+47% ROI</span>
+      </div>
+      <div class="case-card">
+        <div class="case-num">Case 02</div>
+        <div class="case-values">R$370k → R$700k</div>
+        <div class="case-meta">14 meses · Litoral SP</div>
+        <span class="case-roi">+89% ROI</span>
+      </div>
+      <div class="case-card">
+        <div class="case-num">Case 03</div>
+        <div class="case-values">Sociedade</div>
+        <div class="case-meta">R$150k/sócio · Operação ativa</div>
+        <span class="case-roi">+167% ROI</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CTA -->
+  <section class="cta-bottom">
+    <h2>Pronto para investir com quem já faz isso?</h2>
+    <p>Preencha o formulário acima e nossa equipe entra em contato.</p>
+    <a class="btn-cta" href="#formulario">QUERO CONHECER O MODELO →</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    © 2025 4P Patrimonial · Investimento imobiliário real
+  </footer>
+
+  <script>
+    // WhatsApp mask
+    const wppInput = document.getElementById('whatsapp');
+    wppInput.addEventListener('input', function () {
+      let v = this.value.replace(/\D/g, '').slice(0, 11);
+      if (v.length >= 7) {
+        v = '(' + v.slice(0,2) + ') ' + v.slice(2,7) + '-' + v.slice(7);
+      } else if (v.length >= 3) {
+        v = '(' + v.slice(0,2) + ') ' + v.slice(2);
+      } else if (v.length >= 1) {
+        v = '(' + v;
+      }
+      this.value = v;
+    });
+
+    // Form submit
+    const SUPABASE_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI';
+
+    document.getElementById('leadForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const errEl = document.getElementById('formError');
+      errEl.style.display = 'none';
+
+      const nome = document.getElementById('nome').value.trim();
+      const whatsapp = document.getElementById('whatsapp').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const capital = document.getElementById('capital').value;
+      const cidade = document.getElementById('cidade').value.trim();
+
+      if (!nome || !whatsapp || !email || !capital || !cidade) {
+        errEl.textContent = 'Por favor, preencha todos os campos.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_leads`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON,
+            'Authorization': `Bearer ${SUPABASE_ANON}`,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            nome,
+            whatsapp,
+            email,
+            capital_disponivel: capital,
+            cidade,
+            origem: 'site',
+            etapa: 'lead',
+            status: 'novo'
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error(err || 'Erro ao salvar.');
+        }
+
+        fbq('track', 'Lead');
+
+        document.getElementById('formWrapper').style.display = 'none';
+        document.getElementById('formSuccess').style.display = 'block';
+
+      } catch (err) {
+        console.error(err);
+        errEl.textContent = 'Erro ao enviar. Tente novamente ou entre em contato pelo WhatsApp.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'QUERO CONHECER O MODELO →';
+      }
+    });
+  </script>
+</body>
+</html>

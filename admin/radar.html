@@ -603,7 +603,7 @@
           <textarea id="f-descricao" placeholder="Descreva a oportunidade..."></textarea>
         </div>
         <div class="form-group">
-          <label>Cidade *</label>
+          <label>Cidade</label>
           <select id="f-cidade">
             <option value="">Selecione...</option>
             <option value="Praia Grande">Praia Grande</option>
@@ -616,7 +616,7 @@
           <input type="text" id="f-bairro" placeholder="Ex: Tupi" />
         </div>
         <div class="form-group">
-          <label>Tipo *</label>
+          <label>Tipo</label>
           <select id="f-tipo">
             <option value="">Selecione...</option>
             <option value="terreno">Terreno</option>
@@ -626,7 +626,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Potencial *</label>
+          <label>Potencial</label>
           <select id="f-potencial">
             <option value="">Selecione...</option>
             <option value="ALTO">ALTO</option>
@@ -865,32 +865,29 @@
 
     // ── SALVAR ──
     async function salvarOportunidade() {
-      const titulo    = document.getElementById('f-titulo').value.trim();
-      const cidade    = document.getElementById('f-cidade').value;
-      const tipo      = document.getElementById('f-tipo').value;
-      const potencial = document.getElementById('f-potencial').value;
+      const titulo = document.getElementById('f-titulo').value.trim();
 
-      if (!titulo || !cidade || !tipo || !potencial) {
-        showToast('Preencha os campos obrigatórios (*).', 'red');
+      if (!titulo) {
+        showToast('O campo Título é obrigatório.', 'red');
         return;
       }
 
       const payload = {
         titulo,
-        descricao:     document.getElementById('f-descricao').value.trim() || null,
-        cidade,
-        bairro:        document.getElementById('f-bairro').value.trim()    || null,
-        tipo,
-        potencial,
-        valor:         document.getElementById('f-valor').value    || null,
-        area_m2:       document.getElementById('f-area').value     || null,
-        roi_estimado:  document.getElementById('f-roi').value      || null,
-        prazo_meses:   document.getElementById('f-prazo').value    || null,
-        link_original: document.getElementById('f-link').value.trim()   || null,
-        imagem_url:    document.getElementById('f-imagem').value.trim()  || null,
-        lat:           document.getElementById('f-lat').value.trim()     || null,
-        lng:           document.getElementById('f-lng').value.trim()     || null,
-        status:        editingId ? undefined : 'pendente',
+        descricao:            document.getElementById('f-descricao').value.trim() || null,
+        cidade:               document.getElementById('f-cidade').value            || null,
+        bairro:               document.getElementById('f-bairro').value.trim()     || null,
+        tipo:                 document.getElementById('f-tipo').value              || null,
+        potencial:            document.getElementById('f-potencial').value         || null,
+        valor_anuncio:        document.getElementById('f-valor').value             || null,
+        area_m2:              document.getElementById('f-area').value              || null,
+        roi_estimado:         document.getElementById('f-roi').value               || null,
+        prazo_estimado_meses: document.getElementById('f-prazo').value             || null,
+        link_original:        document.getElementById('f-link').value.trim()       || null,
+        imagem_url:           document.getElementById('f-imagem').value.trim()     || null,
+        latitude:             document.getElementById('f-lat').value.trim()        || null,
+        longitude:            document.getElementById('f-lng').value.trim()        || null,
+        status:               editingId ? undefined : 'pendente',
       };
 
       if (!editingId) delete payload.status; // será 'pendente' por default na tabela
