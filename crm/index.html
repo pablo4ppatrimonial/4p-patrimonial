@@ -570,20 +570,19 @@ function renderLeadsRows(leads) {
   wrap.innerHTML = `
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Nome</th><th>WhatsApp</th><th>Capital</th><th>Cidade</th><th>Etapa</th><th>Responsável</th><th>Score</th><th>Ações</th></tr></thead>
+        <thead><tr><th>Nome</th><th>WhatsApp</th><th>Capital</th><th>Cidade</th><th>Etapa</th><th>Responsável</th><th>Ações</th></tr></thead>
         <tbody>
           ${leads.map(l => `<tr>
             <td><strong>${l.nome||'—'}</strong><div style="font-size:11px;color:var(--text-dim)">${l.email||''}</div></td>
             <td>${wapp(l.whatsapp)}</td>
-            <td>${fmtR(l.capital_disponivel)}</td>
+            <td>${l.capital_disponivel||'—'}</td>
             <td>${l.cidade||'—'}</td>
             <td>${etapaBadge(l.etapa)}</td>
             <td>${l.responsavel||'—'}</td>
-            <td><strong style="color:var(--gold)">${l.score||0}</strong></td>
             <td><div class="table-actions">
-              <button class="btn btn-ghost btn-sm btn-icon" onclick="viewLead(${l.id})" title="Ver">👁</button>
-              <button class="btn btn-ghost btn-sm btn-icon" onclick="editLead(${l.id})" title="Editar">✏️</button>
-              <button class="btn btn-danger btn-sm btn-icon" onclick="deleteLead(${l.id})" title="Excluir">🗑</button>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="viewLead('${l.id}')" title="Ver">👁</button>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="editLead('${l.id}')" title="Editar">✏️</button>
+              <button class="btn btn-danger btn-sm btn-icon" onclick="deleteLead('${l.id}')" title="Excluir">🗑</button>
             </div></td>
           </tr>`).join('')}
         </tbody>
@@ -599,7 +598,12 @@ function leadFormFields(l={}) {
       <div class="form-group"><label class="form-label">Nome *</label><input class="form-control" id="fNome" value="${l.nome||''}" placeholder="Nome completo"></div>
       <div class="form-group"><label class="form-label">WhatsApp</label><input class="form-control" id="fWapp" value="${l.whatsapp||''}" placeholder="(11) 99999-9999"></div>
       <div class="form-group"><label class="form-label">E-mail</label><input class="form-control" id="fEmail" type="email" value="${l.email||''}" placeholder="email@exemplo.com"></div>
-      <div class="form-group"><label class="form-label">Capital Disponível (R$)</label><input class="form-control" id="fCapital" type="number" value="${l.capital_disponivel||''}" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Capital Disponível</label>
+        <select class="form-control" id="fCapital">
+          <option value="">Selecione o capital</option>
+          ${['Até R$50k','R$50k a R$150k','R$150k a R$300k','R$300k a R$500k','R$500k a R$1M','Acima de R$1M'].map(o => `<option value="${o}" ${l.capital_disponivel===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
       <div class="form-group"><label class="form-label">Cidade</label><input class="form-control" id="fCidade" value="${l.cidade||''}" placeholder="São Paulo"></div>
       <div class="form-group"><label class="form-label">Etapa</label>
         <select class="form-control" id="fEtapa">
@@ -612,7 +616,6 @@ function leadFormFields(l={}) {
           ${origens.map(o => `<option value="${o}" ${l.origem===o?'selected':''}>${o.charAt(0).toUpperCase()+o.slice(1)}</option>`).join('')}
         </select>
       </div>
-      <div class="form-group"><label class="form-label">Score (0–100)</label><input class="form-control" id="fScore" type="number" min="0" max="100" value="${l.score||0}"></div>
       <div class="form-group full"><label class="form-label">Notas</label><textarea class="form-control" id="fNotas" placeholder="Observações...">${l.notas||''}</textarea></div>
     </div>`;
 }
@@ -636,7 +639,7 @@ async function saveLead() {
 }
 
 async function editLead(id) {
-  const lead = allLeads.find(l => l.id===id);
+  const lead = allLeads.find(l => l.id==id);
   if (!lead) return;
   showModal(`
     <div class="modal-header"><div class="modal-title">Editar Lead</div><button class="modal-close" onclick="closeModal()">×</button></div>
@@ -660,18 +663,18 @@ function getLeadPayload() {
     nome: document.getElementById('fNome').value.trim(),
     whatsapp: document.getElementById('fWapp').value.trim(),
     email: document.getElementById('fEmail').value.trim(),
-    capital_disponivel: parseFloat(document.getElementById('fCapital').value)||null,
+    capital_disponivel: document.getElementById('fCapital').value||null,
     cidade: document.getElementById('fCidade').value.trim(),
     etapa: document.getElementById('fEtapa').value,
     responsavel: document.getElementById('fResp').value.trim(),
     origem: document.getElementById('fOrigem').value,
-    score: parseInt(document.getElementById('fScore').value)||0,
+    score: 0,
     notas: document.getElementById('fNotas').value.trim(),
   };
 }
 
 async function deleteLead(id) {
-  const lead = allLeads.find(l => l.id===id);
+  const lead = allLeads.find(l => l.id==id);
   if (!confirm(`Excluir lead "${lead?.nome}"? Esta ação não pode ser desfeita.`)) return;
   const { error } = await db.from('crm_leads').delete().eq('id', id);
   if (error) { toast('Erro ao excluir', 'error'); return; }
@@ -679,7 +682,7 @@ async function deleteLead(id) {
 }
 
 async function viewLead(id) {
-  const lead = allLeads.find(l => l.id===id);
+  const lead = allLeads.find(l => l.id==id);
   if (!lead) return;
   showModal(`
     <div class="modal-header"><div class="modal-title">👤 ${lead.nome}</div><button class="modal-close" onclick="closeModal()">×</button></div>
