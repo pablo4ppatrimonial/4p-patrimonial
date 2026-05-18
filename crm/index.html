@@ -53,6 +53,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .stat-card-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:52px;opacity:.07;pointer-events:none;}
 .stat-card.novos-hoje{animation:pulseBorder 2s ease-in-out infinite;}
 @keyframes pulseBorder{0%,100%{border-color:var(--border)}50%{border-color:var(--gold);box-shadow:0 0 14px var(--gold-glow)}}
+@keyframes pulseDot{0%,100%{opacity:1;box-shadow:0 0 6px #22c55e}50%{opacity:.5;box-shadow:0 0 12px #22c55e}}
 .stat-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
 .stat-value{font-size:28px;font-weight:700;color:var(--text);font-family:var(--mono);}
 .stat-value.gold{color:var(--gold);}.stat-value.green{color:var(--green);}.stat-value.red{color:var(--red);}
@@ -389,7 +390,7 @@ async function renderDashboard(){
         datasets:[{
           label:'Leads',
           data:counts,
-          backgroundColor:counts.map((v,i)=>i===counts.length-1?'#c9a84c':'rgba(201,168,76,0.25)'),
+          backgroundColor:counts.map((v,i)=>i===counts.length-1?'#c9a84c':'rgba(201,168,76,0.3)'),
           borderColor:counts.map((v,i)=>i===counts.length-1?'#c9a84c':'rgba(201,168,76,0.5)'),
           borderWidth:1,
           borderRadius:6,
@@ -606,8 +607,8 @@ function renderTarefasList(tarefas){
     const venc=t.data_vencimento;
     const v=venc&&venc.slice(0,10)<hojeStr&&t.status!=='concluida';
     const h=venc&&venc.slice(0,10)===hojeStr&&t.status!=='concluida';
-    const badgeHoje=h?'<span style="display:inline-block;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(234,179,8,.2);color:#fbbf24;margin-left:6px">HOJE</span>':'';
-    const badgeAtraso=v?'<span style="display:inline-block;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(239,68,68,.2);color:#f87171;margin-left:6px">ATRASADA</span>':'';
+    const badgeHoje=h?'<span style="background:rgba(234,179,8,0.2);color:#fbbf24;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:600;margin-left:6px">HOJE</span>':'';
+    const badgeAtraso=v?'<span style="background:rgba(239,68,68,0.2);color:#f87171;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:600;margin-left:6px">ATRASADA</span>':'';
     return`<div class="task-item${v?' vencida':''}"><div class="task-check${t.status==='concluida'?' done':''}" onclick="toggleTarefa('${t.id}','${t.status}')"></div><div class="task-info"><div class="task-title" style="${t.status==='concluida'?'text-decoration:line-through;color:var(--text-muted)':''}">${t.titulo||'—'}${badgeHoje}${badgeAtraso}</div><div class="task-meta">${t.responsavel_nome?'👤 '+t.responsavel_nome:''}${venc?' · 📅 '+fmtDate(venc):''}</div></div><div class="task-actions">${badge(t.prioridade||'media')} ${badge(t.status||'pendente')} <button class="action-btn action-btn-del" onclick="excluirTarefa('${t.id}')">🗑</button></div></div>`;
   }).join('');
 }
@@ -623,15 +624,15 @@ async function renderTickets(){
   allTickets=data||[];
   c.innerHTML=`<div class="filters">
     <input class="search-input" id="tk-search" placeholder="🔍 Buscar por título..." oninput="filtrarTickets()">
-    <select class="filter-select" id="tk-f-status" onchange="filtrarTickets()"><option value="">Todos status</option><option value="aberto">Aberto</option><option value="em_andamento">Em andamento</option><option value="resolvido">Resolvido</option></select>
-    <select class="filter-select" id="tk-f-prior" onchange="filtrarTickets()"><option value="">Todas prioridades</option><option value="alta">Alta</option><option value="media">Média</option><option value="baixa">Baixa</option></select>
+    <select class="filter-select" id="tk-filtro-status" onchange="filtrarTickets()"><option value="">Todos status</option><option value="aberto">Aberto</option><option value="em_andamento">Em andamento</option><option value="resolvido">Resolvido</option></select>
+    <select class="filter-select" id="tk-filtro-prior" onchange="filtrarTickets()"><option value="">Todas prioridades</option><option value="alta">Alta</option><option value="media">Média</option><option value="baixa">Baixa</option></select>
   </div><div id="tickets-table"></div>`;
   filtrarTickets();
 }
 function filtrarTickets(){
   const s=(document.getElementById('tk-search')?.value||'').toLowerCase();
-  const st=document.getElementById('tk-f-status')?.value||'';
-  const p=document.getElementById('tk-f-prior')?.value||'';
+  const st=document.getElementById('tk-filtro-status')?.value||'';
+  const p=document.getElementById('tk-filtro-prior')?.value||'';
   let f=allTickets;
   if(s)f=f.filter(t=>(t.titulo||'').toLowerCase().includes(s));
   if(st)f=f.filter(t=>t.status===st);
@@ -669,12 +670,15 @@ async function loadRelatorios(){
   const etapas2=['lead','contato','qualificado','proposta','negociacao','fechado','perdido'];
   const funil=etapas2.map(e=>({e,n:all.filter(l=>(l.etapa||'lead')===e).length}));
   const mxF=Math.max(...funil.map(x=>x.n),1);
-  const pCap={},pOri={},pCid={};
-  all.forEach(l=>{
-    if(l.capital_disponivel)pCap[l.capital_disponivel]=(pCap[l.capital_disponivel]||0)+1;
-    if(l.origem)pOri[l.origem]=(pOri[l.origem]||0)+1;
-    if(l.cidade)pCid[l.cidade]=(pCid[l.cidade]||0)+1;
-  });
+  const pCap={};
+  all.forEach(l=>{if(l.capital_disponivel)pCap[l.capital_disponivel]=(pCap[l.capital_disponivel]||0)+1;});
+  const[{data:oriData},{data:cidData}]=await Promise.all([
+    sb.from('crm_leads').select('origem'),
+    sb.from('crm_leads').select('cidade')
+  ]);
+  const pOri={},pCid={};
+  (oriData||[]).forEach(l=>{if(l.origem)pOri[l.origem]=(pOri[l.origem]||0)+1;});
+  (cidData||[]).forEach(l=>{if(l.cidade)pCid[l.cidade]=(pCid[l.cidade]||0)+1;});
   const desde6m=new Date();desde6m.setMonth(desde6m.getMonth()-6);
   const{data:leads6mData}=await sb.from('crm_leads').select('id,etapa,criado_em').gte('criado_em',desde6m.toISOString());
   const all6m=leads6mData||[];
@@ -786,24 +790,24 @@ async function renderConfig(){
       </div>
 
       <!-- Integrações ativas -->
-      <div class="dash-card" style="border-left:3px solid var(--purple,#a855f7)">
+      <div class="dash-card" style="border-left:3px solid #a855f7">
         <div class="dash-card-title" style="display:flex;align-items:center;gap:8px"><span>🔌</span> Integrações Ativas</div>
-        <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
           ${[
-            {icon:'🟣',name:'Meta Pixel',desc:'Pixel 1602962360794047',status:'Ativo'},
-            {icon:'📧',name:'Resend Email',desc:'contato@4ppatrimonial.com.br',status:'Ativo'},
-            {icon:'💬',name:'WhatsApp Notif.',desc:'Notificação automática de leads',status:'Ativo'},
-            {icon:'🛒',name:'Kiwify Webhook',desc:'Compra → usuário criado automático',status:'Ativo'},
-            {icon:'🗄️',name:'Supabase',desc:'Banco de dados em tempo real',status:'Ativo'},
-            {icon:'🚀',name:'Vercel',desc:'Deploy automático via GitHub',status:'Ativo'},
+            {icon:'🟣',name:'Meta Pixel',desc:'ID 1602962360794047'},
+            {icon:'📧',name:'Resend',desc:'Email automático'},
+            {icon:'💬',name:'WhatsApp',desc:'Notif. de leads'},
+            {icon:'🛒',name:'Kiwify',desc:'Webhook compra'},
+            {icon:'🗄️',name:'Supabase',desc:'Banco de dados'},
+            {icon:'🚀',name:'Vercel',desc:'Deploy automático'},
           ].map(i=>`
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
-              <span style="font-size:22px">${i.icon}</span>
-              <div style="flex:1">
-                <div style="font-size:13px;font-weight:600">${i.name}</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:1px">${i.desc}</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+              <span style="font-size:18px">${i.icon}</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i.name}</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i.desc}</div>
               </div>
-              <span class="badge badge-fechado" style="font-size:10px">${i.status}</span>
+              <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;flex-shrink:0;animation:pulseDot 2s ease-in-out infinite"></div>
             </div>`).join('')}
         </div>
       </div>
