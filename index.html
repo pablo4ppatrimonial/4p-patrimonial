@@ -532,6 +532,7 @@
       border-top: 1px solid rgba(255,255,255,0.05);
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -705,76 +706,62 @@
       this.value = v;
     });
 
-    // Form submit
-    const SUPABASE_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
-    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI';
+    // Form submit — SDK Supabase
+    const _sb = supabase.createClient(
+      'https://vfmtntdaohuwitajxyqc.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI'
+    );
 
-    document.getElementById('leadForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const btn = document.getElementById('submitBtn');
+    async function enviarFormulario() {
+      const nome = (document.getElementById('nome')?.value || document.querySelector('input[name="nome"]')?.value || '').trim();
+      const whatsapp = (document.getElementById('whatsapp')?.value || document.querySelector('input[name="whatsapp"]')?.value || '').replace(/\D/g, '');
+      const email = (document.getElementById('email')?.value || document.querySelector('input[name="email"]')?.value || '').trim();
+      const capital = document.getElementById('capital')?.value || document.querySelector('select[name="capital"]')?.value || '';
+      const cidade = (document.getElementById('cidade')?.value || document.querySelector('input[name="cidade"]')?.value || '').trim();
+
       const errEl = document.getElementById('formError');
       errEl.style.display = 'none';
 
-      const nome = document.getElementById('nome').value.trim();
-      const whatsapp = document.getElementById('whatsapp').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const capital = document.getElementById('capital').value;
-      const cidade = document.getElementById('cidade').value.trim();
-
-      if (!nome || !whatsapp || !email || !capital || !cidade) {
-        errEl.textContent = 'Por favor, preencha todos os campos.';
+      if (!nome || !whatsapp) {
+        errEl.textContent = 'Preencha nome e WhatsApp!';
         errEl.style.display = 'block';
         return;
       }
 
+      const btn = document.getElementById('submitBtn');
       btn.disabled = true;
       btn.textContent = 'Enviando...';
 
-      try {
-        const payload = {
-          nome,
-          whatsapp: whatsapp.replace(/\D/g, ''),
-          email,
-          capital_disponivel: capital,
-          cidade,
-          origem: 'site',
-          etapa: 'lead',
-          score: 0,
-          criado_em: new Date().toISOString()
-        };
+      const { error } = await _sb.from('crm_leads').insert({
+        nome,
+        whatsapp,
+        email,
+        capital_disponivel: capital,
+        cidade,
+        origem: 'site',
+        etapa: 'lead',
+        score: 0,
+        criado_em: new Date().toISOString()
+      });
 
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_leads`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON,
-            'Authorization': `Bearer ${SUPABASE_ANON}`,
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          const errBody = await res.text();
-          console.error('Supabase error:', res.status, errBody);
-          let msg = 'Erro ao salvar.';
-          try { const j = JSON.parse(errBody); msg = j.message || j.error || errBody; } catch {}
-          throw new Error(`[${res.status}] ${msg}`);
-        }
-
-        fbq('track', 'Lead');
-
-        document.getElementById('leadForm').reset();
-        document.getElementById('formWrapper').style.display = 'none';
-        document.getElementById('formSuccess').style.display = 'block';
-
-      } catch (err) {
-        console.error('Form submit error:', err);
-        errEl.textContent = 'Erro ao enviar: ' + err.message;
+      if (error) {
+        console.error('Supabase insert error:', error);
+        errEl.textContent = 'Erro: ' + error.message;
         errEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'QUERO CONHECER O MODELO →';
+      } else {
+        if (typeof fbq !== 'undefined') fbq('track', 'Lead');
+        errEl.style.display = 'none';
+        document.getElementById('formWrapper').style.display = 'none';
+        document.getElementById('formSuccess').style.display = 'block';
+        document.querySelector('form')?.reset();
       }
+    }
+
+    document.getElementById('leadForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      enviarFormulario();
     });
   </script>
 </body>
