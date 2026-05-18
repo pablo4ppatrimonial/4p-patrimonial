@@ -185,6 +185,14 @@ input[type=checkbox].cb-lead{width:15px;height:15px;accent-color:var(--gold);cur
 .proposta-preview th{background:#f5f5f5;font-weight:700;}
 #_proposta_print_only{display:none;}
 @media print{body>*:not(#_proposta_print_only){display:none!important;}#_proposta_print_only{display:block!important;position:fixed;inset:0;background:#fff;z-index:9999;padding:32px;}}
+.motivo-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;margin-bottom:8px;font-size:13px;user-select:none;}
+.motivo-card:hover{border-color:var(--gold-dim);background:var(--gold-glow);}
+.motivo-card.selected{border-color:var(--gold)!important;background:rgba(201,168,76,0.12);color:var(--gold);}
+.motivo-card-icon{font-size:20px;width:26px;flex-shrink:0;text-align:center;}
+.prob-badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;}
+.prob-alto{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.35);}
+.prob-medio{background:rgba(234,179,8,0.15);color:#fbbf24;border:1px solid rgba(234,179,8,0.35);}
+.prob-baixo{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.35);}
 </style>
 </head>
 <body>
@@ -341,7 +349,7 @@ const RESEND='re_XkRB47R9_PkrxabbMvVGpMLScdBMfs7iJ';
 const PABLO_WPP='5513992097189';
 const PABLO_EMAIL='pabloangelyscamilaoficial@gmail.com';
 const sb=supabase.createClient(SB_URL,SB_KEY);
-let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null,_relLeads=[],_importHeaders=[],_importRows=[],_chatInterval=null,_chatOpen=false,leadsSelecionados=[],_agendaMes=new Date().getMonth(),_agendaAno=new Date().getFullYear(),_agendaVista='mensal',_reunioesCache=[],_ligacaoLeadId=null,_propostaLeadId=null,_propostaLead=null;
+let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null,_relLeads=[],_importHeaders=[],_importRows=[],_chatInterval=null,_chatOpen=false,leadsSelecionados=[],_agendaMes=new Date().getMonth(),_agendaAno=new Date().getFullYear(),_agendaVista='mensal',_reunioesCache=[],_ligacaoLeadId=null,_propostaLeadId=null,_propostaLead=null,_pendingPerdaCallback=null;
 
 const TEMPLATES_WPP={
   primeiro_contato:{label:'Primeiro Contato',texto:l=>`Olá ${l.nome||''}! 👋\n\nSou da equipe 4P Patrimonial. Identificamos seu interesse em investimento imobiliário.\n\nPodemos agendar uma conversa rápida para apresentar nossas oportunidades exclusivas?\n\nAguardo! 🏆`},
@@ -360,6 +368,37 @@ function calcularScore(l){
   if(l.whatsapp)s+=10;if(l.email)s+=5;if(l.cidade)s+=5;if(l.notas)s+=5;
   return Math.min(100,s);
 }
+function calcularProbabilidade(lead){
+  const etapa=lead.etapa||'lead';
+  if(etapa==='fechado')return 100;
+  if(etapa==='perdido')return 0;
+  const base={lead:5,contato:15,qualificado:30,proposta:50,negociacao:70};
+  let p=base[etapa]||5;
+  const sc=calcularScore(lead);
+  if(sc>=70)p+=15;else if(sc>=40)p+=8;
+  const cap=lead.capital_disponivel||'';
+  if(cap==='Acima de R$1M'||cap==='R$500k a R$1M')p+=10;
+  else if(cap==='R$300k a R$500k')p+=5;
+  if(lead.email)p+=3;
+  if(lead.notas)p+=2;
+  if((lead.origem||'')==='indicacao')p+=10;
+  if(lead.etapa_entrada){
+    const dias=Math.floor((Date.now()-new Date(lead.etapa_entrada).getTime())/86400000);
+    if(dias<3)p+=5;
+    else if(dias>30)p-=20;
+    else if(dias>14)p-=10;
+  }
+  return Math.min(95,Math.max(0,Math.round(p)));
+}
+function calcularTempoNaEtapa(lead){
+  const entrada=lead.etapa_entrada||lead.criado_em;
+  if(!entrada)return null;
+  const ms=Date.now()-new Date(entrada).getTime();
+  const dias=Math.floor(ms/86400000);
+  const horas=Math.floor((ms%86400000)/3600000);
+  if(dias===0)return horas+'h';
+  return dias+'d '+horas+'h';
+}
 function getTemperatura(score){
   if(score>=70)return{label:'🔥 Quente',color:'#ef4444',bg:'rgba(239,68,68,0.15)',border:'rgba(239,68,68,0.4)'};
   if(score>=40)return{label:'⚡ Morno',color:'#fbbf24',bg:'rgba(234,179,8,0.15)',border:'rgba(234,179,8,0.4)'};
@@ -368,6 +407,62 @@ function getTemperatura(score){
 async function registrarAtividade(leadId,tipo,descricao){
   if(!leadId)return;
   try{await sb.from('crm_atividades_log').insert({lead_id:leadId,tipo,descricao,usuario_nome:currentUser?.nome||'Sistema',usuario_id:String(currentUser?.id||''),criado_em:new Date().toISOString()});}catch(e){console.warn('Log:',e);}
+}
+
+/* ===== MOTIVO DE PERDA ===== */
+function interceptarPerdido(leadId,callback){
+  _pendingPerdaCallback=callback;
+  document.querySelectorAll('.motivo-card').forEach(c=>c.classList.remove('selected'));
+  const si=document.getElementById('motivo-selecionado');if(si)si.value='';
+  const ow=document.getElementById('motivo-outro-wrap');if(ow)ow.style.display='none';
+  const ot=document.getElementById('motivo-outro-txt');if(ot)ot.value='';
+  const btn=document.getElementById('btn-confirmar-perda');if(btn){btn.disabled=true;btn.style.opacity='0.5';}
+  openModal('modal-motivo-perda');
+}
+function selecionarMotivo(el,motivo){
+  document.querySelectorAll('.motivo-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('motivo-selecionado').value=motivo;
+  const ow=document.getElementById('motivo-outro-wrap');if(ow)ow.style.display=motivo==='Outro motivo'?'block':'none';
+  const btn=document.getElementById('btn-confirmar-perda');if(btn){btn.disabled=false;btn.style.opacity='1';}
+}
+async function confirmarMotivoPerdido(){
+  const motivo=(document.getElementById('motivo-selecionado')?.value||'').trim();
+  if(!motivo){toast('Selecione um motivo','error');return;}
+  let motivoFinal=motivo;
+  if(motivo==='Outro motivo'){
+    const outro=(document.getElementById('motivo-outro-txt')?.value||'').trim();
+    if(outro)motivoFinal=outro;
+  }
+  closeModal('modal-motivo-perda');
+  if(_pendingPerdaCallback){await _pendingPerdaCallback(motivoFinal);_pendingPerdaCallback=null;}
+}
+function cancelarMotivoPerdido(){closeModal('modal-motivo-perda');_pendingPerdaCallback=null;}
+
+/* ===== ATUALIZAR ETAPA COM HISTÓRICO ===== */
+async function atualizarEtapaLead(id,novaEtapa,motivoPerdido=null){
+  const lead=allLeads.find(l=>l.id===id)||{};
+  const etapaAnterior=lead.etapa||'lead';
+  const entrada=lead.etapa_entrada||lead.criado_em||new Date().toISOString();
+  const horasNaEtapa=Math.round((Date.now()-new Date(entrada).getTime())/3600000);
+  const hist=[...(lead.etapa_historico||[])];
+  if(etapaAnterior!==novaEtapa)hist.push({etapa:etapaAnterior,entrada,saida:new Date().toISOString(),duracao_horas:horasNaEtapa});
+  const score=calcularScore({...lead,etapa:novaEtapa});
+  const prob=calcularProbabilidade({...lead,etapa:novaEtapa});
+  const payload={etapa:novaEtapa,score,probabilidade:prob,atualizado_em:new Date().toISOString(),etapa_entrada:new Date().toISOString(),etapa_historico:hist};
+  if(motivoPerdido)payload.perdido_motivo=motivoPerdido;
+  const{error}=await sb.from('crm_leads').update(payload).eq('id',id);
+  if(error){toast('Erro: '+error.message,'error');return false;}
+  if(novaEtapa==='fechado'&&typeof fbq!=='undefined')fbq('track','Purchase',{value:5000,currency:'BRL'});
+  const ativTipo=motivoPerdido?'perda':'etapa';
+  const ativDesc=motivoPerdido?'Lead marcado como perdido. Motivo: '+motivoPerdido:'Etapa alterada para: '+etapaLabel[novaEtapa];
+  registrarAtividade(id,ativTipo,ativDesc);
+  return true;
+}
+async function atualizarProbabilidadesTodos(){
+  const needsUpdate=allLeads.filter(l=>l.probabilidade!==calcularProbabilidade(l));
+  if(!needsUpdate.length)return;
+  for(const l of needsUpdate)await sb.from('crm_leads').update({probabilidade:calcularProbabilidade(l)}).eq('id',l.id);
 }
 function abrirTemplatesWPPById(id){const l=allLeads.find(x=>x.id===id);if(l)abrirTemplatesWPP(l);}
 function abrirTemplatesWPP(lead){
@@ -669,6 +764,8 @@ async function renderDashboard(){
   const recNeg=leads.filter(l=>['proposta','negociacao'].includes(l.etapa)).reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
   const recPotencial=leads.filter(l=>l.etapa!=='perdido').reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
   const progMeta=Math.min(100,Math.round(recFechada/1000000*100));
+  const leadsAtivos=leads.filter(l=>!['fechado','perdido'].includes(l.etapa));
+  const recPonderada=leadsAtivos.reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel)*calcularProbabilidade(l)/100,0);
   c.innerHTML=`
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-card-icon">👥</div><div class="stat-label">Total de Leads</div><div class="stat-value">${leads.length}</div></div>
@@ -711,6 +808,10 @@ async function renderDashboard(){
         <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--gold)">${fmtMoeda(recPotencial)}</div>
         <div style="font-size:10px;color:var(--text-muted);margin-top:4px">Todos os leads ativos</div>
       </div>
+    </div>
+    <div style="background:linear-gradient(135deg,#111 0%,rgba(201,168,76,0.06) 100%);border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div><div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🎯 Receita Ponderada por Probabilidade</div><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:var(--gold)">${fmtMoeda(recPonderada)}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Baseado em ${leadsAtivos.length} leads ativos × probabilidade de fechamento</div></div>
+      <div style="font-size:12px;color:var(--text-dim);background:var(--surface2);border-radius:8px;padding:10px 14px"><div>🏆 Fechada: <strong style="color:#22c55e">${fmtMoeda(recFechada)}</strong></div><div style="margin-top:4px">📊 Potencial bruto: <strong style="color:var(--gold)">${fmtMoeda(recPotencial)}</strong></div></div>
     </div>
     <div class="dash-card" style="background:linear-gradient(135deg,#111 0%,rgba(201,168,76,0.05) 100%);border:1px solid rgba(201,168,76,0.2);margin-bottom:16px">
       <div class="dash-card-title">🔥 Leads Quentes</div>
@@ -816,7 +917,7 @@ async function renderLeads(){
   </div><div id="leads-sel-bar" style="display:none"></div><div class="table-wrap" id="leads-table"><div class="loading"><span class="spinner"></span> Carregando...</div></div>`;
   const{data}=await sb.from('crm_leads').select('*').order('criado_em',{ascending:false});
   allLeads=data||[];renderLeadsTable(allLeads);
-  setTimeout(async()=>{const upd=allLeads.filter(l=>l.score!==calcularScore(l));for(const l of upd)await sb.from('crm_leads').update({score:calcularScore(l)}).eq('id',l.id);},800);
+  setTimeout(async()=>{const upd=allLeads.filter(l=>l.score!==calcularScore(l));for(const l of upd)await sb.from('crm_leads').update({score:calcularScore(l)}).eq('id',l.id);atualizarProbabilidadesTodos();},1000);
 }
 
 function filtrarLeads(){const s=document.getElementById('lead-search')?.value||'';const e=document.getElementById('lead-etapa')?.value||'';const k=document.getElementById('lead-capital')?.value||'';renderLeadsTable(allLeads,s,e,k);}
@@ -827,14 +928,15 @@ function renderLeadsTable(leads,s='',e='',k=''){
   if(e)f=f.filter(l=>l.etapa===e);if(k)f=f.filter(l=>l.capital_disponivel===k);
   const el=document.getElementById('leads-table');if(!el)return;
   if(!f.length){el.innerHTML='<div class="empty"><div class="empty-icon">👥</div>Nenhum lead encontrado</div>';return;}
-  el.innerHTML='<table><thead><tr><th style="width:36px"><input type="checkbox" class="cb-lead" id="cb-todos" onchange="toggleTodosSel(this.checked)" title="Selecionar todos"></th><th>Nome / E-mail</th><th>WhatsApp</th><th>Capital</th><th>Cidade</th><th>Etapa</th><th>Temp.</th><th>Follow-Up</th><th>Responsável</th><th>Origem</th><th>Ações</th></tr></thead><tbody>'+
-  f.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);const sel=leadsSelecionados.includes(l.id);return`<tr id="row-${l.id}" style="${sel?'background:rgba(201,168,76,0.08);border-left:3px solid var(--gold)':sc>=70?'background:rgba(239,68,68,0.05);border-left:3px solid #ef4444':'border-left:2px solid transparent'}">
+  el.innerHTML='<table><thead><tr><th style="width:36px"><input type="checkbox" class="cb-lead" id="cb-todos" onchange="toggleTodosSel(this.checked)" title="Selecionar todos"></th><th>Nome / E-mail</th><th>WhatsApp</th><th>Capital</th><th>Cidade</th><th>Etapa</th><th>Temp.</th><th>PROB.</th><th>Follow-Up</th><th>Responsável</th><th>Origem</th><th>Ações</th></tr></thead><tbody>'+
+  f.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);const sel=leadsSelecionados.includes(l.id);const prob=calcularProbabilidade(l);const probCls=prob>=60?'prob-alto':prob>=30?'prob-medio':'prob-baixo';return`<tr id="row-${l.id}" style="${sel?'background:rgba(201,168,76,0.08);border-left:3px solid var(--gold)':sc>=70?'background:rgba(239,68,68,0.05);border-left:3px solid #ef4444':'border-left:2px solid transparent'}">
     <td style="text-align:center"><input type="checkbox" class="cb-lead" ${sel?'checked':''} onchange="toggleLeadSel('${l.id}',this.checked)"></td>
     <td><div class="td-name">${l.nome||'—'}</div><div class="td-sub">${l.email||''}</div></td>
     <td>${l.whatsapp?`<div style="display:flex;flex-direction:column;gap:3px"><a href="https://wa.me/55${l.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:var(--green);text-decoration:none;font-size:12px">📱 ${l.whatsapp}</a><button class="action-btn" style="font-size:10px;padding:2px 8px;border-color:rgba(34,197,94,.3);color:var(--green)" onclick="abrirTemplatesWPPById('${l.id}')">Modelos →</button></div>`:'—'}</td>
     <td style="color:var(--gold);font-weight:600">${l.capital_disponivel||'—'}</td>
-    <td>${l.cidade||'—'}</td><td>${badge(l.etapa||'lead')}</td>
+    <td>${l.cidade||'—'}</td><td>${l.etapa==='perdido'&&l.perdido_motivo?`<span class="badge badge-perdido" title="${l.perdido_motivo}" style="cursor:help">Perdido 💬</span>`:badge(l.etapa||'lead')}</td>
     <td style="white-space:nowrap"><span title="${scoreBreakdown(l)}" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:${tmp.bg};color:${tmp.color};border:1px solid ${tmp.border};cursor:help;white-space:nowrap">${tmp.label}</span></td>
+    <td style="white-space:nowrap"><span class="prob-badge ${probCls}">${prob}%</span></td>
     <td>${fmtFollowupBadge(l.proximo_followup)}</td>
     <td>${l.responsavel||'—'}</td><td>${l.origem||'—'}</td>
     <td><div style="display:flex;gap:6px">
@@ -865,16 +967,40 @@ function editarLead(id){
 async function salvarLead(){
   const nome=document.getElementById('f-nome').value.trim();
   if(!nome){toast('Nome é obrigatório','error');return;}
-  const payload={nome,whatsapp:document.getElementById('f-whatsapp').value.trim(),email:document.getElementById('f-email').value.trim(),capital_disponivel:document.getElementById('f-capital').value,cidade:document.getElementById('f-cidade').value.trim(),etapa:document.getElementById('f-etapa').value,responsavel:document.getElementById('f-responsavel').value.trim(),origem:document.getElementById('f-origem').value,notas:document.getElementById('f-notas').value.trim()};
-  payload.score=calcularScore(payload);
+  const novaEtapa=document.getElementById('f-etapa').value;
+  const payload={nome,whatsapp:document.getElementById('f-whatsapp').value.trim(),email:document.getElementById('f-email').value.trim(),capital_disponivel:document.getElementById('f-capital').value,cidade:document.getElementById('f-cidade').value.trim(),etapa:novaEtapa,responsavel:document.getElementById('f-responsavel').value.trim(),origem:document.getElementById('f-origem').value,notas:document.getElementById('f-notas').value.trim()};
+  payload.score=calcularScore(payload);payload.probabilidade=calcularProbabilidade(payload);
   if(editingLeadId){
+    const leadAtual=allLeads.find(l=>l.id===editingLeadId)||{};
+    const etapaAnterior=leadAtual.etapa||'lead';
+    if(novaEtapa==='perdido'&&etapaAnterior!=='perdido'){
+      interceptarPerdido(editingLeadId,async(motivo)=>{
+        payload.perdido_motivo=motivo;
+        const entrada=leadAtual.etapa_entrada||leadAtual.criado_em||new Date().toISOString();
+        const hist=[...(leadAtual.etapa_historico||[])];
+        hist.push({etapa:etapaAnterior,entrada,saida:new Date().toISOString(),duracao_horas:Math.round((Date.now()-new Date(entrada).getTime())/3600000)});
+        payload.etapa_historico=hist;payload.etapa_entrada=new Date().toISOString();payload.atualizado_em=new Date().toISOString();
+        const{error}=await sb.from('crm_leads').update(payload).eq('id',editingLeadId);
+        if(error){toast('Erro: '+error.message,'error');return;}
+        toast('Lead marcado como perdido!');
+        registrarAtividade(editingLeadId,'perda','Lead marcado como perdido. Motivo: '+motivo);
+        closeModal('modal-lead');renderLeads();
+      });
+      return;
+    }
+    if(etapaAnterior!==novaEtapa){
+      const entrada=leadAtual.etapa_entrada||leadAtual.criado_em||new Date().toISOString();
+      const hist=[...(leadAtual.etapa_historico||[])];
+      hist.push({etapa:etapaAnterior,entrada,saida:new Date().toISOString(),duracao_horas:Math.round((Date.now()-new Date(entrada).getTime())/3600000)});
+      payload.etapa_historico=hist;payload.etapa_entrada=new Date().toISOString();
+    }
     payload.atualizado_em=new Date().toISOString();
     const{error}=await sb.from('crm_leads').update(payload).eq('id',editingLeadId);
     if(error){toast('Erro: '+error.message,'error');return;}
     toast('Lead atualizado!');
-    registrarAtividade(editingLeadId,'edicao','Lead atualizado — etapa: '+(etapaLabel[payload.etapa]||payload.etapa));
+    registrarAtividade(editingLeadId,'edicao','Lead atualizado — etapa: '+(etapaLabel[novaEtapa]||novaEtapa));
   }else{
-    payload.criado_em=new Date().toISOString();
+    payload.criado_em=new Date().toISOString();payload.etapa_entrada=new Date().toISOString();
     const{data:ins,error}=await sb.from('crm_leads').insert(payload).select().single();
     if(error){toast('Erro: '+error.message,'error');return;}
     toast('Lead criado!');
@@ -897,6 +1023,9 @@ async function verLead(id){
     <div class="detail-row"><div class="detail-key">Cidade</div><div class="detail-val">${l.cidade||'—'}</div></div>
     <div class="detail-row"><div class="detail-key">Etapa</div><div class="detail-val">${badge(l.etapa||'lead')}</div></div>
     <div class="detail-row"><div class="detail-key">Temperatura</div><div class="detail-val"><span style="font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px;background:${tmp.bg};color:${tmp.color};border:1px solid ${tmp.border}">${tmp.label}</span> <span style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">${sc} pts</span></div></div>
+    ${(()=>{const prob=calcularProbabilidade(l);const pc=prob>=60?'#22c55e':prob>=30?'#fbbf24':'#ef4444';const pbg=prob>=60?'rgba(34,197,94,0.15)':prob>=30?'rgba(234,179,8,0.15)':'rgba(239,68,68,0.15)';return`<div class="detail-row"><div class="detail-key">Probabilidade</div><div class="detail-val"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px;font-weight:700;font-family:var(--mono);color:${pc}">${prob}%</span><div style="flex:1;background:var(--surface2);border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;width:${prob}%;background:${pc};border-radius:4px;transition:width .5s"></div></div></div></div></div>`;})()}
+    ${(()=>{const tempo=calcularTempoNaEtapa(l);if(!tempo)return'';const dias=parseInt(tempo);const cor=tempo.includes('d')&&dias>7?'var(--red)':'var(--gold)';return`<div class="detail-row"><div class="detail-key">Tempo na etapa</div><div class="detail-val" style="color:${cor};font-weight:600;font-family:var(--mono)">${tempo}</div></div>`;})()}
+    ${l.etapa==='perdido'&&l.perdido_motivo?`<div class="detail-row"><div class="detail-key">Motivo perda</div><div class="detail-val" style="color:#f87171">${l.perdido_motivo}</div></div>`:''}
     <div class="detail-row"><div class="detail-key">Responsável</div><div class="detail-val">${l.responsavel||'—'}</div></div>
     <div class="detail-row"><div class="detail-key">Origem</div><div class="detail-val">${l.origem||'—'}</div></div>
     <div class="detail-row"><div class="detail-key">Cadastrado</div><div class="detail-val">${fmtDate(l.criado_em)}</div></div>
@@ -965,7 +1094,7 @@ async function renderPipeline(){
     const cards=allLeads.filter(l=>(l.etapa||'lead')===etapa);
     const col=document.createElement('div');col.className='kanban-col';col.dataset.etapa=etapa;
     col.innerHTML=`<div class="kanban-col-header"><span class="kanban-col-title">${etapaLabel[etapa]}</span><span class="kanban-count">${cards.length}</span></div>
-    <div class="kanban-cards">${cards.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);const dotColor=sc>=70?'#ef4444':sc>=40?'#f97316':'#3b82f6';return`<div class="kanban-card" draggable="true" data-id="${l.id}" onclick="abrirCardPipeline('${l.id}')" style="border-left:3px solid ${dotColor}"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px"><div class="kanban-card-name" style="flex:1;padding-right:4px">${l.nome||'—'}</div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><div style="width:7px;height:7px;border-radius:50%;background:${dotColor}"></div><span style="font-size:11px">${tmp.label.split(' ')[0]}</span></div></div><div class="kanban-card-info">${l.cidade||''}${l.responsavel?' · '+l.responsavel:''}</div>${l.capital_disponivel?`<div class="kanban-card-capital">${l.capital_disponivel}</div>`:''}${fmtFollowupKanban(l.proximo_followup)}<div style="display:flex;gap:4px;margin-top:8px" onclick="event.stopPropagation()" draggable="false"><button onclick="event.stopPropagation();editarLead('${l.id}')" draggable="false" style="padding:3px 6px;border-radius:4px;font-size:11px;background:transparent;border:1px solid #2a2a2a;color:#888;cursor:pointer" onmouseenter="this.style.borderColor='#c9a84c';this.style.color='#c9a84c'" onmouseleave="this.style.borderColor='#2a2a2a';this.style.color='#888'">✏️</button><button onclick="event.stopPropagation();excluirLeadPipeline('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}');" draggable="false" style="padding:3px 6px;border-radius:4px;font-size:11px;background:transparent;border:1px solid #2a2a2a;color:#888;cursor:pointer" onmouseenter="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseleave="this.style.borderColor='#2a2a2a';this.style.color='#888'">🗑</button></div></div>`;}).join('')}</div>`;
+    <div class="kanban-cards">${cards.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);const dotColor=sc>=70?'#ef4444':sc>=40?'#f97316':'#3b82f6';const prob=calcularProbabilidade(l);const probColor=prob>=60?'#22c55e':prob>=30?'#fbbf24':'#ef4444';return`<div class="kanban-card" draggable="true" data-id="${l.id}" onclick="abrirCardPipeline('${l.id}')" style="border-left:3px solid ${dotColor}"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px"><div class="kanban-card-name" style="flex:1;padding-right:4px">${l.nome||'—'}</div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><div style="width:7px;height:7px;border-radius:50%;background:${dotColor}"></div><span style="font-size:11px">${tmp.label.split(' ')[0]}</span></div></div><div class="kanban-card-info">${l.cidade||''}${l.responsavel?' · '+l.responsavel:''}</div>${l.capital_disponivel?`<div class="kanban-card-capital">${l.capital_disponivel}</div>`:''}${fmtFollowupKanban(l.proximo_followup)}<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px"><span style="font-size:10px;color:${probColor};font-weight:700">↑ ${prob}% prob.</span><div style="flex:1;max-width:60px;background:rgba(255,255,255,0.06);border-radius:3px;height:4px;margin:0 8px;overflow:hidden"><div style="height:100%;width:${prob}%;background:${probColor};border-radius:3px"></div></div></div><div style="display:flex;gap:4px;margin-top:6px" onclick="event.stopPropagation()" draggable="false"><button onclick="event.stopPropagation();editarLead('${l.id}')" draggable="false" style="padding:3px 6px;border-radius:4px;font-size:11px;background:transparent;border:1px solid #2a2a2a;color:#888;cursor:pointer" onmouseenter="this.style.borderColor='#c9a84c';this.style.color='#c9a84c'" onmouseleave="this.style.borderColor='#2a2a2a';this.style.color='#888'">✏️</button><button onclick="event.stopPropagation();excluirLeadPipeline('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}');" draggable="false" style="padding:3px 6px;border-radius:4px;font-size:11px;background:transparent;border:1px solid #2a2a2a;color:#888;cursor:pointer" onmouseenter="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseleave="this.style.borderColor='#2a2a2a';this.style.color='#888'">🗑</button></div></div>`;}).join('')}</div>`;
     board.appendChild(col);
   });
   board.addEventListener('dragstart',e=>{const cd=e.target.closest('.kanban-card');if(!cd)return;dragId=cd.dataset.id;cd.classList.add('dragging');});
@@ -973,11 +1102,12 @@ async function renderPipeline(){
   board.addEventListener('dragover',e=>{e.preventDefault();const col=e.target.closest('.kanban-col');if(col){document.querySelectorAll('.kanban-col').forEach(c=>c.classList.remove('drag-over'));col.classList.add('drag-over');}});
   board.addEventListener('drop',async e=>{
     e.preventDefault();const col=e.target.closest('.kanban-col');if(!col||!dragId)return;
-    const nova=col.dataset.etapa;const lead=allLeads.find(x=>x.id===dragId)||{};const score=calcularScore({...lead,etapa:nova});
-    const{error}=await sb.from('crm_leads').update({etapa:nova,score,atualizado_em:new Date().toISOString()}).eq('id',dragId);
-    if(error){toast('Erro: '+error.message,'error');return;}
-    if(nova==='fechado'&&typeof fbq!=='undefined')fbq('track','Purchase',{value:5000,currency:'BRL'});
-    toast('Movido para '+etapaLabel[nova]);registrarAtividade(dragId,'etapa','Etapa alterada para: '+etapaLabel[nova]);renderPipeline();
+    const nova=col.dataset.etapa;const _did=dragId;
+    if(nova==='perdido'){
+      interceptarPerdido(_did,async(motivo)=>{const ok=await atualizarEtapaLead(_did,nova,motivo);if(ok){toast('Lead marcado como perdido');renderPipeline();}});return;
+    }
+    const ok=await atualizarEtapaLead(_did,nova);
+    if(ok){toast('Movido para '+etapaLabel[nova]);renderPipeline();}
   });
 }
 
@@ -994,7 +1124,8 @@ async function abrirCardPipeline(id){
     <div class="detail-row"><div class="detail-key">Cidade</div><div class="detail-val">${l.cidade||'—'}</div></div>
     <div class="detail-row"><div class="detail-key">Responsável</div><div class="detail-val">${l.responsavel||'—'}</div></div>
     <div class="detail-row"><div class="detail-key">Origem</div><div class="detail-val">${l.origem||'—'}</div></div>
-    ${l.notas?`<div class="detail-row"><div class="detail-key">Notas</div><div class="detail-val" style="color:var(--text-dim)">${l.notas}</div></div>`:''}`;
+    ${l.notas?`<div class="detail-row"><div class="detail-key">Notas</div><div class="detail-val" style="color:var(--text-dim)">${l.notas}</div></div>`:''}
+    ${(()=>{const prob=calcularProbabilidade(l);const pc=prob>=60?'#22c55e':prob>=30?'#fbbf24':'#ef4444';return`<div style="margin-top:12px;padding:12px;background:rgba(${prob>=60?'34,197,94':prob>=30?'234,179,8':'239,68,68'},0.08);border:1px solid rgba(${prob>=60?'34,197,94':prob>=30?'234,179,8':'239,68,68'},0.2);border-radius:8px;display:flex;align-items:center;gap:12px"><div style="font-size:28px;font-weight:700;font-family:var(--mono);color:${pc}">${prob}%</div><div style="flex:1"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">PROBABILIDADE DE FECHAMENTO</div><div style="background:rgba(255,255,255,0.06);border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;width:${prob}%;background:${pc};border-radius:4px;transition:width .5s"></div></div></div></div>`;})()}`;
   const etapaAtual=l.etapa||'lead';
   document.getElementById('mpc-etapas').innerHTML=etapas.map(e=>`<button onclick="moverEtapaPipeline('${l.id}','${e}')" style="width:100%;padding:8px;margin-bottom:6px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s;${e===etapaAtual?'background:var(--gold);color:#000;border:none':'background:transparent;border:1px solid var(--border);color:var(--text-dim)'}">${etapaLabel[e]}</button>`).join('');
   document.getElementById('mpc-acoes').innerHTML=`
@@ -1005,15 +1136,12 @@ async function abrirCardPipeline(id){
   openModal('modal-pipeline-card');
 }
 async function moverEtapaPipeline(id,novaEtapa){
-  const lead=allLeads.find(x=>x.id===id)||{};
-  const score=calcularScore({...lead,etapa:novaEtapa});
-  const{error}=await sb.from('crm_leads').update({etapa:novaEtapa,score,atualizado_em:new Date().toISOString()}).eq('id',id);
-  if(error){toast('Erro: '+error.message,'error');return;}
-  if(novaEtapa==='fechado'&&typeof fbq!=='undefined')fbq('track','Purchase',{value:5000,currency:'BRL'});
-  toast('Lead movido para '+etapaLabel[novaEtapa]);
-  registrarAtividade(id,'etapa','Etapa alterada para: '+etapaLabel[novaEtapa]);
-  closeModal('modal-pipeline-card');
-  renderPipeline();
+  if(novaEtapa==='perdido'){
+    closeModal('modal-pipeline-card');
+    interceptarPerdido(id,async(motivo)=>{const ok=await atualizarEtapaLead(id,novaEtapa,motivo);if(ok){toast('Lead marcado como perdido');renderPipeline();}});return;
+  }
+  const ok=await atualizarEtapaLead(id,novaEtapa);
+  if(ok){toast('Lead movido para '+etapaLabel[novaEtapa]);closeModal('modal-pipeline-card');renderPipeline();}
 }
 function excluirLeadPipeline(id,nome){
   confirmar(`Excluir o lead "${nome}"?`,async()=>{
@@ -1188,6 +1316,40 @@ async function loadRelatorios(){
       <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">💰 Receita: Realizado vs Pipeline — 6 meses</div>
       <div style="position:relative;height:220px"><canvas id="chart-prev-real"></canvas></div>
     </div>
+    ${(()=>{
+      const etapasOrdem=['lead','contato','qualificado','proposta','negociacao','fechado'];
+      const etapaNomesRel={lead:'Lead',contato:'Contato',qualificado:'Qualificado',proposta:'Proposta',negociacao:'Negociação',fechado:'Fechado'};
+      // Tempo médio por etapa a partir do historico
+      const tempoMap={};const contagemMap={};const avancouMap={};
+      const allHist=[];
+      all.forEach(l=>{
+        const hist=l.etapa_historico||[];
+        hist.forEach(h=>{if(!h.etapa||h.duracao_horas==null)return;if(!tempoMap[h.etapa])tempoMap[h.etapa]=[];tempoMap[h.etapa].push(h.duracao_horas);allHist.push({...h,leadId:l.id});});
+        // Current etapa
+        if(l.etapa_entrada&&l.etapa&&!['perdido','fechado'].includes(l.etapa)){const h=Math.round((Date.now()-new Date(l.etapa_entrada).getTime())/3600000);if(!tempoMap[l.etapa])tempoMap[l.etapa]=[];tempoMap[l.etapa].push(h);}
+      });
+      const medias=etapasOrdem.map(e=>{const vals=tempoMap[e]||[];const med=vals.length?Math.round(vals.reduce((s,v)=>s+v,0)/vals.length):0;const dias=Math.floor(med/24);const horas=med%24;const txt=dias>0?dias+'d '+horas+'h':horas+'h';return{e,nome:etapaNomesRel[e],med,txt,n:vals.length};});
+      const maxMed=Math.max(...medias.map(m=>m.med),1);
+      const maisLenta=medias.filter(m=>m.n>0).sort((a,b)=>b.med-a.med)[0];
+      // Probabilidade média por etapa
+      const probPorEtapa=etapasOrdem.map(e=>{const leadsEtapa=all.filter(l=>l.etapa===e);const med=leadsEtapa.length?Math.round(leadsEtapa.reduce((s,l)=>s+calcularProbabilidade(l),0)/leadsEtapa.length):0;return{e,nome:etapaNomesRel[e],med,n:leadsEtapa.length};});
+      return medias.some(m=>m.n>0)?`
+      <div class="dash-card" style="margin-top:16px">
+        <div class="dash-card-title">⏱️ Tempo Médio por Etapa</div>
+        <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Etapa</th><th>Tempo médio</th><th>Amostras</th><th>Velocidade</th></tr></thead><tbody>
+        ${medias.map(m=>{
+          const pct=Math.max(m.n>0?Math.round(m.med/maxMed*100):0,2);
+          const isLenta=maisLenta&&m.e===maisLenta.e&&m.n>0;
+          const barColor=m.med>7*24?'#ef4444':m.med>3*24?'#fbbf24':'#22c55e';
+          return m.n>0?`<tr><td>${isLenta?'⚠️ ':''}<strong>${m.nome}</strong></td><td style="font-family:var(--mono);color:${barColor}">${m.txt}</td><td style="font-family:var(--mono);color:var(--text-dim)">${m.n}</td><td><div style="background:var(--surface2);border-radius:3px;height:8px;overflow:hidden;min-width:80px"><div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px"></div></div></td></tr>`:'';
+        }).join('')}
+        </tbody></table></div>
+      </div>
+      <div class="dash-card" style="margin-top:16px">
+        <div class="dash-card-title">📊 Probabilidade Média por Etapa</div>
+        <div style="position:relative;height:180px;margin-top:12px"><canvas id="chart-prob-etapa"></canvas></div>
+      </div>`:'';
+    })()}
     ${(()=>{const ligs=ligData||[];const atend=ligs.filter(l=>l.resultado==='atendeu');const nAtend=ligs.filter(l=>l.resultado==='nao_atendeu');const cxP=ligs.filter(l=>l.resultado==='caixa_postal');const medDur=atend.length?Math.round(atend.reduce((s,l)=>s+(l.duracao_min||0),0)/atend.length):0;const pctAt=ligs.length?Math.round(atend.length/ligs.length*100):0;return ligs.length?`<div class="dash-card" style="margin-top:16px"><div class="dash-card-title">📞 Resumo de Ligações — Período</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px"><div style="text-align:center;padding:12px;background:#181818;border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:var(--text)">${ligs.length}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Total</div></div><div style="text-align:center;padding:12px;background:rgba(34,197,94,0.1);border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:#22c55e">${pctAt}%</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Atendimento</div></div><div style="text-align:center;padding:12px;background:rgba(96,165,250,0.1);border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:#60a5fa">${medDur}min</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Média Duração</div></div><div style="text-align:center;padding:12px;background:#181818;border-radius:8px"><div style="font-size:11px;color:#22c55e;margin-bottom:2px">✅ Atendeu: ${atend.length}</div><div style="font-size:11px;color:#ef4444;margin-bottom:2px">📵 Não atendeu: ${nAtend.length}</div><div style="font-size:11px;color:#fbbf24">📬 Cx. postal: ${cxP.length}</div></div></div></div>`:'';})()}`;
   if(window._origemChart)window._origemChart.destroy();
   const ctxO=document.getElementById('chart-rel-origem');
@@ -1201,6 +1363,9 @@ async function loadRelatorios(){
   if(window._prevRealChart)window._prevRealChart.destroy();
   const ctxPR=document.getElementById('chart-prev-real');
   if(ctxPR){window._prevRealChart=new Chart(ctxPR,{type:'bar',data:{labels:mLabels,datasets:[{label:'Realizado',data:mRecFechada,backgroundColor:'rgba(34,197,94,0.7)',borderColor:'#22c55e',borderWidth:1,borderRadius:4},{label:'Pipeline',data:mRecPipeline,backgroundColor:'rgba(96,165,250,0.5)',borderColor:'#60a5fa',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#888',font:{size:11},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1a1a1a',borderColor:'#2a2a2a',borderWidth:1,titleColor:'#c9a84c',bodyColor:'#aaa',padding:10,callbacks:{label:i=>i.dataset.label+': '+fmtMoeda(i.raw)}}},scales:{x:{border:{display:false},grid:{display:false},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},callback:v=>fmtMoeda(v)},beginAtZero:true}}}})}
+  if(window._probEtapaChart)window._probEtapaChart.destroy();
+  const ctxPE=document.getElementById('chart-prob-etapa');
+  if(ctxPE){const etapasP=['lead','contato','qualificado','proposta','negociacao','fechado'];const probMedP=etapasP.map(e=>{const ls=all.filter(l=>l.etapa===e);return ls.length?Math.round(ls.reduce((s,l)=>s+calcularProbabilidade(l),0)/ls.length):0;});window._probEtapaChart=new Chart(ctxPE,{type:'bar',data:{labels:['Lead','Contato','Qualif.','Proposta','Negoc.','Fechado'],datasets:[{label:'Prob. média',data:probMedP,backgroundColor:probMedP.map(p=>p>=60?'rgba(34,197,94,0.7)':p>=30?'rgba(234,179,8,0.7)':'rgba(239,68,68,0.7)'),borderColor:probMedP.map(p=>p>=60?'#22c55e':p>=30?'#fbbf24':'#ef4444'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+'%'}}},scales:{x:{border:{display:false},grid:{display:false},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},callback:v=>v+'%'},beginAtZero:true,max:100}}}});}
 }
 
 // CONFIGURAÇÕES
@@ -2137,5 +2302,37 @@ async function renderDashboardVendedor(c,leads,tarefas){
 </div>
 
 <div id="_proposta_print_only"></div>
+
+<!-- MODAL MOTIVO DE PERDA -->
+<div class="modal-overlay" id="modal-motivo-perda">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2>😔 Por que este lead foi perdido?</h2>
+      <button class="modal-close" onclick="cancelarMotivoPerdido()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Selecione o principal motivo. Isso nos ajuda a melhorar a estratégia comercial.</p>
+      <input type="hidden" id="motivo-selecionado">
+      <div onclick="selecionarMotivo(this,'Preço alto demais')" class="motivo-card"><span class="motivo-card-icon">💰</span><div><div style="font-weight:600">Preço alto demais</div><div style="font-size:12px;color:var(--text-muted)">O custo ou taxa não cabia no orçamento do cliente</div></div></div>
+      <div onclick="selecionarMotivo(this,'Não era o momento certo')" class="motivo-card"><span class="motivo-card-icon">⏰</span><div><div style="font-weight:600">Não era o momento certo</div><div style="font-size:12px;color:var(--text-muted)">Cliente interessado mas sem condições agora</div></div></div>
+      <div onclick="selecionarMotivo(this,'Escolheu outro investimento')" class="motivo-card"><span class="motivo-card-icon">🏦</span><div><div style="font-weight:600">Escolheu outro investimento</div><div style="font-size:12px;color:var(--text-muted)">Optou por outra modalidade ou gestor</div></div></div>
+      <div onclick="selecionarMotivo(this,'Sumiu / Sem resposta')" class="motivo-card"><span class="motivo-card-icon">👻</span><div><div style="font-weight:600">Sumiu / Sem resposta</div><div style="font-size:12px;color:var(--text-muted)">Parou de responder após contatos</div></div></div>
+      <div onclick="selecionarMotivo(this,'Não tinha capital suficiente')" class="motivo-card"><span class="motivo-card-icon">❌</span><div><div style="font-weight:600">Não tinha capital suficiente</div><div style="font-size:12px;color:var(--text-muted)">Capital abaixo do mínimo para investir</div></div></div>
+      <div onclick="selecionarMotivo(this,'Ainda está decidindo')" class="motivo-card"><span class="motivo-card-icon">🤔</span><div><div style="font-weight:600">Ainda está decidindo</div><div style="font-size:12px;color:var(--text-muted)">Retornar futuramente, não desistiu</div></div></div>
+      <div onclick="selecionarMotivo(this,'Comprou imóvel direto')" class="motivo-card"><span class="motivo-card-icon">🏠</span><div><div style="font-weight:600">Comprou imóvel direto</div><div style="font-size:12px;color:var(--text-muted)">Preferiu comprar imóvel em vez de investir</div></div></div>
+      <div onclick="selecionarMotivo(this,'Outro motivo')" class="motivo-card"><span class="motivo-card-icon">📝</span><div><div style="font-weight:600">Outro motivo</div><div style="font-size:12px;color:var(--text-muted)">Especificar abaixo</div></div></div>
+      <div id="motivo-outro-wrap" style="display:none;margin-top:10px">
+        <div class="form-group">
+          <label>Descreva o motivo</label>
+          <textarea id="motivo-outro-txt" placeholder="Ex: Cliente migrou para o exterior..." rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cancelarMotivoPerdido()">Cancelar — manter etapa anterior</button>
+      <button class="btn btn-danger" id="btn-confirmar-perda" onclick="confirmarMotivoPerdido()" disabled style="opacity:0.5">Confirmar perda</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
