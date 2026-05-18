@@ -166,6 +166,25 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
 @keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
 .alerta-drawer{position:fixed;right:0;top:0;height:100vh;width:360px;background:#111;border-left:1px solid #2a2a2a;z-index:300;display:none;flex-direction:column;}
 .alerta-drawer.open{display:flex;animation:slideInRight .25s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.sel-bar{background:#1a1a1a;border:1px solid var(--gold);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;animation:slideDown .2s ease;flex-wrap:wrap;}
+.cal-wrap{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px;}
+.cal-hdr-day{text-align:center;font-size:10px;font-weight:700;color:var(--text-muted);padding:6px 0;text-transform:uppercase;letter-spacing:1px;}
+.cal-day{min-height:76px;background:#111;border:1px solid #1a1a1a;border-radius:6px;padding:5px;cursor:pointer;transition:border-color .15s;}
+.cal-day:hover{border-color:var(--gold-dim);}.cal-day.cal-today{border-color:var(--gold)!important;}.cal-day.cal-other{opacity:.35;}
+.cal-num{font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:3px;}
+.cal-chip{font-size:9px;border-radius:3px;padding:1px 5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+.chip-reuniao{background:rgba(59,130,246,0.2);color:#60a5fa;}.chip-followup{background:rgba(201,168,76,0.2);color:#c9a84c;}
+.nav-badge{background:#ef4444;color:#fff;font-size:9px;font-weight:700;border-radius:10px;padding:1px 5px;margin-left:4px;font-family:var(--mono);}
+input[type=checkbox].cb-lead{width:15px;height:15px;accent-color:var(--gold);cursor:pointer;margin:0;}
+.proposta-preview{background:#fff;color:#111;padding:32px;border-radius:8px;font-family:Georgia,serif;line-height:1.6;font-size:13px;}
+.proposta-preview h1{color:#c9a84c;font-size:20px;margin-bottom:4px;font-family:Georgia,serif;}
+.proposta-preview h3{color:#333;font-size:13px;font-weight:700;border-bottom:1px solid #ddd;padding-bottom:6px;margin:18px 0 10px;}
+.proposta-preview table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+.proposta-preview td,.proposta-preview th{border:1px solid #ddd;padding:7px 10px;}
+.proposta-preview th{background:#f5f5f5;font-weight:700;}
+#_proposta_print_only{display:none;}
+@media print{body>*:not(#_proposta_print_only){display:none!important;}#_proposta_print_only{display:block!important;position:fixed;inset:0;background:#fff;z-index:9999;padding:32px;}}
 </style>
 </head>
 <body>
@@ -187,6 +206,7 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
     <div class="nav-item active" onclick="goTo('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
     <div class="nav-item" onclick="goTo('leads')"><span class="nav-icon">👥</span> Leads</div>
     <div class="nav-item" onclick="goTo('pipeline')"><span class="nav-icon">🎯</span> Pipeline</div>
+    <div class="nav-item" onclick="goTo('agenda')"><span class="nav-icon">📅</span> Agenda <span class="nav-badge" id="badge-agenda" style="display:none">0</span></div>
     <div class="nav-item" onclick="goTo('tarefas')"><span class="nav-icon">✅</span> Tarefas</div>
     <div class="nav-item" onclick="goTo('tickets')"><span class="nav-icon">🎫</span> Tickets</div>
     <div class="nav-item" onclick="goTo('relatorios')"><span class="nav-icon">📈</span> Relatórios</div>
@@ -245,7 +265,7 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
   <div class="modal">
     <div class="modal-header"><h2>Detalhes do Lead</h2><button class="modal-close" onclick="closeModal('modal-ver-lead')">×</button></div>
     <div class="modal-body" id="modal-ver-body"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-ver-lead')">Fechar</button><button class="btn btn-ghost" id="btn-wpp-do-ver" style="color:var(--green);border-color:rgba(34,197,94,.4)">📱 Enviar Mensagem</button><button class="btn btn-gold" id="btn-editar-do-ver">Editar Lead</button></div>
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px"><button class="btn btn-ghost" onclick="closeModal('modal-ver-lead')">Fechar</button><button class="btn btn-ghost" id="btn-wpp-do-ver" style="color:var(--green);border-color:rgba(34,197,94,.4)">📱 Enviar Mensagem</button><button class="btn btn-ghost" id="btn-ligacao-do-ver" style="color:#60a5fa;border-color:rgba(96,165,250,.4)">📞 Registrar Ligação</button><button class="btn btn-ghost" id="btn-proposta-do-ver" style="color:var(--gold);border-color:rgba(201,168,76,.4)">📄 Gerar Proposta</button><button class="btn btn-gold" id="btn-editar-do-ver">Editar Lead</button></div>
   </div>
 </div>
 
@@ -321,7 +341,7 @@ const RESEND='re_XkRB47R9_PkrxabbMvVGpMLScdBMfs7iJ';
 const PABLO_WPP='5513992097189';
 const PABLO_EMAIL='pabloangelyscamilaoficial@gmail.com';
 const sb=supabase.createClient(SB_URL,SB_KEY);
-let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null,_relLeads=[],_importHeaders=[],_importRows=[],_chatInterval=null,_chatOpen=false;
+let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null,_relLeads=[],_importHeaders=[],_importRows=[],_chatInterval=null,_chatOpen=false,leadsSelecionados=[],_agendaMes=new Date().getMonth(),_agendaAno=new Date().getFullYear(),_agendaVista='mensal',_reunioesCache=[],_ligacaoLeadId=null,_propostaLeadId=null,_propostaLead=null;
 
 const TEMPLATES_WPP={
   primeiro_contato:{label:'Primeiro Contato',texto:l=>`Olá ${l.nome||''}! 👋\n\nSou da equipe 4P Patrimonial. Identificamos seu interesse em investimento imobiliário.\n\nPodemos agendar uma conversa rápida para apresentar nossas oportunidades exclusivas?\n\nAguardo! 🏆`},
@@ -565,8 +585,8 @@ function entrarNoApp(){
   verificarAlertas();
   atualizarTemperaturasTodosLeads();
   if(!window._alertaInterval)window._alertaInterval=setInterval(verificarAlertas,300000);
-  atualizarBadgeChat();
-  setInterval(atualizarBadgeChat,30000);
+  atualizarBadgeChat();atualizarBadgeAgenda();
+  setInterval(atualizarBadgeChat,30000);setInterval(atualizarBadgeAgenda,60000);
 }
 function updateSidebarUser(){
   const el=document.getElementById('sidebar-user-info');
@@ -612,16 +632,17 @@ function goToConfig(){if(!isAdmin()){toast('Acesso restrito — apenas administr
 
 function goTo(page){
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
-  const map={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relat',metas:'Metas',config:'Config'};
-  document.querySelectorAll('.nav-item').forEach(el=>{if(el.textContent.trim().includes(map[page]||page))el.classList.add('active');});
-  const titles={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relatórios',metas:'Metas & Comissões',config:'Configurações'};
+  const map={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',agenda:'Agenda',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relat',metas:'Metas',config:'Config'};
+  document.querySelectorAll('.nav-item').forEach(el=>{if(el.textContent.trim().startsWith(map[page]||page)||el.textContent.trim().includes(map[page]||page))el.classList.add('active');});
+  const titles={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',agenda:'Agenda',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relatórios',metas:'Metas & Comissões',config:'Configurações'};
   document.getElementById('page-title').textContent=titles[page]||page;
   const ha=document.getElementById('header-action');ha.innerHTML='';
   if(page==='leads'){ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoLead()">+ Novo Lead</button>';if(isAdmin())ha.innerHTML+=' <button class="btn btn-ghost" onclick="abrirImportar()" style="margin-left:4px">📥 Importar</button> <button class="btn btn-ghost" onclick="exportarLeadsExcel()" style="margin-left:4px">📤 Exportar</button>';}
+  if(page==='agenda')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovaReuniao()">+ Nova Reunião</button>';
   if(page==='tarefas')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovaTarefa()">+ Nova Tarefa</button>';
   if(page==='tickets')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoTicket()">+ Novo Ticket</button>';
   if(page==='config'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoUsuario()">+ Novo Usuário</button>';
-  ({dashboard:renderDashboard,leads:renderLeads,pipeline:renderPipeline,tarefas:renderTarefas,tickets:renderTickets,relatorios:renderRelatorios,metas:renderMetas,config:renderConfig}[page]||renderDashboard)();
+  ({dashboard:renderDashboard,leads:renderLeads,pipeline:renderPipeline,agenda:renderAgenda,tarefas:renderTarefas,tickets:renderTickets,relatorios:renderRelatorios,metas:renderMetas,config:renderConfig}[page]||renderDashboard)();
   document.getElementById('sidebar').classList.remove('open');
 }
 
@@ -636,6 +657,7 @@ async function renderDashboard(){
   const c=document.getElementById('page-content');c.innerHTML='<div class="loading"><span class="spinner"></span> Carregando...</div>';
   const[{data:L},{data:T},{data:TK}]=await Promise.all([sb.from('crm_leads').select('*').order('criado_em',{ascending:false}),sb.from('crm_tarefas').select('*'),sb.from('crm_tickets').select('*')]);
   const leads=L||[],tarefas=T||[],tickets=TK||[];
+  if(currentUser&&!isAdmin()&&['vendedor','sdr','cs'].includes(currentUser.cargo)){await renderDashboardVendedor(c,leads,tarefas);return;}
   const hotLeads=leads.filter(l=>calcularScore(l)>=70).sort((a,b)=>calcularScore(b)-calcularScore(a)).slice(0,5);
   const _agora=new Date();const _ha7d=new Date(_agora.getTime()-7*86400000).toISOString();
   const atencaoLeads=leads.filter(l=>{const hasVenc=l.proximo_followup&&l.proximo_followup<_agora.toISOString();const uc=l.ultimo_contato||l.criado_em;return(hasVenc||!uc||uc<_ha7d)&&l.etapa!=='perdido'&&l.etapa!=='fechado';}).slice(0,5);
@@ -791,7 +813,7 @@ async function renderLeads(){
   c.innerHTML=`<div class="filters"><input class="search-input" id="lead-search" placeholder="🔍 Buscar por nome ou e-mail..." oninput="filtrarLeads()">
     <select class="filter-select" id="lead-etapa" onchange="filtrarLeads()"><option value="">Todas as etapas</option><option value="lead">Lead</option><option value="contato">Contato</option><option value="qualificado">Qualificado</option><option value="proposta">Proposta</option><option value="negociacao">Negociação</option><option value="fechado">Fechado</option><option value="perdido">Perdido</option></select>
     <select class="filter-select" id="lead-capital" onchange="filtrarLeads()"><option value="">Qualquer capital</option><option>Até R$50k</option><option>R$50k a R$150k</option><option>R$150k a R$300k</option><option>R$300k a R$500k</option><option>R$500k a R$1M</option><option>Acima de R$1M</option></select>
-  </div><div class="table-wrap" id="leads-table"><div class="loading"><span class="spinner"></span> Carregando...</div></div>`;
+  </div><div id="leads-sel-bar" style="display:none"></div><div class="table-wrap" id="leads-table"><div class="loading"><span class="spinner"></span> Carregando...</div></div>`;
   const{data}=await sb.from('crm_leads').select('*').order('criado_em',{ascending:false});
   allLeads=data||[];renderLeadsTable(allLeads);
   setTimeout(async()=>{const upd=allLeads.filter(l=>l.score!==calcularScore(l));for(const l of upd)await sb.from('crm_leads').update({score:calcularScore(l)}).eq('id',l.id);},800);
@@ -805,8 +827,9 @@ function renderLeadsTable(leads,s='',e='',k=''){
   if(e)f=f.filter(l=>l.etapa===e);if(k)f=f.filter(l=>l.capital_disponivel===k);
   const el=document.getElementById('leads-table');if(!el)return;
   if(!f.length){el.innerHTML='<div class="empty"><div class="empty-icon">👥</div>Nenhum lead encontrado</div>';return;}
-  el.innerHTML='<table><thead><tr><th>Nome / E-mail</th><th>WhatsApp</th><th>Capital</th><th>Cidade</th><th>Etapa</th><th>Temp.</th><th>Follow-Up</th><th>Responsável</th><th>Origem</th><th>Ações</th></tr></thead><tbody>'+
-  f.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);return`<tr style="${sc>=70?'background:rgba(239,68,68,0.05);':''}border-left:${sc>=70?'3px solid #ef4444':'2px solid transparent'}">
+  el.innerHTML='<table><thead><tr><th style="width:36px"><input type="checkbox" class="cb-lead" id="cb-todos" onchange="toggleTodosSel(this.checked)" title="Selecionar todos"></th><th>Nome / E-mail</th><th>WhatsApp</th><th>Capital</th><th>Cidade</th><th>Etapa</th><th>Temp.</th><th>Follow-Up</th><th>Responsável</th><th>Origem</th><th>Ações</th></tr></thead><tbody>'+
+  f.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);const sel=leadsSelecionados.includes(l.id);return`<tr id="row-${l.id}" style="${sel?'background:rgba(201,168,76,0.08);border-left:3px solid var(--gold)':sc>=70?'background:rgba(239,68,68,0.05);border-left:3px solid #ef4444':'border-left:2px solid transparent'}">
+    <td style="text-align:center"><input type="checkbox" class="cb-lead" ${sel?'checked':''} onchange="toggleLeadSel('${l.id}',this.checked)"></td>
     <td><div class="td-name">${l.nome||'—'}</div><div class="td-sub">${l.email||''}</div></td>
     <td>${l.whatsapp?`<div style="display:flex;flex-direction:column;gap:3px"><a href="https://wa.me/55${l.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:var(--green);text-decoration:none;font-size:12px">📱 ${l.whatsapp}</a><button class="action-btn" style="font-size:10px;padding:2px 8px;border-color:rgba(34,197,94,.3);color:var(--green)" onclick="abrirTemplatesWPPById('${l.id}')">Modelos →</button></div>`:'—'}</td>
     <td style="color:var(--gold);font-weight:600">${l.capital_disponivel||'—'}</td>
@@ -900,6 +923,8 @@ async function verLead(id){
     </div>`;
   document.getElementById('btn-editar-do-ver').onclick=()=>{closeModal('modal-ver-lead');editarLead(id);};
   document.getElementById('btn-wpp-do-ver').onclick=()=>abrirTemplatesWPPById(id);
+  document.getElementById('btn-ligacao-do-ver').onclick=()=>abrirModalLigacao(id);
+  document.getElementById('btn-proposta-do-ver').onclick=()=>abrirProposta(id);
   openModal('modal-ver-lead');
   const{data:hist}=await sb.from('crm_atividades_log').select('*').eq('lead_id',id).order('criado_em',{ascending:false}).limit(20);
   const hEl=document.getElementById('ver-historico');if(!hEl)return;
@@ -975,6 +1000,7 @@ async function abrirCardPipeline(id){
   document.getElementById('mpc-acoes').innerHTML=`
     <button class="btn btn-ghost" onclick="closeModal('modal-pipeline-card');editarLead('${l.id}')">✏️ Editar lead completo</button>
     ${l.whatsapp?`<button class="btn btn-ghost" style="color:var(--green);border-color:rgba(34,197,94,.4)" onclick="closeModal('modal-pipeline-card');abrirTemplatesWPPById('${l.id}')">📱 Enviar Mensagem</button>`:''}
+    <button class="btn btn-ghost" style="color:var(--gold);border-color:rgba(201,168,76,.4)" onclick="closeModal('modal-pipeline-card');abrirProposta('${l.id}')">📄 Gerar Proposta</button>
     <button class="btn btn-danger" onclick="closeModal('modal-pipeline-card');excluirLeadPipeline('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}')">🗑 Excluir lead</button>`;
   openModal('modal-pipeline-card');
 }
@@ -1082,10 +1108,11 @@ async function loadRelatorios(){
   const mxF=Math.max(...funil.map(x=>x.n),1);
   const pCap={};
   all.forEach(l=>{if(l.capital_disponivel)pCap[l.capital_disponivel]=(pCap[l.capital_disponivel]||0)+1;});
-  const[{data:oriData},{data:cidData},{data:usersData}]=await Promise.all([
+  const[{data:oriData},{data:cidData},{data:usersData},{data:ligData}]=await Promise.all([
     sb.from('crm_leads').select('origem'),
     sb.from('crm_leads').select('cidade'),
-    sb.from('crm_usuarios').select('*').eq('ativo',true)
+    sb.from('crm_usuarios').select('*').eq('ativo',true),
+    sb.from('crm_ligacoes').select('*').gte('criado_em',desde.toISOString()).catch(()=>({data:[]}))
   ]);
   const pOri={},pCid={};
   (oriData||[]).forEach(l=>{if(l.origem)pOri[l.origem]=(pOri[l.origem]||0)+1;});
@@ -1160,7 +1187,8 @@ async function loadRelatorios(){
     <div style="background:#111111;border:1px solid #2a2a2a;border-radius:10px;padding:20px;margin-top:16px">
       <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">💰 Receita: Realizado vs Pipeline — 6 meses</div>
       <div style="position:relative;height:220px"><canvas id="chart-prev-real"></canvas></div>
-    </div>`;
+    </div>
+    ${(()=>{const ligs=ligData||[];const atend=ligs.filter(l=>l.resultado==='atendeu');const nAtend=ligs.filter(l=>l.resultado==='nao_atendeu');const cxP=ligs.filter(l=>l.resultado==='caixa_postal');const medDur=atend.length?Math.round(atend.reduce((s,l)=>s+(l.duracao_min||0),0)/atend.length):0;const pctAt=ligs.length?Math.round(atend.length/ligs.length*100):0;return ligs.length?`<div class="dash-card" style="margin-top:16px"><div class="dash-card-title">📞 Resumo de Ligações — Período</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px"><div style="text-align:center;padding:12px;background:#181818;border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:var(--text)">${ligs.length}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Total</div></div><div style="text-align:center;padding:12px;background:rgba(34,197,94,0.1);border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:#22c55e">${pctAt}%</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Atendimento</div></div><div style="text-align:center;padding:12px;background:rgba(96,165,250,0.1);border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:#60a5fa">${medDur}min</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Média Duração</div></div><div style="text-align:center;padding:12px;background:#181818;border-radius:8px"><div style="font-size:11px;color:#22c55e;margin-bottom:2px">✅ Atendeu: ${atend.length}</div><div style="font-size:11px;color:#ef4444;margin-bottom:2px">📵 Não atendeu: ${nAtend.length}</div><div style="font-size:11px;color:#fbbf24">📬 Cx. postal: ${cxP.length}</div></div></div></div>`:'';})()}`;
   if(window._origemChart)window._origemChart.destroy();
   const ctxO=document.getElementById('chart-rel-origem');
   if(ctxO){const oriEntries=Object.entries(pOri).sort((a,b)=>b[1]-a[1]).slice(0,8);window._origemChart=new Chart(ctxO,{type:'bar',data:{labels:oriEntries.map(x=>x[0]),datasets:[{label:'Leads',data:oriEntries.map(x=>x[1]),backgroundColor:'rgba(201,168,76,0.3)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+' lead(s)'}}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true},y:{border:{display:false},grid:{display:false},ticks:{color:'#888',font:{size:11}}}}}})}
@@ -1588,6 +1616,303 @@ async function atualizarBadgeChat(){
   const badge=document.getElementById('chat-badge');
   if(badge){badge.textContent=count||0;badge.style.display=count?'flex':'none';}
 }
+
+/* ===== FEATURE 1: WHATSAPP EM MASSA ===== */
+function toggleLeadSel(id,checked){
+  if(checked){if(!leadsSelecionados.includes(id))leadsSelecionados.push(id);}
+  else{leadsSelecionados=leadsSelecionados.filter(x=>x!==id);}
+  const row=document.getElementById('row-'+id);
+  if(row){
+    if(checked){row.style.background='rgba(201,168,76,0.08)';row.style.borderLeft='3px solid var(--gold)';}
+    else{const lead=allLeads.find(l=>l.id===id);const sc=lead?calcularScore(lead):0;row.style.background=sc>=70?'rgba(239,68,68,0.05)':'';row.style.borderLeft=sc>=70?'3px solid #ef4444':'2px solid transparent';}
+  }
+  atualizarBarraSel();
+}
+function toggleTodosSel(checked){
+  leadsSelecionados=[];
+  document.querySelectorAll('tbody tr[id^="row-"]').forEach(tr=>{
+    const id=tr.id.replace('row-','');
+    const cb=tr.querySelector('.cb-lead');if(cb)cb.checked=checked;
+    if(checked){leadsSelecionados.push(id);tr.style.background='rgba(201,168,76,0.08)';tr.style.borderLeft='3px solid var(--gold)';}
+    else{const lead=allLeads.find(l=>l.id===id);const sc=lead?calcularScore(lead):0;tr.style.background=sc>=70?'rgba(239,68,68,0.05)':'';tr.style.borderLeft=sc>=70?'3px solid #ef4444':'2px solid transparent';}
+  });
+  atualizarBarraSel();
+}
+function atualizarBarraSel(){
+  const bar=document.getElementById('leads-sel-bar');if(!bar)return;
+  const n=leadsSelecionados.length;
+  if(!n){bar.style.display='none';return;}
+  const comWpp=allLeads.filter(l=>leadsSelecionados.includes(l.id)&&l.whatsapp).length;
+  bar.style.display='flex';
+  bar.innerHTML=`<span style="font-size:13px;color:var(--gold);font-weight:700">${n} lead${n>1?'s':''} selecionado${n>1?'s':''}</span><span style="font-size:12px;color:var(--text-dim);margin-left:4px">(${comWpp} com WhatsApp)</span><div style="flex:1"></div><button class="btn btn-ghost" style="font-size:12px;color:var(--green);border-color:rgba(34,197,94,.4)" onclick="abrirWPPMassa()">📱 WhatsApp em Massa</button><button class="btn btn-ghost" style="font-size:12px" onclick="leadsSelecionados=[];document.querySelectorAll('.cb-lead').forEach(c=>c.checked=false);atualizarBarraSel();renderLeadsTable()">✕ Limpar</button>`;
+}
+function abrirWPPMassa(){
+  const comWpp=allLeads.filter(l=>leadsSelecionados.includes(l.id)&&l.whatsapp);
+  if(!comWpp.length){toast('Nenhum lead selecionado possui WhatsApp','error');return;}
+  document.getElementById('wm-count').textContent=comWpp.length;
+  document.getElementById('wm-msg').value='';
+  document.getElementById('wm-preview').textContent='';
+  document.getElementById('wm-progress').style.display='none';
+  document.getElementById('modal-wpp-massa').classList.add('open');
+}
+async function enviarWPPMassa(){
+  const msg=document.getElementById('wm-msg').value.trim();
+  if(!msg){toast('Digite uma mensagem antes de enviar','error');return;}
+  const comWpp=allLeads.filter(l=>leadsSelecionados.includes(l.id)&&l.whatsapp);
+  if(!comWpp.length){toast('Nenhum lead com WhatsApp','error');return;}
+  const prog=document.getElementById('wm-progress');
+  const progBar=document.getElementById('wm-prog-bar');
+  const progTxt=document.getElementById('wm-prog-txt');
+  prog.style.display='block';
+  document.getElementById('btn-enviar-massa').disabled=true;
+  for(let i=0;i<comWpp.length;i++){
+    const l=comWpp[i];
+    const nome=l.nome?.split(' ')[0]||'Cliente';
+    const msgFinal=msg.replace(/\{nome\}/gi,nome).replace(/\{capital\}/gi,l.capital_disponivel||'').replace(/\{cidade\}/gi,l.cidade||'');
+    const pct=Math.round(((i+1)/comWpp.length)*100);
+    progBar.style.width=pct+'%';progTxt.textContent=`Enviando ${i+1} de ${comWpp.length}...`;
+    window.open('https://wa.me/55'+l.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(msgFinal),'_blank');
+    await registrarAtividade(l.id,'whatsapp','WhatsApp massa: '+msgFinal.substring(0,60));
+    if(i<comWpp.length-1)await new Promise(r=>setTimeout(r,800));
+  }
+  progTxt.textContent=`✅ ${comWpp.length} mensagens abertas!`;progBar.style.width='100%';
+  document.getElementById('btn-enviar-massa').disabled=false;
+  toast(`${comWpp.length} mensagens WhatsApp abertas!`);
+  setTimeout(()=>{leadsSelecionados=[];closeModal('modal-wpp-massa');renderLeads();},2000);
+}
+
+/* ===== FEATURE 2: AGENDA E CALENDÁRIO ===== */
+async function renderAgenda(){
+  const c=document.getElementById('page-content');
+  c.innerHTML='<div class="loading"><span class="spinner"></span> Carregando agenda...</div>';
+  const mesInicio=new Date(_agendaAno,_agendaMes,1);
+  const mesFim=new Date(_agendaAno,_agendaMes+1,0,23,59,59);
+  const [{data:reunioes},{data:followups}]=await Promise.all([
+    sb.from('crm_reunioes').select('*,crm_leads(nome)').gte('data_hora',mesInicio.toISOString()).lte('data_hora',mesFim.toISOString()).catch(()=>({data:[]})),
+    sb.from('crm_leads').select('id,nome,followup_em').not('followup_em','is',null).gte('followup_em',mesInicio.toISOString().split('T')[0]).lte('followup_em',mesFim.toISOString().split('T')[0])
+  ]);
+  _reunioesCache=reunioes||[];
+  const fups=followups||[];
+  const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  c.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn btn-ghost" onclick="navegarAgenda(-1)">← Anterior</button>
+        <h2 style="font-family:var(--display);font-size:18px;color:var(--gold)">${meses[_agendaMes]} ${_agendaAno}</h2>
+        <button class="btn btn-ghost" onclick="navegarAgenda(1)">Próximo →</button>
+        <button class="btn btn-ghost" onclick="_agendaMes=new Date().getMonth();_agendaAno=new Date().getFullYear();renderAgenda()">Hoje</button>
+      </div>
+      <span style="font-size:12px;color:var(--text-dim)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(59,130,246,0.4);margin-right:4px;vertical-align:middle"></span>Reuniões <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(201,168,76,0.3);margin-right:4px;vertical-align:middle;margin-left:10px"></span>Follow-ups</span>
+    </div>
+    ${_renderCalMensal(_agendaAno,_agendaMes,_reunioesCache,fups)}
+    ${_reunioesCache.length?`<div style="margin-top:24px"><div class="dash-card-title">Reuniões do Mês (${_reunioesCache.length})</div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Data/Hora</th><th>Título</th><th>Lead</th><th>Responsável</th><th>Status</th><th>Ações</th></tr></thead><tbody>${_reunioesCache.sort((a,b)=>new Date(a.data_hora)-new Date(b.data_hora)).map(r=>`<tr><td style="white-space:nowrap;font-size:12px">${new Date(r.data_hora).toLocaleDateString('pt-BR')} ${new Date(r.data_hora).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</td><td><strong>${r.titulo}</strong></td><td>${r.crm_leads?.nome||'—'}</td><td>${r.responsavel||'—'}</td><td><span class="badge ${r.status==='realizada'?'badge-fechado':r.status==='cancelada'?'badge-perdido':'badge-em_andamento'}">${r.status||'agendada'}</span></td><td style="white-space:nowrap">${r.status!=='realizada'?`<button class="action-btn action-btn-view" onclick="concluirReuniao('${r.id}')">✅</button>`:''}<button class="action-btn action-btn-del" onclick="excluirReuniao('${r.id}')" style="margin-left:4px">🗑</button>${r.link?`<button class="action-btn action-btn-edit" onclick="window.open('${r.link}','_blank')" style="margin-left:4px">🔗</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>`:'<div class="empty" style="margin-top:24px"><div class="empty-icon">📅</div>Nenhuma reunião este mês. Clique em + Nova Reunião para agendar.</div>'}
+  `;
+}
+function _renderCalMensal(ano,mes,reunioes,followups){
+  const diasSem=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const hoje=new Date();
+  const primeiroDia=new Date(ano,mes,1).getDay();
+  const ultimoDia=new Date(ano,mes+1,0).getDate();
+  const diasMesAnt=new Date(ano,mes,0).getDate();
+  let dias=[];
+  for(let i=primeiroDia-1;i>=0;i--)dias.push({num:diasMesAnt-i,outro:true});
+  for(let d=1;d<=ultimoDia;d++)dias.push({num:d,outro:false});
+  while(dias.length%7!==0)dias.push({num:dias.length-ultimoDia-primeiroDia+1,outro:true});
+  const hdrs=diasSem.map(d=>`<div class="cal-hdr-day">${d}</div>`).join('');
+  const cells=dias.map(d=>{
+    const isHoje=!d.outro&&d.num===hoje.getDate()&&mes===hoje.getMonth()&&ano===hoje.getFullYear();
+    const dateStr=`${ano}-${String(mes+1).padStart(2,'0')}-${String(d.num).padStart(2,'0')}`;
+    const dayR=reunioes.filter(r=>r.data_hora?.startsWith(dateStr));
+    const dayF=followups.filter(f=>f.followup_em?.startsWith(dateStr));
+    return `<div class="cal-day${d.outro?' cal-other':''}${isHoje?' cal-today':''}">
+      <div class="cal-num">${d.num}</div>
+      ${dayR.slice(0,2).map(r=>`<span class="cal-chip chip-reuniao" title="${r.titulo}" onclick="abrirDetalheReuniao('${r.id}')">${r.titulo.substring(0,14)}</span>`).join('')}
+      ${dayR.length>2?`<span class="cal-chip chip-reuniao">+${dayR.length-2} mais</span>`:''}
+      ${dayF.slice(0,1).map(f=>`<span class="cal-chip chip-followup">⭐ ${f.nome.split(' ')[0]}</span>`).join('')}
+    </div>`;
+  }).join('');
+  return `<div class="cal-wrap">${hdrs}${cells}</div>`;
+}
+function navegarAgenda(dir){
+  _agendaMes+=dir;
+  if(_agendaMes>11){_agendaMes=0;_agendaAno++;}
+  if(_agendaMes<0){_agendaMes=11;_agendaAno--;}
+  renderAgenda();
+}
+function abrirNovaReuniao(){
+  const sel=document.getElementById('r-lead');
+  if(sel){sel.innerHTML='<option value="">Nenhum (reunião interna)</option>';allLeads.forEach(l=>{sel.innerHTML+=`<option value="${l.id}">${l.nome}</option>`;});}
+  ['r-titulo','r-descricao','r-link'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const dh=document.getElementById('r-datahora');if(dh)dh.value='';
+  const dur=document.getElementById('r-duracao');if(dur)dur.value='60';
+  const resp=document.getElementById('r-responsavel');if(resp)resp.value=currentUser?.nome||'';
+  document.getElementById('modal-reuniao').classList.add('open');
+}
+async function salvarReuniao(){
+  const titulo=(document.getElementById('r-titulo')?.value||'').trim();
+  const dataHora=document.getElementById('r-datahora')?.value;
+  if(!titulo){toast('Informe o título','error');return;}
+  if(!dataHora){toast('Informe data e hora','error');return;}
+  const payload={lead_id:document.getElementById('r-lead')?.value||null,titulo,descricao:(document.getElementById('r-descricao')?.value||'').trim(),data_hora:new Date(dataHora).toISOString(),duracao:parseInt(document.getElementById('r-duracao')?.value)||60,link:(document.getElementById('r-link')?.value||'').trim(),responsavel:(document.getElementById('r-responsavel')?.value||currentUser?.nome||'').trim(),status:'agendada'};
+  const{error}=await sb.from('crm_reunioes').insert(payload);
+  if(error){toast('Erro ao salvar: '+error.message,'error');return;}
+  if(payload.lead_id)await registrarAtividade(payload.lead_id,'reuniao','Reunião agendada: '+titulo);
+  toast('Reunião agendada!');closeModal('modal-reuniao');atualizarBadgeAgenda();renderAgenda();
+}
+function abrirDetalheReuniao(id){
+  const r=_reunioesCache.find(x=>x.id===id);if(!r)return;
+  const dt=new Date(r.data_hora);
+  const info=`${r.titulo}\n📅 ${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}\n⏱ ${r.duracao||60} min\n${r.responsavel?'👤 '+r.responsavel+'\n':''}${r.crm_leads?.nome?'👥 '+r.crm_leads.nome+'\n':''}${r.descricao?'\n'+r.descricao+'\n':''}\nStatus: ${r.status||'agendada'}`;
+  if(r.status!=='realizada'&&confirm(info+'\n\nMarcar como realizada?'))concluirReuniao(id);
+}
+async function concluirReuniao(id){
+  const{error}=await sb.from('crm_reunioes').update({status:'realizada'}).eq('id',id);
+  if(error){toast('Erro ao atualizar','error');return;}
+  toast('Reunião marcada como realizada!');atualizarBadgeAgenda();renderAgenda();
+}
+async function excluirReuniao(id){
+  if(!confirm('Excluir esta reunião?'))return;
+  const{error}=await sb.from('crm_reunioes').delete().eq('id',id);
+  if(error){toast('Erro ao excluir','error');return;}
+  toast('Reunião excluída');atualizarBadgeAgenda();renderAgenda();
+}
+async function atualizarBadgeAgenda(){
+  try{
+    const hoje=new Date();
+    const ini=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()).toISOString();
+    const fim=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate(),23,59,59).toISOString();
+    const{count}=await sb.from('crm_reunioes').select('id',{count:'exact',head:true}).gte('data_hora',ini).lte('data_hora',fim).eq('status','agendada');
+    const badge=document.getElementById('badge-agenda');
+    if(badge){badge.textContent=count||0;badge.style.display=count?'inline':'none';}
+  }catch(e){}
+}
+
+/* ===== FEATURE 3: REGISTRO DE LIGAÇÕES ===== */
+function abrirModalLigacao(leadId){
+  _ligacaoLeadId=leadId;
+  const lead=allLeads.find(l=>l.id===leadId);
+  const el=document.getElementById('lig-lead-nome');if(el)el.textContent=lead?.nome||'Lead';
+  const res=document.getElementById('lig-resultado');if(res)res.value='atendeu';
+  const dur=document.getElementById('lig-duracao');if(dur)dur.value='';
+  const obs=document.getElementById('lig-obs');if(obs)obs.value='';
+  const dw=document.getElementById('lig-duracao-wrap');if(dw)dw.style.display='block';
+  document.getElementById('modal-ligacao').classList.add('open');
+}
+async function salvarLigacao(){
+  if(!_ligacaoLeadId)return;
+  const resultado=document.getElementById('lig-resultado')?.value||'atendeu';
+  const duracao=resultado==='atendeu'?(parseInt(document.getElementById('lig-duracao')?.value)||0):null;
+  const obs=(document.getElementById('lig-obs')?.value||'').trim();
+  const{error}=await sb.from('crm_ligacoes').insert({lead_id:_ligacaoLeadId,resultado,duracao_min:duracao,observacoes:obs,usuario_nome:currentUser?.nome||'Usuário'});
+  if(error){toast('Erro: '+error.message,'error');return;}
+  await sb.from('crm_leads').update({ultimo_contato:new Date().toISOString()}).eq('id',_ligacaoLeadId);
+  const rtxt={atendeu:'Atendeu',nao_atendeu:'Não atendeu',caixa_postal:'Caixa postal',agendou:'Agendou retorno'}[resultado]||resultado;
+  await registrarAtividade(_ligacaoLeadId,'ligacao','Ligação: '+rtxt+(obs?' — '+obs:''));
+  toast('Ligação registrada!');closeModal('modal-ligacao');_ligacaoLeadId=null;
+}
+
+/* ===== FEATURE 4: PROPOSTA AUTOMÁTICA EM PDF ===== */
+async function abrirProposta(leadId){
+  _propostaLeadId=leadId;
+  _propostaLead=allLeads.find(l=>l.id===leadId)||null;
+  if(!_propostaLead){const{data}=await sb.from('crm_leads').select('*').eq('id',leadId).maybeSingle();_propostaLead=data;}
+  if(!_propostaLead){toast('Lead não encontrado','error');return;}
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+  s('p-cliente',_propostaLead.nome);
+  const capSel=document.getElementById('p-capital');
+  if(capSel){capSel.value='';Array.from(capSel.options).forEach(o=>{if(o.value===_propostaLead.capital_disponivel)capSel.value=o.value;});}
+  s('p-cidade',_propostaLead.cidade);s('p-consultor',currentUser?.nome||'Consultor 4P');
+  const val=document.getElementById('p-validade');if(val)val.value='7 dias';
+  const obs=document.getElementById('p-obs');if(obs)obs.value='';
+  atualizarPreviewProposta();
+  document.getElementById('modal-proposta').classList.add('open');
+}
+function atualizarPreviewProposta(){
+  const g=id=>(document.getElementById(id)?.value||'');
+  const cliente=g('p-cliente'),capital=g('p-capital'),cidade=g('p-cidade'),consultor=g('p-consultor'),validade=g('p-validade')||'7 dias',obs=g('p-obs');
+  const capitalNum=calcularReceitaMedia(capital);
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  const sims=[
+    {prod:'Fundo Exclusivo Patrimonial',aloc:'40%',val:fmtMoeda(capitalNum*0.4),ret:'CDI + 2,5% a.a.',prazo:'36 meses'},
+    {prod:'Previdência Privada PGBL',aloc:'30%',val:fmtMoeda(capitalNum*0.3),ret:'IPCA + 4% a.a.',prazo:'Longo prazo'},
+    {prod:'Renda Fixa Estruturada',aloc:'20%',val:fmtMoeda(capitalNum*0.2),ret:'CDI + 1% a.a.',prazo:'12 meses'},
+    {prod:'Reserva de Liquidez',aloc:'10%',val:fmtMoeda(capitalNum*0.1),ret:'CDI 100%',prazo:'D+1'},
+  ];
+  const preview=document.getElementById('p-preview');if(!preview)return;
+  preview.innerHTML=`<div class="proposta-preview" id="proposta-content">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #c9a84c">
+      <div><h1 style="font-size:22px;margin-bottom:4px">4P Patrimonial</h1><p style="color:#888;font-size:11px">Gestão Patrimonial de Alto Padrão</p></div>
+      <div style="text-align:right;font-size:11px;color:#666"><div>Proposta Comercial</div><div>Data: ${hoje}</div><div>Validade: ${validade}</div></div>
+    </div>
+    <h3>Dados do Cliente</h3>
+    <table style="margin-bottom:16px"><tr><td style="width:130px;color:#666">Nome:</td><td><strong>${cliente||'—'}</strong></td></tr><tr><td style="color:#666">Capital disponível:</td><td>${capital||'A definir'}</td></tr>${cidade?`<tr><td style="color:#666">Cidade:</td><td>${cidade}</td></tr>`:''}<tr><td style="color:#666">Consultor:</td><td>${consultor}</td></tr></table>
+    <h3>Alocação Sugerida${capitalNum?` — Total: ${fmtMoeda(capitalNum)}`:''}</h3>
+    <table><thead><tr><th>Produto</th><th>Alocação</th><th>Valor Est.</th><th>Retorno</th><th>Prazo</th></tr></thead><tbody>${capitalNum?sims.map(s=>`<tr><td>${s.prod}</td><td style="text-align:center">${s.aloc}</td><td style="text-align:right">${s.val}</td><td>${s.ret}</td><td>${s.prazo}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999">Capital a ser definido em reunião</td></tr>'}</tbody></table>
+    ${obs?`<h3>Observações</h3><p style="font-size:12px;color:#444">${obs}</p>`:''}
+    <h3>Próximos Passos</h3>
+    <ol style="font-size:12px;color:#444;padding-left:18px;line-height:2.2"><li>Revisão e aprovação da proposta</li><li>Assinatura de contrato e documentação</li><li>Abertura de conta na custodiante</li><li>Transferência e aplicação dos recursos</li><li>Reunião mensal de acompanhamento</li></ol>
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #ddd;font-size:11px;color:#aaa;text-align:center"><p>4P Patrimonial — Gestão Patrimonial de Alto Padrão</p><p>Esta proposta é confidencial e destinada exclusivamente ao cliente identificado acima.</p></div>
+  </div>`;
+}
+async function baixarPropostaPDF(){
+  const conteudo=document.getElementById('proposta-content');if(!conteudo){toast('Gere a proposta primeiro','error');return;}
+  document.getElementById('_proposta_print_only').innerHTML=conteudo.outerHTML;
+  if(_propostaLead)await registrarAtividade(_propostaLeadId,'proposta','Proposta PDF gerada para '+(_propostaLead.nome||'Lead'));
+  window.print();
+  setTimeout(()=>{document.getElementById('_proposta_print_only').innerHTML='';},3000);
+}
+function enviarPropostaWPP(){
+  if(!_propostaLead?.whatsapp){toast('Lead sem WhatsApp cadastrado','error');return;}
+  const msg=`Olá ${_propostaLead.nome?.split(' ')[0]||''}! Preparei uma proposta de gestão patrimonial personalizada para você. Podemos agendar uma conversa rápida para apresentá-la? 😊`;
+  window.open('https://wa.me/55'+_propostaLead.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+/* ===== FEATURE 5: DASHBOARD DO VENDEDOR ===== */
+async function renderDashboardVendedor(c,leads,tarefas){
+  const userNome=currentUser?.nome||'';
+  const userId=currentUser?.id||'';
+  const meusLeads=leads.filter(l=>l.responsavel_id===userId||l.responsavel===userNome);
+  const hoje=new Date().toISOString().split('T')[0];
+  const meusHoje=meusLeads.filter(l=>l.criado_em?.startsWith(hoje)).length;
+  const minhasTarefas=tarefas.filter(t=>(t.responsavel_id===userId||t.responsavel===userNome)&&t.status!=='concluida');
+  const meusFollowupsHoje=meusLeads.filter(l=>l.followup_em?.startsWith(hoje)).length;
+  const meusQuentes=meusLeads.filter(l=>calcularScore(l)>=50).sort((a,b)=>calcularScore(b)-calcularScore(a));
+  const receitaPot=meusLeads.reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel||''),0);
+  const etapas=['lead','contato','qualificado','proposta','negociacao','fechado'];
+  const etapaNomes={lead:'Lead',contato:'Contato',qualificado:'Qualificado',proposta:'Proposta',negociacao:'Negociação',fechado:'Fechado'};
+  const pipeline=etapas.map(e=>({nome:etapaNomes[e],count:meusLeads.filter(l=>l.etapa===e).length}));
+  const metaLeads=20;const pctMeta=Math.min(100,Math.round((meusLeads.length/metaLeads)*100));
+  const tarefasHoje=minhasTarefas.filter(t=>t.prazo?.startsWith(hoje));
+  c.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+      <div><h2 style="font-family:var(--display);font-size:20px">Olá, ${userNome.split(' ')[0]} 👋</h2><p style="color:var(--text-dim);font-size:13px;margin-top:4px">${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</p></div>
+      <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:1px">${currentUser?.cargo||'Vendedor'}</span>
+    </div>
+    <div class="stats-grid" style="margin-bottom:24px">
+      <div class="stat-card"><div class="stat-card-icon">👥</div><div class="stat-label">Meus Leads</div><div class="stat-value">${meusLeads.length}</div></div>
+      <div class="stat-card ${meusHoje>0?'novos-hoje':''}"><div class="stat-card-icon">✨</div><div class="stat-label">Novos Hoje</div><div class="stat-value ${meusHoje>0?'green':''}">${meusHoje}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">✅</div><div class="stat-label">Tarefas Pendentes</div><div class="stat-value ${minhasTarefas.length>5?'red':''}">${minhasTarefas.length}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">📅</div><div class="stat-label">Follow-ups Hoje</div><div class="stat-value ${meusFollowupsHoje>0?'gold':''}">${meusFollowupsHoje}</div></div>
+    </div>
+    <div class="dash-grid" style="margin-bottom:24px">
+      <div class="dash-card">
+        <div class="dash-card-title">Minha Meta do Mês</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:28px;font-weight:700;font-family:var(--mono);color:var(--gold)">${pctMeta}%</span><span style="font-size:13px;color:var(--text-dim)">${meusLeads.length} / ${metaLeads} leads</span></div>
+        <div style="background:var(--surface2);border-radius:4px;height:10px;overflow:hidden"><div style="height:100%;width:${pctMeta}%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));border-radius:4px;transition:width .5s"></div></div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text-dim)">Receita potencial: <strong style="color:var(--gold)">${fmtMoeda(receitaPot)}</strong></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-title">Pipeline — Meus Leads</div>
+        ${pipeline.filter(e=>e.count>0).map(e=>`<div class="funil-row"><span class="funil-label">${e.nome}</span><div class="funil-bar-wrap"><div class="funil-bar" style="width:${meusLeads.length?Math.round((e.count/meusLeads.length)*100):0}%"></div></div><span class="funil-num">${e.count}</span></div>`).join('')||'<div class="empty">Sem leads ainda</div>'}
+      </div>
+    </div>
+    ${tarefasHoje.length?`<div class="dash-card" style="margin-bottom:24px"><div class="dash-card-title">⚡ Tarefas para Hoje (${tarefasHoje.length})</div>${tarefasHoje.slice(0,5).map(t=>`<div class="task-item"><div class="task-check" onclick="concluirTarefa('${t.id}')"></div><div class="task-info"><div class="task-title">${t.titulo}</div><div class="task-meta">${t.descricao||''}</div></div></div>`).join('')}</div>`:''}
+    <div>
+      <div class="dash-card-title" style="margin-bottom:12px">🔥 Meus Leads Quentes (score ≥ 50)</div>
+      ${meusQuentes.length?`<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Capital</th><th>Etapa</th><th>Temp.</th><th>Follow-Up</th><th>Ações</th></tr></thead><tbody>${meusQuentes.slice(0,10).map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);return`<tr><td><div class="td-name">${l.nome}</div><div class="td-sub">${l.email||''}</div></td><td style="color:var(--gold);font-weight:600;font-size:12px">${l.capital_disponivel||'—'}</td><td><span class="badge badge-${l.etapa||'lead'}">${l.etapa||'lead'}</span></td><td style="white-space:nowrap"><span style="font-size:15px">${tmp.icon}</span> <span style="font-size:11px;color:${tmp.cor}">${tmp.label}</span></td><td style="font-size:12px;color:${l.followup_em&&new Date(l.followup_em)<new Date()?'var(--red)':'var(--text-dim)'}">${l.followup_em?new Date(l.followup_em).toLocaleDateString('pt-BR'):'—'}</td><td style="white-space:nowrap"><button class="action-btn action-btn-view" onclick="verLead('${l.id}')">Ver</button>${l.whatsapp?`<button class="action-btn action-btn-edit" onclick="abrirTemplatesWPPById('${l.id}')" style="color:var(--green);margin-left:4px">📱</button>`:''}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><div class="empty-icon">📊</div>Nenhum lead quente ainda. Continue prospectando!</div>'}
+    </div>
+  `;
+}
 </script>
 
 <!-- MODAL IMPORTAR LEADS -->
@@ -1681,5 +2006,136 @@ async function atualizarBadgeChat(){
     <button class="btn btn-gold" onclick="enviarMensagem()" style="padding:8px 14px;font-size:16px">➤</button>
   </div>
 </div>
+
+<!-- MODAL WPP MASSA -->
+<div class="modal-overlay" id="modal-wpp-massa">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header"><h2>📱 WhatsApp em Massa</h2><button class="modal-close" onclick="closeModal('modal-wpp-massa')">×</button></div>
+    <div class="modal-body">
+      <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px"><span style="color:var(--green);font-weight:700" id="wm-count">0</span> leads selecionados com WhatsApp</div>
+      <div style="margin-bottom:16px">
+        <div class="dash-card-title" style="margin-bottom:10px">Templates Rápidos</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px" onclick="document.getElementById('wm-msg').value='Olá {nome}, tudo bem? Sou consultor da 4P Patrimonial e gostaria de apresentar nossas soluções de gestão patrimonial. Podemos conversar? 😊';document.getElementById('wm-preview').textContent=document.getElementById('wm-msg').value">Apresentação</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px" onclick="document.getElementById('wm-msg').value='Olá {nome}! Preparei uma análise exclusiva para o seu perfil de investidor em {cidade}. Posso te enviar? 📊';document.getElementById('wm-preview').textContent=document.getElementById('wm-msg').value">Análise</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px" onclick="document.getElementById('wm-msg').value='Olá {nome}, vim dar um retorno! Tenho uma oportunidade alinhada com o seu capital disponível. Quando podemos conversar? 🤝';document.getElementById('wm-preview').textContent=document.getElementById('wm-msg').value">Follow-up</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px" onclick="document.getElementById('wm-msg').value='Olá {nome}! A 4P Patrimonial tem uma nova oportunidade de investimento com retorno diferenciado. Quer saber mais? 💰';document.getElementById('wm-preview').textContent=document.getElementById('wm-msg').value">Oportunidade</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Mensagem <span style="color:var(--text-muted);font-weight:400;text-transform:none">(variáveis: {nome}, {capital}, {cidade})</span></label>
+        <textarea id="wm-msg" rows="5" placeholder="Digite sua mensagem aqui..." oninput="document.getElementById('wm-preview').textContent=this.value"></textarea>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Preview</div>
+        <div id="wm-preview" style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;min-height:36px"></div>
+      </div>
+      <div id="wm-progress" style="display:none;margin-bottom:12px">
+        <div style="background:var(--surface2);border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px"><div id="wm-prog-bar" style="height:100%;background:var(--gold);border-radius:4px;width:0%;transition:width .3s"></div></div>
+        <div id="wm-prog-txt" style="font-size:12px;color:var(--text-dim);text-align:center"></div>
+      </div>
+      <div style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2);border-radius:8px;padding:10px;font-size:12px;color:#fbbf24">⚠️ Cada mensagem abrirá uma aba do WhatsApp Web com 0.8s de intervalo entre envios.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-wpp-massa')">Cancelar</button>
+      <button class="btn btn-gold" id="btn-enviar-massa" onclick="enviarWPPMassa()">📱 Enviar para todos</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA REUNIÃO -->
+<div class="modal-overlay" id="modal-reuniao">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header"><h2>📅 Nova Reunião</h2><button class="modal-close" onclick="closeModal('modal-reuniao')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Título *</label><input id="r-titulo" placeholder="Ex: Apresentação da proposta ao cliente"></div>
+        <div class="form-group full"><label>Lead vinculado</label><select id="r-lead"><option value="">Nenhum (reunião interna)</option></select></div>
+        <div class="form-group"><label>Data e Hora *</label><input id="r-datahora" type="datetime-local"></div>
+        <div class="form-group"><label>Duração (min)</label><input id="r-duracao" type="number" value="60" min="15" max="480" step="15"></div>
+        <div class="form-group full"><label>Descrição / Pauta</label><textarea id="r-descricao" placeholder="Tópicos a discutir..." rows="3"></textarea></div>
+        <div class="form-group"><label>Link (Meet / Zoom)</label><input id="r-link" type="url" placeholder="https://meet.google.com/..."></div>
+        <div class="form-group"><label>Responsável</label><input id="r-responsavel" placeholder="Nome do responsável"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reuniao')">Cancelar</button>
+      <button class="btn btn-gold" onclick="salvarReuniao()">📅 Agendar Reunião</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REGISTRO DE LIGAÇÃO -->
+<div class="modal-overlay" id="modal-ligacao">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header"><h2>📞 Registrar Ligação</h2><button class="modal-close" onclick="closeModal('modal-ligacao')">×</button></div>
+    <div class="modal-body">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">👤</span><strong id="lig-lead-nome" style="font-size:14px">—</strong>
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Resultado da ligação *</label>
+        <select id="lig-resultado" onchange="document.getElementById('lig-duracao-wrap').style.display=this.value==='atendeu'?'flex':'none'">
+          <option value="atendeu">✅ Atendeu</option>
+          <option value="nao_atendeu">📵 Não atendeu</option>
+          <option value="caixa_postal">📬 Caixa postal</option>
+          <option value="agendou">🔄 Agendou retorno</option>
+        </select>
+      </div>
+      <div class="form-group" id="lig-duracao-wrap" style="margin-bottom:16px;display:flex;flex-direction:column;gap:6px">
+        <label>Duração (minutos)</label>
+        <input id="lig-duracao" type="number" placeholder="Ex: 15" min="1" max="180">
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="lig-obs" placeholder="Resumo da conversa, próximos passos..." rows="4"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ligacao')">Cancelar</button>
+      <button class="btn btn-gold" onclick="salvarLigacao()">📞 Registrar Ligação</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROPOSTA PDF -->
+<div class="modal-overlay" id="modal-proposta">
+  <div class="modal" style="max-width:920px;width:96vw">
+    <div class="modal-header"><h2>📄 Gerar Proposta</h2><button class="modal-close" onclick="closeModal('modal-proposta')">×</button></div>
+    <div class="modal-body" style="max-height:80vh;overflow-y:auto">
+      <div style="display:grid;grid-template-columns:260px 1fr;gap:20px">
+        <div>
+          <div class="dash-card-title" style="margin-bottom:12px">Dados da Proposta</div>
+          <div class="form-group" style="margin-bottom:10px"><label>Nome do cliente</label><input id="p-cliente" oninput="atualizarPreviewProposta()"></div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Capital disponível</label>
+            <select id="p-capital" onchange="atualizarPreviewProposta()">
+              <option value="">A definir</option>
+              <option>Até R$50k</option><option>R$50k a R$150k</option><option>R$150k a R$300k</option><option>R$300k a R$500k</option><option>R$500k a R$1M</option><option>Acima de R$1M</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:10px"><label>Cidade</label><input id="p-cidade" oninput="atualizarPreviewProposta()"></div>
+          <div class="form-group" style="margin-bottom:10px"><label>Consultor responsável</label><input id="p-consultor" oninput="atualizarPreviewProposta()"></div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Validade</label>
+            <select id="p-validade" onchange="atualizarPreviewProposta()"><option value="7 dias">7 dias</option><option value="15 dias">15 dias</option><option value="30 dias">30 dias</option></select>
+          </div>
+          <div class="form-group" style="margin-bottom:16px"><label>Observações adicionais</label><textarea id="p-obs" rows="4" placeholder="Condições especiais, notas..." oninput="atualizarPreviewProposta()"></textarea></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-gold" onclick="baixarPropostaPDF()" style="width:100%;justify-content:center">📄 Baixar PDF</button>
+            <button class="btn btn-ghost" onclick="enviarPropostaWPP()" style="width:100%;justify-content:center;color:var(--green);border-color:rgba(34,197,94,.4)">📱 Enviar via WhatsApp</button>
+          </div>
+        </div>
+        <div>
+          <div class="dash-card-title" style="margin-bottom:12px">Preview da Proposta</div>
+          <div id="p-preview" style="max-height:62vh;overflow-y:auto;border:1px solid var(--border);border-radius:8px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-proposta')">Fechar</button></div>
+  </div>
+</div>
+
+<div id="_proposta_print_only"></div>
 </body>
 </html>
