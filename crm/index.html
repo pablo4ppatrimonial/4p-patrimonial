@@ -629,7 +629,7 @@ async function renderPipeline(){
     const cards=allLeads.filter(l=>(l.etapa||'lead')===etapa);
     const col=document.createElement('div');col.className='kanban-col';col.dataset.etapa=etapa;
     col.innerHTML=`<div class="kanban-col-header"><span class="kanban-col-title">${etapaLabel[etapa]}</span><span class="kanban-count">${cards.length}</span></div>
-    <div class="kanban-cards">${cards.map(l=>`<div class="kanban-card" draggable="true" data-id="${l.id}"><div class="kanban-card-name">${l.nome||'—'}</div><div class="kanban-card-info">${l.cidade||''}${l.responsavel?' · '+l.responsavel:''}</div>${l.capital_disponivel?`<div class="kanban-card-capital">${l.capital_disponivel}</div>`:''}</div>`).join('')}</div>`;
+    <div class="kanban-cards">${cards.map(l=>`<div class="kanban-card" draggable="true" data-id="${l.id}" onclick="abrirCardPipeline('${l.id}')"><div class="kanban-card-name">${l.nome||'—'}</div><div class="kanban-card-info">${l.cidade||''}${l.responsavel?' · '+l.responsavel:''}</div>${l.capital_disponivel?`<div class="kanban-card-capital">${l.capital_disponivel}</div>`:''}</div>`).join('')}</div>`;
     board.appendChild(col);
   });
   board.addEventListener('dragstart',e=>{const cd=e.target.closest('.kanban-card');if(!cd)return;dragId=cd.dataset.id;cd.classList.add('dragging');});
@@ -642,6 +642,44 @@ async function renderPipeline(){
     if(error){toast('Erro: '+error.message,'error');return;}
     if(nova==='fechado'&&typeof fbq!=='undefined')fbq('track','Purchase',{value:5000,currency:'BRL'});
     toast('Movido para '+etapaLabel[nova]);renderPipeline();
+  });
+}
+
+async function abrirCardPipeline(id){
+  let l=allLeads.find(x=>x.id===id);
+  if(!l){const{data}=await sb.from('crm_leads').select('*').eq('id',id).single();l=data;}
+  if(!l)return;
+  document.getElementById('mpc-nome').textContent=l.nome||'—';
+  document.getElementById('mpc-badge').innerHTML=badge(l.etapa||'lead');
+  document.getElementById('mpc-info').innerHTML=`
+    <div class="detail-row"><div class="detail-key">WhatsApp</div><div class="detail-val">${l.whatsapp?`<a href="https://wa.me/55${l.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:var(--green);text-decoration:none">📱 ${l.whatsapp}</a>`:'—'}</div></div>
+    <div class="detail-row"><div class="detail-key">E-mail</div><div class="detail-val">${l.email||'—'}</div></div>
+    <div class="detail-row"><div class="detail-key">Capital</div><div class="detail-val" style="color:var(--gold);font-weight:600">${l.capital_disponivel||'—'}</div></div>
+    <div class="detail-row"><div class="detail-key">Cidade</div><div class="detail-val">${l.cidade||'—'}</div></div>
+    <div class="detail-row"><div class="detail-key">Responsável</div><div class="detail-val">${l.responsavel||'—'}</div></div>
+    <div class="detail-row"><div class="detail-key">Origem</div><div class="detail-val">${l.origem||'—'}</div></div>
+    ${l.notas?`<div class="detail-row"><div class="detail-key">Notas</div><div class="detail-val" style="color:var(--text-dim)">${l.notas}</div></div>`:''}`;
+  const etapaAtual=l.etapa||'lead';
+  document.getElementById('mpc-etapas').innerHTML=etapas.map(e=>`<button onclick="moverEtapaPipeline('${l.id}','${e}')" style="width:100%;padding:8px;margin-bottom:6px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s;${e===etapaAtual?'background:var(--gold);color:#000;border:none':'background:transparent;border:1px solid var(--border);color:var(--text-dim)'}">${etapaLabel[e]}</button>`).join('');
+  document.getElementById('mpc-acoes').innerHTML=`
+    <button class="btn btn-ghost" onclick="closeModal('modal-pipeline-card');editarLead('${l.id}')">✏️ Editar lead completo</button>
+    ${l.whatsapp?`<button class="btn btn-ghost" onclick="window.open('https://wa.me/55${l.whatsapp.replace(/\D/g,'')}','_blank')" style="color:var(--green);border-color:rgba(34,197,94,.4)">📱 Abrir WhatsApp</button>`:''}
+    ${isAdmin()?`<button class="btn btn-danger" onclick="closeModal('modal-pipeline-card');excluirLeadPipeline('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}')">🗑 Excluir lead</button>`:''}`;
+  openModal('modal-pipeline-card');
+}
+async function moverEtapaPipeline(id,novaEtapa){
+  const{error}=await sb.from('crm_leads').update({etapa:novaEtapa,atualizado_em:new Date().toISOString()}).eq('id',id);
+  if(error){toast('Erro: '+error.message,'error');return;}
+  if(novaEtapa==='fechado'&&typeof fbq!=='undefined')fbq('track','Purchase',{value:5000,currency:'BRL'});
+  toast('Lead movido para '+etapaLabel[novaEtapa]);
+  closeModal('modal-pipeline-card');
+  renderPipeline();
+}
+function excluirLeadPipeline(id,nome){
+  confirmar(`Excluir o lead "${nome}"?`,async()=>{
+    const{error}=await sb.from('crm_leads').delete().eq('id',id);
+    if(error){toast('Erro: '+error.message,'error');return;}
+    toast('Lead excluído!');renderPipeline();
   });
 }
 
@@ -985,5 +1023,31 @@ function excluirUsuario(id,nome){
   });
 }
 </script>
+
+<!-- MODAL PIPELINE CARD -->
+<div class="modal-overlay" id="modal-pipeline-card">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div>
+        <h2 id="mpc-nome">—</h2>
+        <div id="mpc-badge" style="margin-top:6px"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-pipeline-card')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 200px;gap:20px">
+        <div>
+          <div class="dash-card-title">Informações</div>
+          <div id="mpc-info"></div>
+        </div>
+        <div>
+          <div class="dash-card-title">Mover para etapa</div>
+          <div id="mpc-etapas"></div>
+        </div>
+      </div>
+      <div id="mpc-acoes" style="display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);flex-wrap:wrap"></div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
