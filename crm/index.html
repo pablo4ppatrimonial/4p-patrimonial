@@ -189,6 +189,7 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
     <div class="nav-item" onclick="goTo('tarefas')"><span class="nav-icon">✅</span> Tarefas</div>
     <div class="nav-item" onclick="goTo('tickets')"><span class="nav-icon">🎫</span> Tickets</div>
     <div class="nav-item" onclick="goTo('relatorios')"><span class="nav-icon">📈</span> Relatórios</div>
+    <div class="nav-item" onclick="goTo('metas')"><span class="nav-icon">🏅</span> Metas</div>
     <div class="nav-item" id="nav-config" onclick="goToConfig()"><span class="nav-icon">⚙️</span> Configurações</div>
   </div>
   <div class="sidebar-footer">
@@ -462,6 +463,84 @@ async function atualizarTemperaturasTodosLeads(){
   for(const lote of lotes)await Promise.all(lote.map(l=>{const s=calcularScore(l);return l.score===s?Promise.resolve():sb.from('crm_leads').update({score:s}).eq('id',l.id);}));
 }
 
+function calcularReceitaMedia(cap){
+  const m={'Até R$50k':25000,'R$50k a R$150k':100000,'R$150k a R$300k':225000,'R$300k a R$500k':400000,'R$500k a R$1M':750000,'Acima de R$1M':1500000};
+  return m[cap]||0;
+}
+function fmtMoeda(v){
+  if(!v)return'R$ 0';
+  if(v>=1000000)return'R$ '+(v/1000000).toFixed(1)+'M';
+  if(v>=1000)return'R$ '+(v/1000).toFixed(0)+'k';
+  return'R$ '+v.toLocaleString('pt-BR');
+}
+async function renderMetas(){
+  const c=document.getElementById('page-content');
+  c.innerHTML='<div class="loading"><span class="spinner"></span> Carregando...</div>';
+  const[{data:usuarios},{data:todasLeads}]=await Promise.all([
+    sb.from('crm_usuarios').select('*').eq('ativo',true),
+    sb.from('crm_leads').select('*')
+  ]);
+  const vendedores=(usuarios||[]).filter(u=>['vendedor','sdr','cs','gerente'].includes(u.cargo||''));
+  const todosLeads=todasLeads||[];
+  const META_LEADS=10;const META_RECEITA=1000000;
+  const agora=new Date();
+  const inicioMes=new Date(agora.getFullYear(),agora.getMonth(),1).toISOString();
+  const stats=vendedores.map(u=>{
+    const meus=todosLeads.filter(l=>l.responsavel===u.nome);
+    const mesMeus=meus.filter(l=>l.criado_em&&l.criado_em>=inicioMes);
+    const fechados=meus.filter(l=>l.etapa==='fechado');
+    const pipeline=meus.filter(l=>['proposta','negociacao'].includes(l.etapa));
+    const receitaFechada=fechados.reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
+    const receitaPipeline=pipeline.reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
+    const progLeads=Math.min(100,Math.round(mesMeus.length/META_LEADS*100));
+    return{u,meus,mesMeus,fechados,pipeline,receitaFechada,receitaPipeline,progLeads,score:receitaFechada+receitaPipeline*0.3};
+  }).sort((a,b)=>b.score-a.score);
+  const totalFechados=todosLeads.filter(l=>l.etapa==='fechado').length;
+  const totalNeg=todosLeads.filter(l=>['proposta','negociacao'].includes(l.etapa)).length;
+  const recTotalF=todosLeads.filter(l=>l.etapa==='fechado').reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
+  const recTotalP=todosLeads.filter(l=>['proposta','negociacao'].includes(l.etapa)).reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
+  const podium=stats.slice(0,3);
+  const podiumHTML=!podium.length?'<div style="color:var(--text-muted);text-align:center;padding:24px">Sem dados de vendedores cadastrados</div>':`<div style="display:flex;align-items:flex-end;justify-content:center;gap:16px;padding:24px 0">${podium[1]?`<div style="text-align:center;flex:1"><div style="font-size:28px;margin-bottom:4px">🥈</div><div style="font-size:13px;font-weight:700;color:#94a3b8">${podium[1].u.nome}</div><div style="font-size:11px;color:var(--text-muted);margin:2px 0">${fmtMoeda(podium[1].receitaFechada)}</div><div style="height:90px;background:rgba(148,163,184,0.15);border:1px solid rgba(148,163,184,0.3);border-radius:8px 8px 0 0;margin-top:8px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#94a3b8">2</div></div>`:'<div style="flex:1"></div>'}${podium[0]?`<div style="text-align:center;flex:1"><div style="font-size:32px;margin-bottom:4px">👑</div><div style="font-size:14px;font-weight:700;color:#c9a84c">${podium[0].u.nome}</div><div style="font-size:12px;color:#a07a30;margin:2px 0">${fmtMoeda(podium[0].receitaFechada)}</div><div style="height:120px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:8px 8px 0 0;margin-top:8px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#c9a84c">1</div></div>`:'<div style="flex:1"></div>'}${podium[2]?`<div style="text-align:center;flex:1"><div style="font-size:26px;margin-bottom:4px">🥉</div><div style="font-size:12px;font-weight:700;color:#cd7f32">${podium[2].u.nome}</div><div style="font-size:11px;color:var(--text-muted);margin:2px 0">${fmtMoeda(podium[2].receitaFechada)}</div><div style="height:70px;background:rgba(205,127,50,0.15);border:1px solid rgba(205,127,50,0.3);border-radius:8px 8px 0 0;margin-top:8px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#cd7f32">3</div></div>`:'<div style="flex:1"></div>'}</div>`;
+  const meses6=[];for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);meses6.push({label:d.toLocaleString('pt-BR',{month:'short'}),y:d.getFullYear(),m:d.getMonth()});}
+  const fechadosPorMes=meses6.map(mm=>todosLeads.filter(l=>l.etapa==='fechado'&&l.criado_em&&new Date(l.criado_em).getFullYear()===mm.y&&new Date(l.criado_em).getMonth()===mm.m).reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0));
+  const cumRec=fechadosPorMes.reduce((acc,v)=>{acc.push((acc[acc.length-1]||0)+v);return acc;},[]);
+  const mediaUlt3=cumRec.length>=3?(cumRec[cumRec.length-1]-cumRec[Math.max(0,cumRec.length-4)])/3:cumRec[cumRec.length-1]||0;
+  const projLen=cumRec.length;
+  const projData=[...cumRec.map((_,i)=>i===projLen-1?cumRec[i]:null),cumRec[projLen-1]+mediaUlt3,cumRec[projLen-1]+mediaUlt3*2];
+  const mesesLabels=[...meses6.map(mm=>mm.label),'M+1','M+2'];
+  c.innerHTML=`
+    <div class="stats-grid" style="margin-bottom:20px">
+      <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-label">Leads Fechados</div><div class="stat-value green">${totalFechados}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">💰</div><div class="stat-label">Receita Fechada</div><div class="stat-value gold">${fmtMoeda(recTotalF)}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">🎯</div><div class="stat-label">Em Negociação</div><div class="stat-value">${totalNeg}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">📈</div><div class="stat-label">Pipeline Potencial</div><div class="stat-value">${fmtMoeda(recTotalP)}</div></div>
+    </div>
+    <div class="dash-card" style="margin-bottom:16px">
+      <div class="dash-card-title">🏅 Ranking de Vendedores</div>
+      ${podiumHTML}
+    </div>
+    <div class="dash-card" style="margin-bottom:16px">
+      <div class="dash-card-title">📋 Metas Individuais — Mês Atual</div>
+      ${!stats.length?'<div style="color:var(--text-muted);text-align:center;padding:24px">Nenhum vendedor cadastrado</div>':'<table><thead><tr><th>#</th><th>Vendedor</th><th>Leads/Mês</th><th>Progresso</th><th>Fechados</th><th>Rec. Fechada</th><th>Pipeline</th></tr></thead><tbody>'+stats.map((s,i)=>`<tr><td style="color:${i===0?'#c9a84c':i===1?'#94a3b8':'#cd7f32'};font-weight:700;font-family:var(--mono);text-align:center">${i+1}</td><td><div style="font-weight:600;font-size:13px">${s.u.nome}</div><div style="font-size:11px;color:var(--text-muted)">${s.u.cargo}</div></td><td style="font-family:var(--mono);color:var(--gold)">${s.mesMeus.length}/${META_LEADS}</td><td style="min-width:100px"><div style="background:rgba(255,255,255,0.05);border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;width:${s.progLeads}%;background:${s.progLeads>=100?'#22c55e':'#c9a84c'};border-radius:4px"></div></div><div style="font-size:10px;color:var(--text-muted);margin-top:2px">${s.progLeads}%</div></td><td style="color:#22c55e;font-weight:700;font-family:var(--mono)">${s.fechados.length}</td><td style="color:var(--gold);font-weight:700;font-family:var(--mono)">${fmtMoeda(s.receitaFechada)}</td><td style="color:#60a5fa;font-family:var(--mono)">${fmtMoeda(s.receitaPipeline)}</td></tr>`).join('')+'</tbody></table>'}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="background:#111111;border:1px solid #2a2a2a;border-radius:10px;padding:20px">
+        <div class="chart-title">Performance por Vendedor</div>
+        <div style="position:relative;height:220px"><canvas id="chart-metas-vendedor"></canvas></div>
+      </div>
+      <div style="background:#111111;border:1px solid #2a2a2a;border-radius:10px;padding:20px">
+        <div class="chart-title">📈 Previsão de Receita — 6 meses</div>
+        <div style="position:relative;height:220px"><canvas id="chart-previsao"></canvas></div>
+      </div>
+    </div>`;
+  if(window._metasVendChart)window._metasVendChart.destroy();
+  const ctxMV=document.getElementById('chart-metas-vendedor');
+  if(ctxMV&&stats.length){window._metasVendChart=new Chart(ctxMV,{type:'bar',data:{labels:stats.map(s=>s.u.nome),datasets:[{label:'Receita Fechada',data:stats.map(s=>s.receitaFechada),backgroundColor:'rgba(34,197,94,0.7)',borderColor:'#22c55e',borderWidth:1,borderRadius:4},{label:'Pipeline',data:stats.map(s=>s.receitaPipeline),backgroundColor:'rgba(96,165,250,0.5)',borderColor:'#60a5fa',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#888',font:{size:11},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1a1a1a',borderColor:'#2a2a2a',borderWidth:1,titleColor:'#c9a84c',bodyColor:'#aaa',padding:10,callbacks:{label:i=>i.dataset.label+': '+fmtMoeda(i.raw)}}},scales:{x:{border:{display:false},grid:{display:false},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},callback:v=>fmtMoeda(v)},beginAtZero:true}}}})}
+  if(window._previsaoChart)window._previsaoChart.destroy();
+  const ctxPrev=document.getElementById('chart-previsao');
+  if(ctxPrev){window._previsaoChart=new Chart(ctxPrev,{type:'line',data:{labels:mesesLabels,datasets:[{label:'Realizado',data:[...cumRec,...Array(2).fill(null)],borderColor:'#c9a84c',backgroundColor:'rgba(201,168,76,0.1)',tension:0.3,fill:true,pointRadius:4,pointBackgroundColor:'#c9a84c'},{label:'Projeção',data:projData,borderColor:'rgba(96,165,250,0.7)',backgroundColor:'transparent',borderDash:[6,4],tension:0.3,fill:false,pointRadius:3,pointBackgroundColor:'#60a5fa'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#888',font:{size:11},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1a1a1a',borderColor:'#2a2a2a',borderWidth:1,titleColor:'#c9a84c',bodyColor:'#aaa',padding:10,callbacks:{label:i=>i.dataset.label+': '+fmtMoeda(i.raw)}}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},callback:v=>fmtMoeda(v)},beginAtZero:true}}}})}
+}
+
 async function doLogin(){
   const email=(document.getElementById('login-email').value||'').trim().toLowerCase();
   const senha=document.getElementById('login-pass').value;
@@ -530,16 +609,16 @@ function goToConfig(){if(!isAdmin()){toast('Acesso restrito — apenas administr
 
 function goTo(page){
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
-  const map={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relat',config:'Config'};
+  const map={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relat',metas:'Metas',config:'Config'};
   document.querySelectorAll('.nav-item').forEach(el=>{if(el.textContent.trim().includes(map[page]||page))el.classList.add('active');});
-  const titles={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relatórios',config:'Configurações'};
+  const titles={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relatórios',metas:'Metas & Comissões',config:'Configurações'};
   document.getElementById('page-title').textContent=titles[page]||page;
   const ha=document.getElementById('header-action');ha.innerHTML='';
   if(page==='leads')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoLead()">+ Novo Lead</button>';
   if(page==='tarefas'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovaTarefa()">+ Nova Tarefa</button>';
   if(page==='tickets'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoTicket()">+ Novo Ticket</button>';
   if(page==='config'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoUsuario()">+ Novo Usuário</button>';
-  ({dashboard:renderDashboard,leads:renderLeads,pipeline:renderPipeline,tarefas:renderTarefas,tickets:renderTickets,relatorios:renderRelatorios,config:renderConfig}[page]||renderDashboard)();
+  ({dashboard:renderDashboard,leads:renderLeads,pipeline:renderPipeline,tarefas:renderTarefas,tickets:renderTickets,relatorios:renderRelatorios,metas:renderMetas,config:renderConfig}[page]||renderDashboard)();
   document.getElementById('sidebar').classList.remove('open');
 }
 
@@ -561,6 +640,10 @@ async function renderDashboard(){
   const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
   const dc=days.map(d=>({d,n:leads.filter(l=>l.criado_em&&l.criado_em.slice(0,10)===d).length}));
   const mx=Math.max(...dc.map(x=>x.n),1);
+  const recFechada=leads.filter(l=>l.etapa==='fechado').reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
+  const recNeg=leads.filter(l=>['proposta','negociacao'].includes(l.etapa)).reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
+  const recPotencial=leads.filter(l=>l.etapa!=='perdido').reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
+  const progMeta=Math.min(100,Math.round(recFechada/1000000*100));
   c.innerHTML=`
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-card-icon">👥</div><div class="stat-label">Total de Leads</div><div class="stat-value">${leads.length}</div></div>
@@ -583,6 +666,25 @@ async function renderDashboard(){
       <div style="background:#111111;border:1px solid #2a2a2a;border-radius:10px;padding:20px">
         <div class="chart-title">Leads por Capital</div>
         <div style="position:relative;height:220px"><canvas id="chart-capital"></canvas></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+      <div style="background:#111111;border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:16px">
+        <div style="font-size:10px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">💰 Receita Fechada</div>
+        <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:#22c55e">${fmtMoeda(recFechada)}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px">${leads.filter(l=>l.etapa==='fechado').length} contratos</div>
+        <div style="margin-top:8px;background:rgba(255,255,255,0.05);border-radius:4px;height:6px"><div style="height:100%;width:${progMeta}%;background:#22c55e;border-radius:4px"></div></div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${progMeta}% da meta</div>
+      </div>
+      <div style="background:#111111;border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:16px">
+        <div style="font-size:10px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">⚡ Em Negociação</div>
+        <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:#fbbf24">${fmtMoeda(recNeg)}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px">${leads.filter(l=>['proposta','negociacao'].includes(l.etapa)).length} leads</div>
+      </div>
+      <div style="background:#111111;border:1px solid rgba(201,168,76,0.3);border-radius:10px;padding:16px">
+        <div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">📊 Potencial Total</div>
+        <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--gold)">${fmtMoeda(recPotencial)}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px">Todos os leads ativos</div>
       </div>
     </div>
     <div class="dash-card" style="background:linear-gradient(135deg,#111 0%,rgba(201,168,76,0.05) 100%);border:1px solid rgba(201,168,76,0.2);margin-bottom:16px">
@@ -976,20 +1078,32 @@ async function loadRelatorios(){
   const mxF=Math.max(...funil.map(x=>x.n),1);
   const pCap={};
   all.forEach(l=>{if(l.capital_disponivel)pCap[l.capital_disponivel]=(pCap[l.capital_disponivel]||0)+1;});
-  const[{data:oriData},{data:cidData}]=await Promise.all([
+  const[{data:oriData},{data:cidData},{data:usersData}]=await Promise.all([
     sb.from('crm_leads').select('origem'),
-    sb.from('crm_leads').select('cidade')
+    sb.from('crm_leads').select('cidade'),
+    sb.from('crm_usuarios').select('*').eq('ativo',true)
   ]);
   const pOri={},pCid={};
   (oriData||[]).forEach(l=>{if(l.origem)pOri[l.origem]=(pOri[l.origem]||0)+1;});
   (cidData||[]).forEach(l=>{if(l.cidade)pCid[l.cidade]=(pCid[l.cidade]||0)+1;});
   const desde6m=new Date();desde6m.setMonth(desde6m.getMonth()-6);
-  const{data:leads6mData}=await sb.from('crm_leads').select('id,etapa,criado_em').gte('criado_em',desde6m.toISOString());
+  const{data:leads6mData}=await sb.from('crm_leads').select('id,etapa,criado_em,capital_disponivel,responsavel').gte('criado_em',desde6m.toISOString());
   const all6m=leads6mData||[];
   const meses=[];for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);meses.push({label:d.toLocaleString('pt-BR',{month:'short',year:'2-digit'}),y:d.getFullYear(),m:d.getMonth()});}
   const mCaptados=meses.map(mm=>all6m.filter(l=>l.criado_em&&new Date(l.criado_em).getFullYear()===mm.y&&new Date(l.criado_em).getMonth()===mm.m).length);
   const mFechados=meses.map(mm=>all6m.filter(l=>l.etapa==='fechado'&&l.criado_em&&new Date(l.criado_em).getFullYear()===mm.y&&new Date(l.criado_em).getMonth()===mm.m).length);
   const mLabels=meses.map(mm=>mm.label);
+  const vendedoresR=(usersData||[]).filter(u=>['vendedor','sdr','cs','gerente'].includes(u.cargo||''));
+  const rankStats=vendedoresR.map(u=>{
+    const meus=all.filter(l=>l.responsavel===u.nome);
+    const fch=meus.filter(l=>l.etapa==='fechado');
+    const pip=meus.filter(l=>['proposta','negociacao'].includes(l.etapa));
+    const rec=fch.reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
+    const pipRec=pip.reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0);
+    return{u,total:meus.length,fch:fch.length,rec,pipRec,conv:meus.length?Math.round(fch.length/meus.length*100):0};
+  }).sort((a,b)=>b.rec-a.rec);
+  const mRecFechada=meses.map(mm=>all6m.filter(l=>l.etapa==='fechado'&&l.criado_em&&new Date(l.criado_em).getFullYear()===mm.y&&new Date(l.criado_em).getMonth()===mm.m).reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0));
+  const mRecPipeline=meses.map(mm=>all6m.filter(l=>['proposta','negociacao'].includes(l.etapa)&&l.criado_em&&new Date(l.criado_em).getFullYear()===mm.y&&new Date(l.criado_em).getMonth()===mm.m).reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0));
   const listItems=(obj)=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>`
     <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
       <span style="color:var(--text-dim)">${k}</span><span style="color:var(--gold);font-weight:700;font-family:var(--mono)">${v}</span>
@@ -1034,6 +1148,14 @@ async function loadRelatorios(){
         <div style="text-align:center;padding:16px;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.4);border-radius:8px"><div style="font-size:28px;font-weight:700;color:#fbbf24;font-family:var(--mono)">${all.filter(l=>{const s=calcularScore(l);return s>=40&&s<70;}).length}</div><div style="font-size:11px;color:#fbbf24;font-weight:600;margin-top:4px">⚡ Mornos</div></div>
         <div style="text-align:center;padding:16px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.4);border-radius:8px"><div style="font-size:28px;font-weight:700;color:#60a5fa;font-family:var(--mono)">${all.filter(l=>calcularScore(l)<40).length}</div><div style="font-size:11px;color:#60a5fa;font-weight:600;margin-top:4px">❄️ Frios</div></div>
       </div>
+    </div>
+    <div class="dash-card" style="margin-top:16px">
+      <div class="dash-card-title">🏅 Ranking de Vendedores — Período</div>
+      ${!rankStats.length?'<div style="color:var(--text-muted);text-align:center;padding:16px">Sem vendedores cadastrados</div>':'<table><thead><tr><th>#</th><th>Vendedor</th><th>Total</th><th>Fechados</th><th>Conversão</th><th>Receita Fechada</th><th>Pipeline</th></tr></thead><tbody>'+rankStats.map((s,i)=>`<tr><td style="color:${i===0?'#c9a84c':i===1?'#94a3b8':'#cd7f32'};font-weight:700;text-align:center;font-family:var(--mono)">${i+1}</td><td><div style="font-weight:600">${s.u.nome}</div><div style="font-size:11px;color:var(--text-muted)">${s.u.cargo}</div></td><td style="font-family:var(--mono)">${s.total}</td><td style="color:#22c55e;font-weight:700;font-family:var(--mono)">${s.fch}</td><td style="color:var(--gold);font-family:var(--mono)">${s.conv}%</td><td style="color:var(--gold);font-weight:700;font-family:var(--mono)">${fmtMoeda(s.rec)}</td><td style="color:#60a5fa;font-family:var(--mono)">${fmtMoeda(s.pipRec)}</td></tr>`).join('')+'</tbody></table>'}
+    </div>
+    <div style="background:#111111;border:1px solid #2a2a2a;border-radius:10px;padding:20px;margin-top:16px">
+      <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">💰 Receita: Realizado vs Pipeline — 6 meses</div>
+      <div style="position:relative;height:220px"><canvas id="chart-prev-real"></canvas></div>
     </div>`;
   if(window._origemChart)window._origemChart.destroy();
   const ctxO=document.getElementById('chart-rel-origem');
@@ -1044,6 +1166,9 @@ async function loadRelatorios(){
   if(window._mensalChart)window._mensalChart.destroy();
   const ctxM=document.getElementById('chart-rel-mensal');
   if(ctxM){window._mensalChart=new Chart(ctxM,{type:'bar',data:{labels:mLabels,datasets:[{label:'Captados',data:mCaptados,backgroundColor:'rgba(201,168,76,0.8)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4},{label:'Fechados',data:mFechados,backgroundColor:'rgba(34,197,94,0.8)',borderColor:'#22c55e',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#888',font:{size:11},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1a1a1a',borderColor:'#2a2a2a',borderWidth:1,titleColor:'#c9a84c',bodyColor:'#aaa',padding:10}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true}}}})}
+  if(window._prevRealChart)window._prevRealChart.destroy();
+  const ctxPR=document.getElementById('chart-prev-real');
+  if(ctxPR){window._prevRealChart=new Chart(ctxPR,{type:'bar',data:{labels:mLabels,datasets:[{label:'Realizado',data:mRecFechada,backgroundColor:'rgba(34,197,94,0.7)',borderColor:'#22c55e',borderWidth:1,borderRadius:4},{label:'Pipeline',data:mRecPipeline,backgroundColor:'rgba(96,165,250,0.5)',borderColor:'#60a5fa',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#888',font:{size:11},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1a1a1a',borderColor:'#2a2a2a',borderWidth:1,titleColor:'#c9a84c',bodyColor:'#aaa',padding:10,callbacks:{label:i=>i.dataset.label+': '+fmtMoeda(i.raw)}}},scales:{x:{border:{display:false},grid:{display:false},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},callback:v=>fmtMoeda(v)},beginAtZero:true}}}})}
 }
 
 // CONFIGURAÇÕES
