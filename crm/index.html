@@ -183,7 +183,7 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
     <div class="nav-item" onclick="goTo('tarefas')"><span class="nav-icon">✅</span> Tarefas</div>
     <div class="nav-item" onclick="goTo('tickets')"><span class="nav-icon">🎫</span> Tickets</div>
     <div class="nav-item" onclick="goTo('relatorios')"><span class="nav-icon">📈</span> Relatórios</div>
-    <div class="nav-item" onclick="goTo('config')"><span class="nav-icon">⚙️</span> Configurações</div>
+    <div class="nav-item" id="nav-config" onclick="goToConfig()"><span class="nav-icon">⚙️</span> Configurações</div>
   </div>
   <div class="sidebar-footer">
     <div id="sidebar-user-info" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #2a2a2a;margin-bottom:8px"></div>
@@ -195,6 +195,7 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
     <div style="display:flex;align-items:center;gap:14px">
       <div class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></div>
       <h1 id="page-title">Dashboard</h1>
+      <span id="access-tag"></span>
     </div>
     <div id="header-action"></div>
   </div>
@@ -338,8 +339,23 @@ function updateSidebarUser(){
   const el=document.getElementById('sidebar-user-info');
   if(!el||!currentUser)return;
   const labels={admin:'Admin',gerente:'Gerente',vendedor:'Vendedor',sdr:'SDR',cs:'CS',socio:'Sócio'};
-  const cargo=labels[currentUser.cargo]||currentUser.cargo;
-  el.innerHTML=`<div style="width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,0.2);border:1px solid #9a7a35;display:flex;align-items:center;justify-content:center;font-weight:700;color:#c9a84c;font-size:13px;flex-shrink:0">${(currentUser.nome||'?')[0].toUpperCase()}</div><div><div style="font-size:12px;font-weight:600;color:#f0f0f0">${currentUser.nome}</div><div style="font-size:10px;color:#888">${cargo}</div></div>`;
+  const cargoLabel=labels[currentUser.cargo]||currentUser.cargo;
+  const badgeStyle=['admin','socio'].includes(currentUser.cargo)
+    ?'background:rgba(201,168,76,0.2);color:#c9a84c;border:1px solid #9a7a35'
+    :currentUser.cargo==='gerente'
+    ?'background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid rgba(59,130,246,0.4)'
+    :'background:rgba(100,100,100,0.15);color:#888;border:1px solid #333';
+  el.innerHTML=`<div style="width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,0.2);border:1px solid #9a7a35;display:flex;align-items:center;justify-content:center;font-weight:700;color:#c9a84c;font-size:13px;flex-shrink:0">${(currentUser.nome||'?')[0].toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:#f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${currentUser.nome}</div><span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;${badgeStyle}">${cargoLabel}</span></div>`;
+  const tag=document.getElementById('access-tag');
+  if(tag){
+    if(isAdmin()){tag.textContent='● Admin';tag.style.cssText='font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(201,168,76,0.15);color:#c9a84c;border:1px solid rgba(201,168,76,0.3);margin-left:8px';}
+    else{tag.textContent='● '+cargoLabel;tag.style.cssText='font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(100,100,100,0.15);color:#888;border:1px solid #333;margin-left:8px';}
+  }
+  const navConfig=document.getElementById('nav-config');
+  if(navConfig){
+    navConfig.style.opacity=isAdmin()?'':'0.4';
+    navConfig.style.cursor=isAdmin()?'':'not-allowed';
+  }
 }
 function doLogout(){
   currentUser=null;
@@ -358,6 +374,8 @@ function toast(msg,type='success'){const el=document.createElement('div');el.cla
 function confirmar(msg,cb){document.getElementById('confirma-msg').textContent=msg;document.getElementById('confirma-btn').onclick=()=>{closeModal('modal-confirma');cb();};openModal('modal-confirma');}
 function badge(val){const L={lead:'Lead',contato:'Contato',qualificado:'Qualificado',proposta:'Proposta',negociacao:'Negociação',fechado:'Fechado',perdido:'Perdido',aberto:'Aberto',em_andamento:'Em andamento',resolvido:'Resolvido',pendente:'Pendente',concluida:'Concluída',alta:'Alta',media:'Média',baixa:'Baixa'};return`<span class="badge badge-${val}">${L[val]||val}</span>`;}
 function fmtDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('pt-BR');}
+function isAdmin(){return!!(currentUser&&['admin','gerente','socio'].includes(currentUser.cargo));}
+function goToConfig(){if(!isAdmin()){toast('Acesso restrito — apenas administradores','error');return;}goTo('config');}
 
 function goTo(page){
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
@@ -367,9 +385,9 @@ function goTo(page){
   document.getElementById('page-title').textContent=titles[page]||page;
   const ha=document.getElementById('header-action');ha.innerHTML='';
   if(page==='leads')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoLead()">+ Novo Lead</button>';
-  if(page==='tarefas')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovaTarefa()">+ Nova Tarefa</button>';
-  if(page==='tickets')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoTicket()">+ Novo Ticket</button>';
-  if(page==='config')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoUsuario()">+ Novo Usuário</button>';
+  if(page==='tarefas'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovaTarefa()">+ Nova Tarefa</button>';
+  if(page==='tickets'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoTicket()">+ Novo Ticket</button>';
+  if(page==='config'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoUsuario()">+ Novo Usuário</button>';
   ({dashboard:renderDashboard,leads:renderLeads,pipeline:renderPipeline,tarefas:renderTarefas,tickets:renderTickets,relatorios:renderRelatorios,config:renderConfig}[page]||renderDashboard)();
   document.getElementById('sidebar').classList.remove('open');
 }
@@ -531,7 +549,7 @@ function renderLeadsTable(leads,s='',e='',k=''){
     <td><div style="display:flex;gap:6px">
       <button class="action-btn action-btn-view" onclick="verLead('${l.id}')">👁 Ver</button>
       <button class="action-btn action-btn-edit" onclick="editarLead('${l.id}')">✏️ Editar</button>
-      <button class="action-btn action-btn-del" onclick="excluirLead('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}')">🗑</button>
+      ${isAdmin()?`<button class="action-btn action-btn-del" onclick="excluirLead('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}')">🗑</button>`:''}
     </div></td>
   </tr>`).join('')+'</tbody></table>';
 }
@@ -776,6 +794,7 @@ async function loadRelatorios(){
 // CONFIGURAÇÕES
 async function renderConfig(){
   const c=document.getElementById('page-content');
+  if(!isAdmin()){c.innerHTML='<div class="empty" style="padding:80px 20px"><div class="empty-icon">🔒</div><div style="font-size:16px;font-weight:600;margin-bottom:8px">Acesso Restrito</div><div style="color:var(--text-muted)">Apenas administradores e gerentes podem acessar as configurações.</div></div>';return;}
   c.innerHTML='<div class="loading"><span class="spinner"></span> Carregando...</div>';
   const{data:usuarios}=await sb.from('crm_usuarios').select('*').order('criado_em',{ascending:false});
   const U=usuarios||[];
