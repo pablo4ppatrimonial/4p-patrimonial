@@ -4,8 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>4P Patrimonial — CRM</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Meta Pixel -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','1602962360794047');fbq('track','PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1602962360794047&ev=PageView&noscript=1"/></noscript>
 <style>
 :root {
   --bg: #080808;
@@ -83,11 +89,18 @@ body {
   display: flex; flex-direction: column;
   position: fixed; top: 0; left: 0; z-index: 100;
 }
+.sidebar-shimmer {
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold) 40%, #fff8e1 55%, var(--gold) 70%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s linear infinite;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 .sidebar-logo {
-  padding: 24px 20px 20px;
+  padding: 20px 20px 18px;
   border-bottom: 1px solid var(--border);
 }
-.sidebar-logo strong { display: block; color: var(--gold); font-size: 16px; font-weight: 700; letter-spacing: .5px; }
+.sidebar-logo strong { display: block; color: var(--gold); font-size: 18px; font-weight: 700; letter-spacing: 2px; font-family: 'Playfair Display', serif; }
 .sidebar-logo span { color: var(--text-muted); font-size: 11px; }
 .sidebar-nav { flex: 1; padding: 12px 0; }
 .nav-item {
@@ -124,7 +137,7 @@ body {
   padding: 28px 32px 20px;
   border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
-  background: var(--bg);
+  background: linear-gradient(180deg, #0d0d0d 0%, #080808 100%);
   position: sticky; top: 0; z-index: 50;
 }
 .page-header h1 { font-size: 20px; font-weight: 700; }
@@ -154,9 +167,19 @@ body {
 .stat-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 20px;
-  transition: border-color .2s;
+  transition: border-color .2s, box-shadow .2s;
+  position: relative; overflow: hidden;
 }
-.stat-card:hover { border-color: var(--gold-dim); }
+.stat-card:hover { border-color: var(--gold-dim); box-shadow: 0 0 20px rgba(201,168,76,0.12); }
+.stat-card-icon {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 52px; opacity: 0.07; pointer-events: none; user-select: none;
+}
+.stat-card.novos-hoje { animation: pulseBorder 2s ease-in-out infinite; }
+@keyframes pulseBorder {
+  0%,100% { border-color: var(--border); }
+  50% { border-color: var(--gold); box-shadow: 0 0 14px rgba(201,168,76,0.2); }
+}
 .stat-label { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
 .stat-value { font-size: 28px; font-weight: 700; color: var(--text); font-family: var(--mono); }
 .stat-value.gold { color: var(--gold); }
@@ -182,8 +205,8 @@ td {
   vertical-align: middle;
 }
 tr:last-child td { border-bottom: none; }
-tbody tr { transition: background .1s; }
-tbody tr:hover { background: var(--surface2); }
+tbody tr { transition: background .1s, border-left .1s; border-left: 2px solid transparent; }
+tbody tr:hover { background: var(--surface2); border-left: 2px solid var(--gold); }
 .td-name { font-weight: 600; }
 .td-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 
@@ -333,6 +356,10 @@ tbody tr:hover { background: var(--surface2); }
 .toast.error { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.4); color: #fca5a5; }
 @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } }
 
+/* ── FADE-IN ── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.page-fade { animation: fadeIn .3s ease forwards; }
+
 /* ── LOADING ── */
 .loading { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
 .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin .6s linear infinite; display: inline-block; margin-right: 8px; }
@@ -433,6 +460,7 @@ tbody tr:hover { background: var(--surface2); }
 
 <!-- SIDEBAR -->
 <nav id="sidebar">
+  <div class="sidebar-shimmer"></div>
   <div class="sidebar-logo">
     <strong>4P Patrimonial</strong>
     <span>CRM Comercial</span>
@@ -761,7 +789,13 @@ function goTo(page) {
   if (page === 'config') ha.innerHTML = '<button class="btn btn-gold" onclick="abrirNovoUsuario()">+ Novo Usuário</button>';
 
   const pages = { dashboard: renderDashboard, leads: renderLeads, pipeline: renderPipeline, tarefas: renderTarefas, tickets: renderTickets, relatorios: renderRelatorios, config: renderConfig };
-  if (pages[page]) pages[page]();
+  if (pages[page]) {
+    const pc = document.getElementById('page-content');
+    pc.classList.remove('page-fade');
+    void pc.offsetWidth;
+    pc.classList.add('page-fade');
+    pages[page]();
+  }
   document.getElementById('sidebar').classList.remove('open');
 }
 
@@ -805,13 +839,13 @@ async function renderDashboard() {
   const maxN = Math.max(...dayCounts.map(x=>x.n), 1);
 
   c.innerHTML = `
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-label">Total de Leads</div><div class="stat-value">${leads.length}</div></div>
-      <div class="stat-card"><div class="stat-label">Novos Hoje</div><div class="stat-value gold">${novosHoje}</div></div>
-      <div class="stat-card"><div class="stat-label">Em Negociação</div><div class="stat-value">${negociando}</div></div>
-      <div class="stat-card"><div class="stat-label">Fechados</div><div class="stat-value green">${fechados}</div></div>
-      <div class="stat-card"><div class="stat-label">Tarefas Pendentes</div><div class="stat-value">${tarefasP}</div></div>
-      <div class="stat-card"><div class="stat-label">Tickets Abertos</div><div class="stat-value red">${ticketsA}</div></div>
+    <div class="stats-grid page-fade">
+      <div class="stat-card"><div class="stat-card-icon">👥</div><div class="stat-label">Total de Leads</div><div class="stat-value">${leads.length}</div></div>
+      <div class="stat-card novos-hoje"><div class="stat-card-icon">📅</div><div class="stat-label">Novos Hoje</div><div class="stat-value gold">${novosHoje}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">🎯</div><div class="stat-label">Em Negociação</div><div class="stat-value">${negociando}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-label">Fechados</div><div class="stat-value green">${fechados}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">✅</div><div class="stat-label">Tarefas Pendentes</div><div class="stat-value">${tarefasP}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">🎫</div><div class="stat-label">Tickets Abertos</div><div class="stat-value red">${ticketsA}</div></div>
     </div>
 
     <div class="dash-grid">
@@ -979,6 +1013,30 @@ async function salvarLead() {
   if (error) { toast('Erro: ' + error.message, 'error'); return; }
   toast(editingLeadId ? 'Lead atualizado!' : 'Lead criado!');
   closeModal('modal-lead');
+
+  if (!editingLeadId) {
+    // Meta Pixel — Lead
+    if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: 'CRM Lead', value: 0, currency: 'BRL' });
+
+    // E-mail via Resend
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer re_XkRB47R9_PkrxabbMvVGpMLScdBMfs7iJ', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'contato@4ppatrimonial.com.br',
+        to: 'pabloangelyscamilaoficial@gmail.com',
+        subject: '🔔 Novo Lead no CRM — ' + payload.nome,
+        html: '<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#f9f9f9;border-radius:8px"><h2 style="color:#c9a84c">Novo Lead Captado!</h2><p><strong>Nome:</strong> ' + payload.nome + '</p><p><strong>WhatsApp:</strong> ' + (payload.whatsapp||'—') + '</p><p><strong>E-mail:</strong> ' + (payload.email||'—') + '</p><p><strong>Capital:</strong> ' + (payload.capital_disponivel||'—') + '</p><p><strong>Cidade:</strong> ' + (payload.cidade||'—') + '</p><p><strong>Etapa:</strong> ' + (payload.etapa||'—') + '</p><p><strong>Origem:</strong> ' + (payload.origem||'—') + '</p><p><strong>Notas:</strong> ' + (payload.notas||'—') + '</p><hr><p style="color:#888;font-size:12px">4P Patrimonial CRM · Baixada Santista</p></div>'
+      })
+    }).catch(err => console.warn('Resend error:', err));
+
+    // WhatsApp — notificação opcional
+    if (confirm('Novo lead criado! Deseja notificar Pablo via WhatsApp?')) {
+      const msg = '🔔 Novo lead no CRM!\n\nNome: ' + payload.nome + '\nCapital: ' + (payload.capital_disponivel||'—') + '\nCidade: ' + (payload.cidade||'—') + '\nWhatsApp: ' + (payload.whatsapp||'—') + '\nOrigem: ' + (payload.origem||'—');
+      window.open('https://wa.me/5513992097189?text=' + encodeURIComponent(msg), '_blank');
+    }
+  }
+
   renderLeads();
 }
 
@@ -1068,6 +1126,7 @@ async function renderPipeline() {
     const novaEtapa = col.dataset.etapa;
     const { error } = await sb.from('crm_leads').update({ etapa: novaEtapa, atualizado_em: new Date().toISOString() }).eq('id', dragId);
     if (error) { toast('Erro ao mover: ' + error.message, 'error'); return; }
+    if (novaEtapa === 'fechado' && typeof fbq !== 'undefined') fbq('track', 'Purchase', { value: 5000, currency: 'BRL' });
     toast('Lead movido para ' + etapaLabel[novaEtapa]);
     renderPipeline();
   });
