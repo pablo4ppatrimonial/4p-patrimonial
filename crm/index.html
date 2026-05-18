@@ -165,9 +165,11 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo"><strong>4P Patrimonial</strong><p>CRM COMERCIAL</p></div>
-    <div class="form-group" style="margin-bottom:16px"><label>Senha de acesso</label><input type="password" id="login-pass" placeholder="••••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="form-group" style="margin-bottom:14px"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="form-group" style="margin-bottom:16px"><label>Senha</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="login-btn" onclick="doLogin()">Entrar no CRM</button>
     <p class="login-err" id="login-err"></p>
+    <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--text-muted);cursor:pointer">Esqueci minha senha</p>
   </div>
 </div>
 <div id="app" style="display:none;width:100%">
@@ -183,7 +185,10 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
     <div class="nav-item" onclick="goTo('relatorios')"><span class="nav-icon">📈</span> Relatórios</div>
     <div class="nav-item" onclick="goTo('config')"><span class="nav-icon">⚙️</span> Configurações</div>
   </div>
-  <div class="sidebar-footer"><button class="logout-btn" onclick="doLogout()">Sair do sistema</button></div>
+  <div class="sidebar-footer">
+    <div id="sidebar-user-info" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #2a2a2a;margin-bottom:8px"></div>
+    <button class="logout-btn" onclick="doLogout()">Sair do sistema</button>
+  </div>
 </nav>
 <div id="main">
   <div class="page-header">
@@ -278,6 +283,7 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
       <div class="form-grid">
         <div class="form-group full"><label>Nome completo *</label><input id="u-nome" placeholder="Ex: João Silva"></div>
         <div class="form-group"><label>E-mail *</label><input id="u-email" type="email" placeholder="email@exemplo.com"></div>
+        <div class="form-group"><label>Senha de acesso</label><input id="u-senha" type="password" placeholder="Mín. 6 caracteres"></div>
         <div class="form-group"><label>WhatsApp</label><input id="u-whats" placeholder="13999999999"></div>
         <div class="form-group"><label>Cargo / Função</label><select id="u-cargo"><option value="vendedor">Vendedor</option><option value="gerente">Gerente Comercial</option><option value="sdr">SDR / Pré-venda</option><option value="cs">Customer Success</option><option value="admin">Administrador</option><option value="socio">Sócio / Diretor</option></select></div>
         <div class="form-group"><label>Meta mensal (R$)</label><input id="u-meta" type="number" placeholder="5000" min="0"></div>
@@ -305,11 +311,44 @@ const RESEND='re_XkRB47R9_PkrxabbMvVGpMLScdBMfs7iJ';
 const PABLO_WPP='5513992097189';
 const PABLO_EMAIL='pabloangelyscamilaoficial@gmail.com';
 const sb=supabase.createClient(SB_URL,SB_KEY);
-const SENHA='4P@admin2025';
-let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null;
+let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null;
 
-function doLogin(){if(document.getElementById('login-pass').value===SENHA){document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='flex';goTo('dashboard');}else document.getElementById('login-err').textContent='Senha incorreta.';}
-function doLogout(){document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('login-pass').value='';}
+async function doLogin(){
+  const email=(document.getElementById('login-email').value||'').trim().toLowerCase();
+  const senha=document.getElementById('login-pass').value;
+  const errEl=document.getElementById('login-err');
+  errEl.textContent='';
+  if(!email||!senha){errEl.textContent='Preencha e-mail e senha.';return;}
+  if(email==='admin@4ppatrimonial.com.br'&&senha==='4P@admin2025'){
+    currentUser={id:'master',nome:'Pablo Dantas',email,cargo:'admin'};
+    entrarNoApp();return;
+  }
+  const{data:u}=await sb.from('crm_usuarios').select('*').eq('email',email).eq('senha',senha).eq('ativo',true).maybeSingle();
+  if(!u){errEl.textContent='E-mail ou senha incorretos.';return;}
+  currentUser={id:u.id,nome:u.nome,email:u.email,cargo:u.cargo||'vendedor'};
+  entrarNoApp();
+}
+function entrarNoApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  updateSidebarUser();
+  goTo('dashboard');
+}
+function updateSidebarUser(){
+  const el=document.getElementById('sidebar-user-info');
+  if(!el||!currentUser)return;
+  const labels={admin:'Admin',gerente:'Gerente',vendedor:'Vendedor',sdr:'SDR',cs:'CS',socio:'Sócio'};
+  const cargo=labels[currentUser.cargo]||currentUser.cargo;
+  el.innerHTML=`<div style="width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,0.2);border:1px solid #9a7a35;display:flex;align-items:center;justify-content:center;font-weight:700;color:#c9a84c;font-size:13px;flex-shrink:0">${(currentUser.nome||'?')[0].toUpperCase()}</div><div><div style="font-size:12px;font-weight:600;color:#f0f0f0">${currentUser.nome}</div><div style="font-size:10px;color:#888">${cargo}</div></div>`;
+}
+function doLogout(){
+  currentUser=null;
+  document.getElementById('sidebar-user-info').innerHTML='';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-email').value='';
+  document.getElementById('login-pass').value='';
+}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
@@ -880,7 +919,7 @@ async function renderConfig(){
 let editingUsuarioId=null;
 function abrirNovoUsuario(){
   editingUsuarioId=null;
-  ['nome','email','whats','meta'].forEach(f=>document.getElementById('u-'+f).value='');
+  ['nome','email','whats','meta','senha'].forEach(f=>document.getElementById('u-'+f).value='');
   document.getElementById('u-cargo').value='vendedor';
   document.getElementById('modal-usuario-title').textContent='Novo Membro da Equipe';
   openModal('modal-usuario');
@@ -895,6 +934,7 @@ function editarUsuario(id){
     document.getElementById('u-whats').value=u.whatsapp||'';
     document.getElementById('u-cargo').value=u.cargo||'vendedor';
     document.getElementById('u-meta').value=u.meta_mensal||0;
+    document.getElementById('u-senha').value='';
     document.getElementById('modal-usuario-title').textContent='Editar Membro';
     openModal('modal-usuario');
   });
@@ -903,11 +943,14 @@ async function salvarUsuario(){
   const nome=document.getElementById('u-nome').value.trim();
   const email=document.getElementById('u-email').value.trim();
   if(!nome||!email){toast('Nome e e-mail são obrigatórios','error');return;}
+  const senhaVal=document.getElementById('u-senha').value.trim();
   const payload={nome,email,whatsapp:document.getElementById('u-whats').value.trim(),cargo:document.getElementById('u-cargo').value,meta_mensal:parseFloat(document.getElementById('u-meta').value)||0,ativo:true};
   let error;
   if(editingUsuarioId){
+    if(senhaVal)payload.senha=senhaVal;
     ({error}=await sb.from('crm_usuarios').update(payload).eq('id',editingUsuarioId));
   }else{
+    payload.senha=senhaVal||'4P@2025';
     payload.criado_em=new Date().toISOString();
     ({error}=await sb.from('crm_usuarios').insert(payload));
   }
