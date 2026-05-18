@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1602962360794047');fbq('track','PageView');</script>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1602962360794047&ev=PageView&noscript=1"/></noscript>
 <style>
@@ -320,7 +321,7 @@ const RESEND='re_XkRB47R9_PkrxabbMvVGpMLScdBMfs7iJ';
 const PABLO_WPP='5513992097189';
 const PABLO_EMAIL='pabloangelyscamilaoficial@gmail.com';
 const sb=supabase.createClient(SB_URL,SB_KEY);
-let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null;
+let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null,_relLeads=[],_importHeaders=[],_importRows=[],_chatInterval=null,_chatOpen=false;
 
 const TEMPLATES_WPP={
   primeiro_contato:{label:'Primeiro Contato',texto:l=>`Olá ${l.nome||''}! 👋\n\nSou da equipe 4P Patrimonial. Identificamos seu interesse em investimento imobiliário.\n\nPodemos agendar uma conversa rápida para apresentar nossas oportunidades exclusivas?\n\nAguardo! 🏆`},
@@ -564,6 +565,8 @@ function entrarNoApp(){
   verificarAlertas();
   atualizarTemperaturasTodosLeads();
   if(!window._alertaInterval)window._alertaInterval=setInterval(verificarAlertas,300000);
+  atualizarBadgeChat();
+  setInterval(atualizarBadgeChat,30000);
 }
 function updateSidebarUser(){
   const el=document.getElementById('sidebar-user-info');
@@ -614,7 +617,7 @@ function goTo(page){
   const titles={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relatórios',metas:'Metas & Comissões',config:'Configurações'};
   document.getElementById('page-title').textContent=titles[page]||page;
   const ha=document.getElementById('header-action');ha.innerHTML='';
-  if(page==='leads')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoLead()">+ Novo Lead</button>';
+  if(page==='leads'){ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoLead()">+ Novo Lead</button>';if(isAdmin())ha.innerHTML+=' <button class="btn btn-ghost" onclick="abrirImportar()" style="margin-left:4px">📥 Importar</button> <button class="btn btn-ghost" onclick="exportarLeadsExcel()" style="margin-left:4px">📤 Exportar</button>';}
   if(page==='tarefas'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovaTarefa()">+ Nova Tarefa</button>';
   if(page==='tickets'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoTicket()">+ Novo Ticket</button>';
   if(page==='config'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoUsuario()">+ Novo Usuário</button>';
@@ -1059,10 +1062,11 @@ function excluirTicket(id){confirmar('Excluir este ticket?',async()=>{const{erro
 // RELATÓRIOS
 async function renderRelatorios(){
   const c=document.getElementById('page-content');
-  c.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:24px">
+  c.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;align-items:center" id="rel-btns">
     <button class="btn ${relPeriodo===7?'btn-gold':'btn-ghost'}" onclick="setPeriodo(7)">7 dias</button>
     <button class="btn ${relPeriodo===30?'btn-gold':'btn-ghost'}" onclick="setPeriodo(30)">30 dias</button>
     <button class="btn ${relPeriodo===90?'btn-gold':'btn-ghost'}" onclick="setPeriodo(90)">90 dias</button>
+    ${isAdmin()?'<div style="flex:1"></div><button class="btn btn-ghost" onclick="exportarRelatorioExcel()">📥 Exportar Excel</button><button class="btn btn-ghost" onclick="exportarRelatorioPDF()" style="margin-left:4px">📄 Exportar PDF</button>':''}
   </div><div id="rel-content"><div class="loading"><span class="spinner"></span> Carregando...</div></div>`;
   loadRelatorios();
 }
@@ -1070,7 +1074,7 @@ function setPeriodo(p){relPeriodo=p;renderRelatorios();}
 async function loadRelatorios(){
   const desde=new Date();desde.setDate(desde.getDate()-relPeriodo);
   const{data:leads}=await sb.from('crm_leads').select('*').gte('criado_em',desde.toISOString());
-  const all=leads||[];
+  const all=leads||[];_relLeads=all;
   const fech=all.filter(l=>l.etapa==='fechado').length;
   const total=all.length;const conv=total?Math.round(fech/total*100):0;
   const etapas2=['lead','contato','qualificado','proposta','negociacao','fechado','perdido'];
@@ -1364,7 +1368,254 @@ function excluirUsuario(id,nome){
     toast('Membro removido!');renderConfig();
   });
 }
+
+// ── IMPORTAR LEADS ──
+function abrirImportar(){
+  document.getElementById('import-preview').innerHTML='';
+  document.getElementById('import-file').value='';
+  openModal('modal-importar');
+}
+function downloadModeloCSV(){
+  const csv='nome,whatsapp,email,capital_disponivel,cidade,origem,notas,responsavel\nExemplo Silva,11999999999,exemplo@email.com,R$150k a R$300k,São Paulo,Indicação,,João';
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='modelo_leads_4p.csv';a.click();
+}
+function handleImportDrop(e){e.preventDefault();e.currentTarget.style.borderColor='#2a2a2a';const f=e.dataTransfer.files[0];if(f)processImportFile(f);}
+function handleImportFile(e){const f=e.target.files[0];if(f)processImportFile(f);}
+function processImportFile(file){
+  document.getElementById('import-preview').innerHTML='<div class="loading"><span class="spinner"></span> Lendo arquivo...</div>';
+  const ext=file.name.split('.').pop().toLowerCase();
+  const reader=new FileReader();
+  if(ext==='csv'){
+    reader.onload=ev=>{
+      const lines=ev.target.result.split('\n').filter(l=>l.trim());
+      const parseCSVLine=l=>{const cols=[];let cur='';let inQ=false;for(const c of l){if(c==='"')inQ=!inQ;else if(c===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());return cols.map(c=>c.replace(/^"|"$/g,''));};
+      const headers=parseCSVLine(lines[0]);
+      const rows=lines.slice(1).map(parseCSVLine).filter(r=>r.some(c=>c));
+      mostrarPreviewImport(headers,rows,file.name);
+    };
+    reader.readAsText(file,'UTF-8');
+  }else{
+    reader.onload=ev=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        const headers=(data[0]||[]).map(h=>String(h).trim());
+        const rows=data.slice(1).filter(r=>r.some(c=>String(c).trim()));
+        mostrarPreviewImport(headers,rows,file.name);
+      }catch(e){document.getElementById('import-preview').innerHTML='<div style="color:#ef4444;padding:12px">Erro ao ler arquivo: '+e.message+'</div>';}
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+const _CRM_CAMPOS=['ignore','nome','whatsapp','email','capital_disponivel','cidade','origem','notas','responsavel'];
+const _CRM_LABELS={ignore:'— Ignorar —',nome:'Nome',whatsapp:'WhatsApp',email:'E-mail',capital_disponivel:'Capital',cidade:'Cidade',origem:'Origem',notas:'Notas',responsavel:'Responsável'};
+function _autoDetect(h){
+  const hn=(h||'').toLowerCase().replace(/[^a-z]/g,'');
+  if(hn.includes('nome'))return'nome';
+  if(hn.includes('whats')||hn.includes('tel')||hn.includes('fone')||hn.includes('celular'))return'whatsapp';
+  if(hn.includes('mail'))return'email';
+  if(hn.includes('capital')||hn.includes('investimento')||hn.includes('patrimonio'))return'capital_disponivel';
+  if(hn.includes('cidade')||hn.includes('city'))return'cidade';
+  if(hn.includes('origem')||hn.includes('source')||hn.includes('canal'))return'origem';
+  if(hn.includes('nota')||hn.includes('obs')||hn.includes('comment'))return'notas';
+  if(hn.includes('respons')||hn.includes('vendedor')||hn.includes('consultor'))return'responsavel';
+  return'ignore';
+}
+function mostrarPreviewImport(headers,rows,filename){
+  _importHeaders=headers;_importRows=rows;
+  const prev=document.getElementById('import-preview');
+  prev.innerHTML=`
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">📄 <b>${filename}</b> — ${rows.length} linha(s) encontrada(s)</div>
+    <div style="overflow-x:auto;margin-bottom:16px;border:1px solid #2a2a2a;border-radius:8px">
+      <table style="font-size:12px;min-width:100%">
+        <thead><tr>${headers.map(h=>`<th style="white-space:nowrap;padding:8px">${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows.slice(0,5).map(r=>`<tr>${headers.map((_,i)=>`<td style="white-space:nowrap;color:var(--text-muted);padding:6px 8px">${r[i]||''}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Mapear colunas do arquivo → campos do CRM</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:16px">
+      ${headers.map((h,i)=>`<div style="background:#181818;border:1px solid #2a2a2a;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:600;color:var(--gold);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${h}">${h}</div>
+        <select id="map-col-${i}" style="width:100%;background:#111;border:1px solid #2a2a2a;border-radius:6px;color:var(--text);padding:6px 4px;font-size:12px;font-family:var(--font)">
+          ${_CRM_CAMPOS.map(c=>`<option value="${c}"${_autoDetect(h)===c?' selected':''}>${_CRM_LABELS[c]}</option>`).join('')}
+        </select>
+      </div>`).join('')}
+    </div>
+    <button class="btn btn-gold" style="width:100%" onclick="importarLeads()">📥 Importar ${rows.length} leads</button>
+    <div id="import-progress" style="margin-top:12px;display:none">
+      <div style="background:rgba(255,255,255,0.05);border-radius:4px;height:8px;overflow:hidden">
+        <div id="import-progress-bar" style="height:100%;width:0%;background:var(--gold);border-radius:4px;transition:width .3s"></div>
+      </div>
+      <div id="import-progress-text" style="font-size:11px;color:var(--text-muted);margin-top:4px;text-align:center">Aguardando...</div>
+    </div>`;
+}
+async function importarLeads(){
+  if(!_importRows.length)return;
+  const mapping=_importHeaders.map((_,i)=>document.getElementById('map-col-'+i)?.value||'ignore');
+  if(!mapping.includes('nome')){toast('Mapeie ao menos a coluna Nome','error');return;}
+  const leads=_importRows.map(row=>{
+    const obj={};
+    mapping.forEach((campo,i)=>{if(campo!=='ignore'&&row[i]!=null&&String(row[i]).trim())obj[campo]=String(row[i]).trim();});
+    obj.etapa=obj.etapa||'lead';obj.score=0;
+    return obj;
+  }).filter(l=>l.nome);
+  if(!leads.length){toast('Nenhum lead válido encontrado (coluna Nome vazia?)','error');return;}
+  document.getElementById('import-progress').style.display='block';
+  let ok=0;const tam=20;
+  for(let i=0;i<leads.length;i+=tam){
+    const batch=leads.slice(i,i+tam);
+    const{error}=await sb.from('crm_leads').insert(batch);
+    if(!error)ok+=batch.length;
+    const pct=Math.round((i+batch.length)/leads.length*100);
+    document.getElementById('import-progress-bar').style.width=pct+'%';
+    document.getElementById('import-progress-text').textContent=ok+' / '+leads.length+' importados';
+  }
+  toast(ok+' lead(s) importado(s) com sucesso!');
+  closeModal('modal-importar');
+  _importRows=[];_importHeaders=[];
+  renderLeads();
+}
+
+// ── EXPORTAR LEADS (página Leads) ──
+function exportarLeadsExcel(){
+  if(typeof XLSX==='undefined'){toast('Biblioteca XLSX não carregada','error');return;}
+  const rows=(allLeads||[]).map(l=>({
+    Nome:l.nome||'',WhatsApp:l.whatsapp||'',Email:l.email||'',
+    Capital:l.capital_disponivel||'',Cidade:l.cidade||'',
+    Etapa:l.etapa||'',Temperatura:getTemperatura(calcularScore(l)).label,
+    Responsavel:l.responsavel||'',Origem:l.origem||'',
+    Score:calcularScore(l),Cadastrado:fmtDate(l.criado_em)
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Leads');
+  XLSX.writeFile(wb,'4P_Leads_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.xlsx');
+}
+
+// ── EXPORTAR RELATÓRIO EXCEL ──
+function exportarRelatorioExcel(){
+  if(typeof XLSX==='undefined'){toast('Biblioteca XLSX não carregada','error');return;}
+  const all=_relLeads||[];
+  const rows=all.map(l=>({
+    Nome:l.nome||'',WhatsApp:l.whatsapp||'',Email:l.email||'',
+    Capital:l.capital_disponivel||'',Cidade:l.cidade||'',
+    Etapa:l.etapa||'',Temperatura:getTemperatura(calcularScore(l)).label,
+    Responsavel:l.responsavel||'',Origem:l.origem||'',
+    Score:calcularScore(l),Cadastrado:fmtDate(l.criado_em)
+  }));
+  const fech=all.filter(l=>l.etapa==='fechado').length;
+  const resumo=[
+    {'Métrica':'Total de Leads','Valor':all.length},
+    {'Métrica':'Fechados','Valor':fech},
+    {'Métrica':'Taxa de Conversão','Valor':(all.length?Math.round(fech/all.length*100):0)+'%'},
+    {'Métrica':'Perdidos','Valor':all.filter(l=>l.etapa==='perdido').length},
+    {'Métrica':'Em Negociação','Valor':all.filter(l=>['proposta','negociacao'].includes(l.etapa)).length},
+    {'Métrica':'Receita Fechada Est.','Valor':fmtMoeda(all.filter(l=>l.etapa==='fechado').reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0))},
+    {'Métrica':'Pipeline Est.','Valor':fmtMoeda(all.filter(l=>['proposta','negociacao'].includes(l.etapa)).reduce((s,l)=>s+calcularReceitaMedia(l.capital_disponivel),0))},
+  ];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Leads');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(resumo),'Resumo');
+  XLSX.writeFile(wb,'4P_Patrimonial_Relatorio_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.xlsx');
+}
+
+// ── EXPORTAR RELATÓRIO PDF ──
+function exportarRelatorioPDF(){
+  const old=document.getElementById('_print_tmp');if(old)old.remove();
+  const s=document.createElement('style');s.id='_print_tmp';s.media='print';
+  s.textContent='#sidebar,#header-action,.bell-btn,.hamburger,#rel-btns,#chat-btn,#chat-drawer{display:none!important;}#main{margin-left:0!important;}.page-header{position:static!important;padding:8px 16px!important;}.page-content{padding:8px 16px!important;}canvas{max-width:100%!important;}.dash-card,.stat-card{break-inside:avoid;page-break-inside:avoid;}';
+  document.head.appendChild(s);
+  window.print();
+  setTimeout(()=>s.remove(),3000);
+}
+
+// ── CHAT INTERNO ──
+function abrirChat(){
+  _chatOpen=true;
+  document.getElementById('chat-drawer').style.display='flex';
+  document.getElementById('chat-btn').style.display='none';
+  localStorage.setItem('chat_last_read',new Date().toISOString());
+  atualizarBadgeChat();
+  carregarMensagens();
+  if(!_chatInterval)_chatInterval=setInterval(()=>{if(_chatOpen)carregarMensagens();},10000);
+}
+function fecharChat(){
+  _chatOpen=false;
+  document.getElementById('chat-drawer').style.display='none';
+  document.getElementById('chat-btn').style.display='flex';
+  if(_chatInterval){clearInterval(_chatInterval);_chatInterval=null;}
+}
+async function carregarMensagens(){
+  const{data:msgs}=await sb.from('crm_chat').select('*').order('criado_em',{ascending:true}).limit(50);
+  renderMensagens(msgs||[]);
+}
+function renderMensagens(msgs){
+  const el=document.getElementById('chat-msgs');if(!el)return;
+  let lastDate='';
+  el.innerHTML=msgs.map(m=>{
+    const minha=currentUser&&m.usuario_nome===currentUser.nome;
+    const d=new Date(m.criado_em);
+    const ds=d.toLocaleDateString('pt-BR');
+    const hoje=new Date().toLocaleDateString('pt-BR');
+    const ontem=new Date(Date.now()-86400000).toLocaleDateString('pt-BR');
+    let sep='';
+    if(ds!==lastDate){lastDate=ds;const label=ds===hoje?'Hoje':ds===ontem?'Ontem':ds;sep=`<div style="text-align:center;padding:8px 0;font-size:10px;color:var(--text-muted);letter-spacing:1px">${label}</div>`;}
+    const hora=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const ini=(m.usuario_nome||'?')[0].toUpperCase();
+    return`${sep}<div style="display:flex;flex-direction:column;align-items:${minha?'flex-end':'flex-start'};margin-bottom:10px;padding:0 10px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;${minha?'flex-direction:row-reverse':''}">
+        <div style="width:22px;height:22px;border-radius:50%;background:${minha?'rgba(201,168,76,0.3)':'rgba(255,255,255,0.08)'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${minha?'#c9a84c':'#888'};flex-shrink:0">${ini}</div>
+        <span style="font-size:10px;color:var(--text-muted)">${minha?hora:m.usuario_nome+' · '+hora}</span>
+      </div>
+      <div style="max-width:82%;padding:8px 12px;border-radius:${minha?'12px 4px 12px 12px':'4px 12px 12px 12px'};background:${minha?'rgba(201,168,76,0.15)':'#1a1a1a'};border:1px solid ${minha?'rgba(201,168,76,0.3)':'#2a2a2a'};font-size:13px;line-height:1.5;word-break:break-word">${m.mensagem}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop=el.scrollHeight;
+}
+async function enviarMensagem(){
+  const inp=document.getElementById('chat-input');
+  const txt=(inp?.value||'').trim();if(!txt)return;
+  inp.value='';
+  const{error}=await sb.from('crm_chat').insert({usuario_nome:currentUser?.nome||'Usuário',usuario_id:currentUser?.id||'master',mensagem:txt});
+  if(error){toast('Erro ao enviar mensagem','error');return;}
+  localStorage.setItem('chat_last_read',new Date().toISOString());
+  carregarMensagens();
+}
+async function atualizarBadgeChat(){
+  if(!currentUser)return;
+  const lastRead=localStorage.getItem('chat_last_read')||new Date(0).toISOString();
+  const{count}=await sb.from('crm_chat').select('id',{count:'exact',head:true}).gt('criado_em',lastRead).neq('usuario_nome',currentUser.nome||'');
+  const badge=document.getElementById('chat-badge');
+  if(badge){badge.textContent=count||0;badge.style.display=count?'flex':'none';}
+}
 </script>
+
+<!-- MODAL IMPORTAR LEADS -->
+<div class="modal-overlay" id="modal-importar">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <h2>📥 Importar Leads</h2>
+      <button class="modal-close" onclick="closeModal('modal-importar')">×</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:13px;color:var(--text-dim)">Importe leads via Excel (.xlsx) ou CSV</div>
+        <button class="btn btn-ghost" style="font-size:12px" onclick="downloadModeloCSV()">⬇️ Baixar modelo CSV</button>
+      </div>
+      <div style="border:2px dashed #2a2a2a;border-radius:10px;padding:40px;text-align:center;cursor:pointer;transition:border-color .2s"
+        ondragover="event.preventDefault();this.style.borderColor='#c9a84c'"
+        ondragleave="this.style.borderColor='#2a2a2a'"
+        ondrop="handleImportDrop(event)">
+        <div style="font-size:40px;margin-bottom:12px">📊</div>
+        <div style="font-size:14px;color:var(--text-dim);margin-bottom:16px">Arraste seu arquivo Excel ou CSV aqui</div>
+        <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">Selecionar arquivo</button>
+        <input type="file" id="import-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleImportFile(event)">
+      </div>
+      <div id="import-preview" style="margin-top:16px"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-importar')">Fechar</button></div>
+  </div>
+</div>
 
 <!-- MODAL TEMPLATES WPP -->
 <div class="modal-overlay" id="modal-templates-wpp">
@@ -1412,5 +1663,23 @@ function excluirUsuario(id,nome){
   <div id="alertas-lista" style="flex:1;overflow-y:auto;padding:12px"></div>
 </div>
 <div id="drawer-overlay" style="display:none;position:fixed;inset:0;z-index:299;background:rgba(0,0,0,.4)" onclick="fecharDrawerAlertas()"></div>
+
+<!-- CHAT FLUTUANTE -->
+<button id="chat-btn" onclick="abrirChat()" style="position:fixed;bottom:24px;right:24px;z-index:500;width:52px;height:52px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(201,168,76,0.4);transition:transform .15s" onmouseenter="this.style.transform='scale(1.1)'" onmouseleave="this.style.transform='scale(1)'">
+  💬
+  <span id="chat-badge" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:50%;width:18px;height:18px;display:none;align-items:center;justify-content:center;border:2px solid var(--bg)">0</span>
+</button>
+
+<div id="chat-drawer" style="position:fixed;right:0;bottom:0;width:360px;height:500px;background:#111111;border:1px solid #2a2a2a;border-radius:12px 0 0 0;z-index:499;display:none;flex-direction:column;box-shadow:-4px -4px 24px rgba(0,0,0,.5)">
+  <div style="padding:14px 16px;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div style="font-size:14px;font-weight:700;font-family:var(--display)">💬 Chat da Equipe</div>
+    <button class="modal-close" onclick="fecharChat()">×</button>
+  </div>
+  <div id="chat-msgs" style="flex:1;overflow-y:auto;padding:8px 0"></div>
+  <div style="border-top:1px solid #2a2a2a;padding:10px;display:flex;gap:8px;flex-shrink:0">
+    <input id="chat-input" placeholder="Mensagem..." style="flex:1;background:#181818;border:1px solid #2a2a2a;border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='#c9a84c'" onblur="this.style.borderColor='#2a2a2a'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensagem()}">
+    <button class="btn btn-gold" onclick="enviarMensagem()" style="padding:8px 14px;font-size:16px">➤</button>
+  </div>
+</div>
 </body>
 </html>
