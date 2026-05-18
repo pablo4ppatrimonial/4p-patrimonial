@@ -193,6 +193,11 @@ input[type=checkbox].cb-lead{width:15px;height:15px;accent-color:var(--gold);cur
 .prob-alto{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.35);}
 .prob-medio{background:rgba(234,179,8,0.15);color:#fbbf24;border:1px solid rgba(234,179,8,0.35);}
 .prob-baixo{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.35);}
+@keyframes piscar{0%,100%{opacity:1}50%{opacity:0.25}}
+.nav-badge-aniv{display:inline-flex;align-items:center;margin-left:4px;font-size:13px;animation:piscar 1.4s ease-in-out infinite;}
+.nps-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:all .15s;user-select:none;font-family:var(--mono);}
+.nps-btn:hover{opacity:.8;}
+.nps-btn.selected{outline:3px solid currentColor;transform:scale(1.12);}
 </style>
 </head>
 <body>
@@ -211,7 +216,7 @@ input[type=checkbox].cb-lead{width:15px;height:15px;accent-color:var(--gold);cur
   <div class="sidebar-shimmer"></div>
   <div class="sidebar-logo"><strong>4P Patrimonial</strong><span>CRM COMERCIAL</span></div>
   <div class="sidebar-nav">
-    <div class="nav-item active" onclick="goTo('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
+    <div class="nav-item active" onclick="goTo('dashboard')"><span class="nav-icon">📊</span> Dashboard <span class="nav-badge-aniv" id="badge-aniversario" style="display:none">🎂</span></div>
     <div class="nav-item" onclick="goTo('leads')"><span class="nav-icon">👥</span> Leads</div>
     <div class="nav-item" onclick="goTo('pipeline')"><span class="nav-icon">🎯</span> Pipeline</div>
     <div class="nav-item" onclick="goTo('agenda')"><span class="nav-icon">📅</span> Agenda <span class="nav-badge" id="badge-agenda" style="display:none">0</span></div>
@@ -262,6 +267,8 @@ input[type=checkbox].cb-lead{width:15px;height:15px;accent-color:var(--gold);cur
           <select id="f-origem"><option value="site">Site</option><option value="meta_ads">Meta Ads</option><option value="instagram">Instagram</option><option value="indicacao">Indicação</option><option value="whatsapp">WhatsApp</option><option value="evento">Evento</option><option value="outro">Outro</option></select>
         </div>
         <div class="form-group full"><label>Notas</label><textarea id="f-notas" placeholder="Observações sobre o lead..."></textarea></div>
+        <div class="form-group"><label>Data de Nascimento</label><input id="f-nascimento" type="date"></div>
+        <div class="form-group"><label>Indicado por</label><input id="f-indicado-por" placeholder="Nome de quem indicou"></div>
       </div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-lead')">Cancelar</button><button class="btn btn-gold" onclick="salvarLead()">Salvar Lead</button></div>
@@ -349,7 +356,7 @@ const RESEND='re_XkRB47R9_PkrxabbMvVGpMLScdBMfs7iJ';
 const PABLO_WPP='5513992097189';
 const PABLO_EMAIL='pabloangelyscamilaoficial@gmail.com';
 const sb=supabase.createClient(SB_URL,SB_KEY);
-let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null,_relLeads=[],_importHeaders=[],_importRows=[],_chatInterval=null,_chatOpen=false,leadsSelecionados=[],_agendaMes=new Date().getMonth(),_agendaAno=new Date().getFullYear(),_agendaVista='mensal',_reunioesCache=[],_ligacaoLeadId=null,_propostaLeadId=null,_propostaLead=null,_pendingPerdaCallback=null;
+let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null,_relLeads=[],_importHeaders=[],_importRows=[],_chatInterval=null,_chatOpen=false,leadsSelecionados=[],_agendaMes=new Date().getMonth(),_agendaAno=new Date().getFullYear(),_agendaVista='mensal',_reunioesCache=[],_ligacaoLeadId=null,_propostaLeadId=null,_propostaLead=null,_pendingPerdaCallback=null,_npsLeadId=null;
 
 const TEMPLATES_WPP={
   primeiro_contato:{label:'Primeiro Contato',texto:l=>`Olá ${l.nome||''}! 👋\n\nSou da equipe 4P Patrimonial. Identificamos seu interesse em investimento imobiliário.\n\nPodemos agendar uma conversa rápida para apresentar nossas oportunidades exclusivas?\n\nAguardo! 🏆`},
@@ -454,6 +461,7 @@ async function atualizarEtapaLead(id,novaEtapa,motivoPerdido=null){
   const{error}=await sb.from('crm_leads').update(payload).eq('id',id);
   if(error){toast('Erro: '+error.message,'error');return false;}
   if(novaEtapa==='fechado'&&typeof fbq!=='undefined')fbq('track','Purchase',{value:5000,currency:'BRL'});
+  if(novaEtapa==='fechado'&&etapaAnterior!=='fechado')triggerFechadoActions(id,{...lead,...payload});
   const ativTipo=motivoPerdido?'perda':'etapa';
   const ativDesc=motivoPerdido?'Lead marcado como perdido. Motivo: '+motivoPerdido:'Etapa alterada para: '+etapaLabel[novaEtapa];
   registrarAtividade(id,ativTipo,ativDesc);
@@ -680,8 +688,8 @@ function entrarNoApp(){
   verificarAlertas();
   atualizarTemperaturasTodosLeads();
   if(!window._alertaInterval)window._alertaInterval=setInterval(verificarAlertas,300000);
-  atualizarBadgeChat();atualizarBadgeAgenda();
-  setInterval(atualizarBadgeChat,30000);setInterval(atualizarBadgeAgenda,60000);
+  atualizarBadgeChat();atualizarBadgeAgenda();atualizarBadgeAniversario();
+  setInterval(atualizarBadgeChat,30000);setInterval(atualizarBadgeAgenda,60000);setInterval(atualizarBadgeAniversario,3600000);
 }
 function updateSidebarUser(){
   const el=document.getElementById('sidebar-user-info');
@@ -754,6 +762,13 @@ async function renderDashboard(){
   const leads=L||[],tarefas=T||[],tickets=TK||[];
   if(currentUser&&!isAdmin()&&['vendedor','sdr','cs'].includes(currentUser.cargo)){await renderDashboardVendedor(c,leads,tarefas);return;}
   const hotLeads=leads.filter(l=>calcularScore(l)>=70).sort((a,b)=>calcularScore(b)-calcularScore(a)).slice(0,5);
+  // Aniversariantes próximos 7 dias
+  const anivSemana=leads.filter(l=>{if(!l.data_nascimento)return false;const r=calcularAniversario(l.data_nascimento);return r.hojeFlag||(r.diasAte>0&&r.diasAte<=7);}).sort((a,b)=>{const ra=calcularAniversario(a.data_nascimento),rb=calcularAniversario(b.data_nascimento);return(ra.hojeFlag?0:ra.diasAte)-(rb.hojeFlag?0:rb.diasAte);});
+  // Top indicadores do mês (últimos 30 dias)
+  const _30dAgo=new Date();_30dAgo.setDate(_30dAgo.getDate()-30);const _30dStr=_30dAgo.toISOString();
+  const leadsComIndicacao=leads.filter(l=>l.indicado_por&&l.criado_em>=_30dStr);
+  const topIndMap={};leadsComIndicacao.forEach(l=>{if(!topIndMap[l.indicado_por])topIndMap[l.indicado_por]={nome:l.indicado_por,qtd:0,fechadas:0};topIndMap[l.indicado_por].qtd++;if(l.etapa==='fechado')topIndMap[l.indicado_por].fechadas++;});
+  const topInd=Object.values(topIndMap).sort((a,b)=>b.qtd-a.qtd).slice(0,5);
   const _agora=new Date();const _ha7d=new Date(_agora.getTime()-7*86400000).toISOString();
   const atencaoLeads=leads.filter(l=>{const hasVenc=l.proximo_followup&&l.proximo_followup<_agora.toISOString();const uc=l.ultimo_contato||l.criado_em;return(hasVenc||!uc||uc<_ha7d)&&l.etapa!=='perdido'&&l.etapa!=='fechado';}).slice(0,5);
   const hoje=new Date().toISOString().slice(0,10);
@@ -776,6 +791,8 @@ async function renderDashboard(){
       <div class="stat-card"><div class="stat-card-icon">🎫</div><div class="stat-label">Tickets Abertos</div><div class="stat-value red">${tickets.filter(t=>t.status==='aberto').length}</div></div>
       <div class="stat-card" style="border-color:rgba(239,68,68,0.3)"><div class="stat-card-icon">🔥</div><div class="stat-label">Leads Quentes</div><div class="stat-value red">${leads.filter(l=>calcularScore(l)>=70).length}</div></div>
     </div>
+    ${anivSemana.length?`<div class="dash-card" style="background:linear-gradient(135deg,#111 0%,rgba(244,114,182,0.05) 100%);border:1px solid rgba(244,114,182,0.25);margin-bottom:16px"><div class="dash-card-title" style="color:#f472b6">🎂 Aniversariantes da Semana</div>${anivSemana.map(l=>{const r=calcularAniversario(l.data_nascimento);return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="width:32px;height:32px;border-radius:50%;background:rgba(244,114,182,0.2);border:1px solid rgba(244,114,182,0.4);display:flex;align-items:center;justify-content:center;font-weight:700;color:#f472b6;font-size:13px;flex-shrink:0">${(l.nome||'?')[0].toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.nome}</div><div style="font-size:11px;color:var(--text-muted)">${r.hojeFlag?'🎂 Hoje! '+r.idade+' anos':'Em '+r.diasAte+' dia'+(r.diasAte>1?'s':'')+' — '+r.idade+' anos'}</div></div><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;color:var(--green);border-color:rgba(34,197,94,.4);flex-shrink:0" onclick="enviarParabens('${l.id}')">🎉 Parabéns</button></div>`;}).join('')}</div>`:''}
+    ${topInd.length?`<div class="dash-card" style="background:linear-gradient(135deg,#111 0%,rgba(201,168,76,0.05) 100%);border:1px solid rgba(201,168,76,0.2);margin-bottom:16px"><div class="dash-card-title">🤝 Top Indicadores do Mês</div>${topInd.map((ind,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="width:28px;text-align:center;font-size:16px;flex-shrink:0">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'🏅'}</div><div style="flex:1;font-weight:600;font-size:13px">${ind.nome}</div><div style="font-size:11px;color:var(--text-muted)"><span style="color:var(--gold);font-weight:700">${ind.qtd}</span> indicações · <span style="color:#22c55e;font-weight:700">${ind.fechadas}</span> fechadas</div></div>`).join('')}</div>`:''}
     <div class="chart-wrap">
       <div class="chart-title">Leads por dia — últimos 7 dias</div>
       <div style="position:relative;height:200px"><canvas id="chart-leads"></canvas></div>
@@ -928,7 +945,7 @@ function renderLeadsTable(leads,s='',e='',k=''){
   if(e)f=f.filter(l=>l.etapa===e);if(k)f=f.filter(l=>l.capital_disponivel===k);
   const el=document.getElementById('leads-table');if(!el)return;
   if(!f.length){el.innerHTML='<div class="empty"><div class="empty-icon">👥</div>Nenhum lead encontrado</div>';return;}
-  el.innerHTML='<table><thead><tr><th style="width:36px"><input type="checkbox" class="cb-lead" id="cb-todos" onchange="toggleTodosSel(this.checked)" title="Selecionar todos"></th><th>Nome / E-mail</th><th>WhatsApp</th><th>Capital</th><th>Cidade</th><th>Etapa</th><th>Temp.</th><th>PROB.</th><th>Follow-Up</th><th>Responsável</th><th>Origem</th><th>Ações</th></tr></thead><tbody>'+
+  el.innerHTML='<table><thead><tr><th style="width:36px"><input type="checkbox" class="cb-lead" id="cb-todos" onchange="toggleTodosSel(this.checked)" title="Selecionar todos"></th><th>Nome / E-mail</th><th>WhatsApp</th><th>Capital</th><th>Cidade</th><th>Etapa</th><th>Temp.</th><th>PROB.</th><th>ANIV.</th><th>Follow-Up</th><th>Responsável</th><th>Origem</th><th>Ações</th></tr></thead><tbody>'+
   f.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);const sel=leadsSelecionados.includes(l.id);const prob=calcularProbabilidade(l);const probCls=prob>=60?'prob-alto':prob>=30?'prob-medio':'prob-baixo';return`<tr id="row-${l.id}" style="${sel?'background:rgba(201,168,76,0.08);border-left:3px solid var(--gold)':sc>=70?'background:rgba(239,68,68,0.05);border-left:3px solid #ef4444':'border-left:2px solid transparent'}">
     <td style="text-align:center"><input type="checkbox" class="cb-lead" ${sel?'checked':''} onchange="toggleLeadSel('${l.id}',this.checked)"></td>
     <td><div class="td-name">${l.nome||'—'}</div><div class="td-sub">${l.email||''}</div></td>
@@ -937,6 +954,7 @@ function renderLeadsTable(leads,s='',e='',k=''){
     <td>${l.cidade||'—'}</td><td>${l.etapa==='perdido'&&l.perdido_motivo?`<span class="badge badge-perdido" title="${l.perdido_motivo}" style="cursor:help">Perdido 💬</span>`:badge(l.etapa||'lead')}</td>
     <td style="white-space:nowrap"><span title="${scoreBreakdown(l)}" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:${tmp.bg};color:${tmp.color};border:1px solid ${tmp.border};cursor:help;white-space:nowrap">${tmp.label}</span></td>
     <td style="white-space:nowrap"><span class="prob-badge ${probCls}">${prob}%</span></td>
+    <td style="white-space:nowrap">${(()=>{if(!l.data_nascimento)return'<span style="color:var(--text-muted)">—</span>';const r=calcularAniversario(l.data_nascimento);if(r.hojeFlag)return'<span style="color:#f472b6;font-weight:700;animation:piscar 1.2s infinite">🎂 Hoje!</span>';if(r.diasAte<=7&&r.diasAte>0)return`<span style="color:var(--gold);font-weight:600" title="${r.idade} anos">🎂 Em ${r.diasAte}d</span>`;return`<span style="color:var(--text-muted);font-size:12px" title="${r.idade} anos">${r.dataFmt}</span>`;})()}</td>
     <td>${fmtFollowupBadge(l.proximo_followup)}</td>
     <td>${l.responsavel||'—'}</td><td>${l.origem||'—'}</td>
     <td><div style="display:flex;gap:6px">
@@ -949,7 +967,7 @@ function renderLeadsTable(leads,s='',e='',k=''){
 
 function abrirNovoLead(){
   editingLeadId=null;document.getElementById('modal-lead-title').textContent='Novo Lead';
-  ['nome','whatsapp','email','cidade','responsavel','notas'].forEach(id=>document.getElementById('f-'+id).value='');
+  ['nome','whatsapp','email','cidade','responsavel','notas','nascimento','indicado-por'].forEach(id=>document.getElementById('f-'+id).value='');
   document.getElementById('f-capital').value='';document.getElementById('f-etapa').value='lead';document.getElementById('f-origem').value='site';
   openModal('modal-lead');
 }
@@ -961,14 +979,16 @@ function editarLead(id){
   document.getElementById('f-email').value=l.email||'';document.getElementById('f-capital').value=l.capital_disponivel||'';
   document.getElementById('f-cidade').value=l.cidade||'';document.getElementById('f-etapa').value=l.etapa||'lead';
   document.getElementById('f-responsavel').value=l.responsavel||'';document.getElementById('f-origem').value=l.origem||'site';
-  document.getElementById('f-notas').value=l.notas||'';openModal('modal-lead');
+  document.getElementById('f-notas').value=l.notas||'';document.getElementById('f-nascimento').value=l.data_nascimento||'';document.getElementById('f-indicado-por').value=l.indicado_por||'';openModal('modal-lead');
 }
 
 async function salvarLead(){
   const nome=document.getElementById('f-nome').value.trim();
   if(!nome){toast('Nome é obrigatório','error');return;}
   const novaEtapa=document.getElementById('f-etapa').value;
-  const payload={nome,whatsapp:document.getElementById('f-whatsapp').value.trim(),email:document.getElementById('f-email').value.trim(),capital_disponivel:document.getElementById('f-capital').value,cidade:document.getElementById('f-cidade').value.trim(),etapa:novaEtapa,responsavel:document.getElementById('f-responsavel').value.trim(),origem:document.getElementById('f-origem').value,notas:document.getElementById('f-notas').value.trim()};
+  const _nasc=document.getElementById('f-nascimento').value;
+  const payload={nome,whatsapp:document.getElementById('f-whatsapp').value.trim(),email:document.getElementById('f-email').value.trim(),capital_disponivel:document.getElementById('f-capital').value,cidade:document.getElementById('f-cidade').value.trim(),etapa:novaEtapa,responsavel:document.getElementById('f-responsavel').value.trim(),origem:document.getElementById('f-origem').value,notas:document.getElementById('f-notas').value.trim(),indicado_por:document.getElementById('f-indicado-por').value.trim()||null};
+  if(_nasc)payload.data_nascimento=_nasc;else payload.data_nascimento=null;
   payload.score=calcularScore(payload);payload.probabilidade=calcularProbabilidade(payload);
   if(editingLeadId){
     const leadAtual=allLeads.find(l=>l.id===editingLeadId)||{};
@@ -999,6 +1019,7 @@ async function salvarLead(){
     if(error){toast('Erro: '+error.message,'error');return;}
     toast('Lead atualizado!');
     registrarAtividade(editingLeadId,'edicao','Lead atualizado — etapa: '+(etapaLabel[novaEtapa]||novaEtapa));
+    if(novaEtapa==='fechado'&&etapaAnterior!=='fechado')triggerFechadoActions(editingLeadId,{...leadAtual,...payload});
   }else{
     payload.criado_em=new Date().toISOString();payload.etapa_entrada=new Date().toISOString();
     const{data:ins,error}=await sb.from('crm_leads').insert(payload).select().single();
@@ -1030,6 +1051,9 @@ async function verLead(id){
     <div class="detail-row"><div class="detail-key">Origem</div><div class="detail-val">${l.origem||'—'}</div></div>
     <div class="detail-row"><div class="detail-key">Cadastrado</div><div class="detail-val">${fmtDate(l.criado_em)}</div></div>
     ${l.notas?`<div class="detail-row"><div class="detail-key">Notas</div><div class="detail-val" style="color:var(--text-dim)">${l.notas}</div></div>`:''}
+    ${(()=>{if(!l.data_nascimento)return'';const r=calcularAniversario(l.data_nascimento);const idade=r.idade;let txt='';let cor='var(--text-dim)';if(r.hojeFlag){txt=`🎂 Hoje! ${idade} anos`;cor='#f472b6';}else if(r.diasAte<=7&&r.diasAte>0){txt=`🎂 Em ${r.diasAte} dia${r.diasAte>1?'s':''} (${r.dataFmt}) — ${idade} anos`;cor='var(--gold)';}else{txt=`${r.dataFmt} — ${idade} anos`;}return`<div class="detail-row"><div class="detail-key">Aniversário</div><div class="detail-val" style="color:${cor};font-weight:600">${txt} ${r.hojeFlag||r.diasAte<=7&&r.diasAte>0?`<button class="btn btn-ghost" style="margin-left:8px;font-size:11px;padding:4px 10px;color:var(--green);border-color:rgba(34,197,94,.4)" onclick="enviarParabens('${l.id}')">🎉 Enviar Parabéns</button>`:''}$</div></div>`.replace('$','');})()}
+    ${l.indicado_por?`<div class="detail-row"><div class="detail-key">Indicado por</div><div class="detail-val" style="color:var(--gold);font-weight:600">🤝 ${l.indicado_por}</div></div>`:''}
+    <div id="ver-nps-section" style="margin-top:8px"><div style="display:inline-block;font-size:11px;color:var(--text-muted);padding:4px 0">Carregando NPS...</div></div>
     <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
       <div class="dash-card-title" style="margin-bottom:10px">Histórico de Atividades</div>
       <div id="ver-historico"><div class="loading"><span class="spinner"></span> Carregando...</div></div>
@@ -1060,6 +1084,8 @@ async function verLead(id){
   if(!hist||!hist.length){hEl.innerHTML='<div style="color:var(--text-muted);font-size:12px;padding:8px 0">Nenhuma atividade registrada ainda.</div>';return;}
   const tipoIcon={criacao:'✨',edicao:'✏️',etapa:'🎯',tarefa:'✅',nota:'📝'};
   hEl.innerHTML='<div style="max-height:200px;overflow-y:auto">'+hist.map(a=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:15px;width:22px;flex-shrink:0;text-align:center">${tipoIcon[a.tipo]||'📌'}</div><div style="flex:1"><div style="font-size:12px;color:var(--text)">${a.descricao||'—'}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px">${a.usuario_nome||'Sistema'} · ${fmtDate(a.criado_em)}</div></div></div>`).join('')+'</div>';
+  // NPS async
+  const npsEl=document.getElementById('ver-nps-section');if(npsEl){const{data:npsR}=await sb.from('crm_nps').select('*').eq('lead_id',id).order('criado_em',{ascending:false}).limit(1).maybeSingle().catch(()=>({data:null}));if(npsR){const respondido=npsR.resposta_nota!=null;const notaColor=npsR.resposta_nota>=9?'#22c55e':npsR.resposta_nota>=7?'#fbbf24':'#ef4444';const catLabel=npsR.resposta_nota>=9?'Promotor':npsR.resposta_nota>=7?'Neutro':'Detrator';npsEl.innerHTML=`<div style="padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">⭐ NPS</div>${respondido?`<div style="font-size:13px;font-weight:700;color:${notaColor}">Nota: ${npsR.resposta_nota}/10 <span style="font-size:11px;font-weight:600;padding:2px 8px;background:rgba(34,197,94,0.12);border-radius:10px;color:${notaColor};border:1px solid ${notaColor}40">${catLabel}</span></div>${npsR.resposta_comentario?`<div style="font-size:12px;color:var(--text-dim);margin-top:6px;font-style:italic">"${npsR.resposta_comentario}"</div>`:''}<div style="font-size:11px;color:var(--text-muted);margin-top:4px">Respondido em ${fmtDate(npsR.respondido_em||npsR.criado_em)}</div>`:`<div style="font-size:12px;color:var(--text-muted)">⏳ Aguardando resposta</div><button class="btn btn-ghost" style="margin-top:8px;font-size:11px;padding:5px 12px;color:var(--gold);border-color:rgba(201,168,76,.4)" onclick="abrirModalNPS('${npsR.id}')">✏️ Registrar resposta manual</button>`}</div>`;} else if(l.etapa==='fechado'){npsEl.innerHTML=`<div style="padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-bottom:8px;font-size:12px;color:var(--text-muted)">⭐ NPS não enviado ainda. <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:var(--gold);border-color:rgba(201,168,76,.4);margin-left:8px" onclick="triggerFechadoActions('${id}',${JSON.stringify({...l}).replace(/"/g,"'")})">Enviar agora</button></div>`;} else{npsEl.innerHTML='';}}
 }
 async function salvarNotaLead(leadId){
   const nota=document.getElementById('ver-nota')?.value?.trim();
@@ -1236,11 +1262,12 @@ async function loadRelatorios(){
   const mxF=Math.max(...funil.map(x=>x.n),1);
   const pCap={};
   all.forEach(l=>{if(l.capital_disponivel)pCap[l.capital_disponivel]=(pCap[l.capital_disponivel]||0)+1;});
-  const[{data:oriData},{data:cidData},{data:usersData},{data:ligData}]=await Promise.all([
+  const[{data:oriData},{data:cidData},{data:usersData},{data:ligData},{data:npsData}]=await Promise.all([
     sb.from('crm_leads').select('origem'),
     sb.from('crm_leads').select('cidade'),
     sb.from('crm_usuarios').select('*').eq('ativo',true),
-    sb.from('crm_ligacoes').select('*').gte('criado_em',desde.toISOString()).catch(()=>({data:[]}))
+    sb.from('crm_ligacoes').select('*').gte('criado_em',desde.toISOString()).catch(()=>({data:[]})),
+    sb.from('crm_nps').select('*').order('criado_em',{ascending:false}).catch(()=>({data:[]}))
   ]);
   const pOri={},pCid={};
   (oriData||[]).forEach(l=>{if(l.origem)pOri[l.origem]=(pOri[l.origem]||0)+1;});
@@ -1350,7 +1377,35 @@ async function loadRelatorios(){
         <div style="position:relative;height:180px;margin-top:12px"><canvas id="chart-prob-etapa"></canvas></div>
       </div>`:'';
     })()}
-    ${(()=>{const ligs=ligData||[];const atend=ligs.filter(l=>l.resultado==='atendeu');const nAtend=ligs.filter(l=>l.resultado==='nao_atendeu');const cxP=ligs.filter(l=>l.resultado==='caixa_postal');const medDur=atend.length?Math.round(atend.reduce((s,l)=>s+(l.duracao_min||0),0)/atend.length):0;const pctAt=ligs.length?Math.round(atend.length/ligs.length*100):0;return ligs.length?`<div class="dash-card" style="margin-top:16px"><div class="dash-card-title">📞 Resumo de Ligações — Período</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px"><div style="text-align:center;padding:12px;background:#181818;border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:var(--text)">${ligs.length}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Total</div></div><div style="text-align:center;padding:12px;background:rgba(34,197,94,0.1);border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:#22c55e">${pctAt}%</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Atendimento</div></div><div style="text-align:center;padding:12px;background:rgba(96,165,250,0.1);border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:#60a5fa">${medDur}min</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Média Duração</div></div><div style="text-align:center;padding:12px;background:#181818;border-radius:8px"><div style="font-size:11px;color:#22c55e;margin-bottom:2px">✅ Atendeu: ${atend.length}</div><div style="font-size:11px;color:#ef4444;margin-bottom:2px">📵 Não atendeu: ${nAtend.length}</div><div style="font-size:11px;color:#fbbf24">📬 Cx. postal: ${cxP.length}</div></div></div></div>`:'';})()}`;
+    ${(()=>{const ligs=ligData||[];const atend=ligs.filter(l=>l.resultado==='atendeu');const nAtend=ligs.filter(l=>l.resultado==='nao_atendeu');const cxP=ligs.filter(l=>l.resultado==='caixa_postal');const medDur=atend.length?Math.round(atend.reduce((s,l)=>s+(l.duracao_min||0),0)/atend.length):0;const pctAt=ligs.length?Math.round(atend.length/ligs.length*100):0;return ligs.length?`<div class="dash-card" style="margin-top:16px"><div class="dash-card-title">📞 Resumo de Ligações — Período</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px"><div style="text-align:center;padding:12px;background:#181818;border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:var(--text)">${ligs.length}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Total</div></div><div style="text-align:center;padding:12px;background:rgba(34,197,94,0.1);border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:#22c55e">${pctAt}%</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Atendimento</div></div><div style="text-align:center;padding:12px;background:rgba(96,165,250,0.1);border-radius:8px"><div style="font-size:24px;font-weight:700;font-family:var(--mono);color:#60a5fa">${medDur}min</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Média Duração</div></div><div style="text-align:center;padding:12px;background:#181818;border-radius:8px"><div style="font-size:11px;color:#22c55e;margin-bottom:2px">✅ Atendeu: ${atend.length}</div><div style="font-size:11px;color:#ef4444;margin-bottom:2px">📵 Não atendeu: ${nAtend.length}</div><div style="font-size:11px;color:#fbbf24">📬 Cx. postal: ${cxP.length}</div></div></div></div>`:'';})()}
+    ${(()=>{
+      // NPS da Empresa
+      const nps=npsData||[];const resp=nps.filter(n=>n.resposta_nota!=null);const prom=resp.filter(n=>n.resposta_nota>=9).length;const neutr=resp.filter(n=>n.resposta_nota>=7&&n.resposta_nota<9).length;const detr=resp.filter(n=>n.resposta_nota<7).length;
+      const npsScore=resp.length?Math.round(((prom-detr)/resp.length)*100):null;
+      const scoreColor=npsScore===null?'var(--text-muted)':npsScore>=50?'#22c55e':npsScore>=0?'#fbbf24':'#ef4444';
+      const ultimas=resp.slice(0,10);
+      return nps.length?`<div class="dash-card" style="margin-top:16px"><div class="dash-card-title">⭐ NPS da Empresa</div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;margin:12px 0 16px">
+        <div style="text-align:center;padding:16px 24px;background:var(--surface2);border-radius:12px;border:2px solid ${scoreColor}40"><div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Score NPS</div><div style="font-size:40px;font-weight:700;font-family:var(--mono);color:${scoreColor}">${npsScore===null?'—':npsScore}</div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div style="text-align:center;padding:10px;background:rgba(34,197,94,0.1);border-radius:8px"><div style="font-size:22px;font-weight:700;color:#22c55e;font-family:var(--mono)">${prom}</div><div style="font-size:11px;color:#22c55e;font-weight:600">Promotores</div></div><div style="text-align:center;padding:10px;background:rgba(234,179,8,0.1);border-radius:8px"><div style="font-size:22px;font-weight:700;color:#fbbf24;font-family:var(--mono)">${neutr}</div><div style="font-size:11px;color:#fbbf24;font-weight:600">Neutros</div></div><div style="text-align:center;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px"><div style="font-size:22px;font-weight:700;color:#ef4444;font-family:var(--mono)">${detr}</div><div style="font-size:11px;color:#ef4444;font-weight:600">Detratores</div></div>
+        <div style="text-align:center;padding:10px;background:var(--surface2);border-radius:8px"><div style="font-size:18px;font-weight:700;color:var(--text);font-family:var(--mono)">${nps.length}</div><div style="font-size:11px;color:var(--text-muted)">Enviados</div></div><div style="text-align:center;padding:10px;background:var(--surface2);border-radius:8px"><div style="font-size:18px;font-weight:700;color:var(--text);font-family:var(--mono)">${resp.length}</div><div style="font-size:11px;color:var(--text-muted)">Respondidos</div></div><div style="text-align:center;padding:10px;background:var(--surface2);border-radius:8px"><div style="font-size:18px;font-weight:700;color:var(--gold);font-family:var(--mono)">${nps.length?Math.round(resp.length/nps.length*100):0}%</div><div style="font-size:11px;color:var(--text-muted)">Resposta</div></div></div>
+      </div>
+      ${ultimas.length?`<div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Últimas respostas</div>${ultimas.map(n=>{const nc=n.resposta_nota>=9?'#22c55e':n.resposta_nota>=7?'#fbbf24':'#ef4444';const cat=n.resposta_nota>=9?'Promotor':n.resposta_nota>=7?'Neutro':'Detrator';return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="width:36px;height:36px;border-radius:8px;background:${nc}22;border:1px solid ${nc}44;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;font-family:var(--mono);color:${nc};flex-shrink:0">${n.resposta_nota}</div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.lead_nome||'—'}</div>${n.resposta_comentario?`<div style="font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic">"${n.resposta_comentario}"</div>`:''}</div><span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:${nc}22;color:${nc};border:1px solid ${nc}44;flex-shrink:0">${cat}</span></div>`;}).join('')}`:''}
+      </div>`:'';
+    })()}
+    ${(()=>{
+      // Aniversariantes do Mês
+      const mesAtual=new Date().getMonth()+1;const anivsDoMes=(all||[]).filter(l=>{if(!l.data_nascimento)return false;const m=parseInt(l.data_nascimento.slice(5,7));return m===mesAtual;}).map(l=>{const dia=parseInt(l.data_nascimento.slice(8,10));const r=calcularAniversario(l.data_nascimento);return{...l,_dia:dia,_r:r};}).sort((a,b)=>a._dia-b._dia);
+      return anivsDoMes.length?`<div class="dash-card" style="margin-top:16px"><div class="dash-card-title">🎂 Aniversariantes do Mês</div>${anivsDoMes.map(l=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="width:30px;text-align:center;font-size:13px;font-weight:700;font-family:var(--mono);color:var(--gold);flex-shrink:0">${l._dia.toString().padStart(2,'0')}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.nome}</div><div style="font-size:11px;color:var(--text-muted)">${l._r.idade} anos${l._r.hojeFlag?' 🎂 Hoje!':l._r.diasAte<=7&&l._r.diasAte>0?' — Em '+l._r.diasAte+' dias':''}</div></div>${l.whatsapp?`<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:var(--green);border-color:rgba(34,197,94,.4);flex-shrink:0" onclick="enviarParabens('${l.id}')">🎉</button>`:''}$</div>`.replace('$','')).join('')}</div>`:'';
+    })()}
+    ${(()=>{
+      // Ranking de Indicadores
+      const indMap={};(all||[]).forEach(l=>{if(!l.indicado_por)return;if(!indMap[l.indicado_por])indMap[l.indicado_por]={nome:l.indicado_por,qtd:0,fechadas:0,valor:0};indMap[l.indicado_por].qtd++;if(l.etapa==='fechado'){indMap[l.indicado_por].fechadas++;indMap[l.indicado_por].valor+=calcularReceitaMedia(l.capital_disponivel);}});
+      const indRank=Object.values(indMap).sort((a,b)=>b.qtd-a.qtd);
+      return indRank.length?`<div class="dash-card" style="margin-top:16px"><div class="dash-card-title">🤝 Ranking de Indicadores</div>
+      <div style="margin-bottom:12px;position:relative;height:160px"><canvas id="chart-indicadores"></canvas></div>
+      <table><thead><tr><th>#</th><th>Indicador</th><th>Indicações</th><th>Fechadas</th><th>Conversão</th><th>Valor gerado</th></tr></thead><tbody>${indRank.map((ind,i)=>`<tr><td style="color:${i===0?'#c9a84c':i===1?'#94a3b8':'#cd7f32'};font-weight:700;text-align:center;font-family:var(--mono)">${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)}</td><td style="font-weight:600">${ind.nome}</td><td style="font-family:var(--mono);color:var(--gold)">${ind.qtd}</td><td style="font-family:var(--mono);color:#22c55e">${ind.fechadas}</td><td style="font-family:var(--mono);color:var(--gold)">${ind.qtd?Math.round(ind.fechadas/ind.qtd*100):0}%</td><td style="font-family:var(--mono);color:var(--gold)">${fmtMoeda(ind.valor)}</td></tr>`).join('')}</tbody></table></div>`:'';
+    })()} `;
   if(window._origemChart)window._origemChart.destroy();
   const ctxO=document.getElementById('chart-rel-origem');
   if(ctxO){const oriEntries=Object.entries(pOri).sort((a,b)=>b[1]-a[1]).slice(0,8);window._origemChart=new Chart(ctxO,{type:'bar',data:{labels:oriEntries.map(x=>x[0]),datasets:[{label:'Leads',data:oriEntries.map(x=>x[1]),backgroundColor:'rgba(201,168,76,0.3)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+' lead(s)'}}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true},y:{border:{display:false},grid:{display:false},ticks:{color:'#888',font:{size:11}}}}}})}
@@ -1366,6 +1421,10 @@ async function loadRelatorios(){
   if(window._probEtapaChart)window._probEtapaChart.destroy();
   const ctxPE=document.getElementById('chart-prob-etapa');
   if(ctxPE){const etapasP=['lead','contato','qualificado','proposta','negociacao','fechado'];const probMedP=etapasP.map(e=>{const ls=all.filter(l=>l.etapa===e);return ls.length?Math.round(ls.reduce((s,l)=>s+calcularProbabilidade(l),0)/ls.length):0;});window._probEtapaChart=new Chart(ctxPE,{type:'bar',data:{labels:['Lead','Contato','Qualif.','Proposta','Negoc.','Fechado'],datasets:[{label:'Prob. média',data:probMedP,backgroundColor:probMedP.map(p=>p>=60?'rgba(34,197,94,0.7)':p>=30?'rgba(234,179,8,0.7)':'rgba(239,68,68,0.7)'),borderColor:probMedP.map(p=>p>=60?'#22c55e':p>=30?'#fbbf24':'#ef4444'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+'%'}}},scales:{x:{border:{display:false},grid:{display:false},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},callback:v=>v+'%'},beginAtZero:true,max:100}}}});}
+  // chart-indicadores
+  if(window._indChart)window._indChart.destroy();
+  const ctxInd=document.getElementById('chart-indicadores');
+  if(ctxInd){const indMap2={};(all||[]).forEach(l=>{if(!l.indicado_por)return;if(!indMap2[l.indicado_por])indMap2[l.indicado_por]=0;indMap2[l.indicado_por]++;});const indEntries=Object.entries(indMap2).sort((a,b)=>b[1]-a[1]).slice(0,8);if(indEntries.length)window._indChart=new Chart(ctxInd,{type:'bar',data:{labels:indEntries.map(x=>x[0]),datasets:[{label:'Indicações',data:indEntries.map(x=>x[1]),backgroundColor:'rgba(201,168,76,0.35)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+' indicação(ões)'}}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true},y:{border:{display:false},grid:{display:false},ticks:{color:'#888',font:{size:11}}}}}});}
 }
 
 // CONFIGURAÇÕES
@@ -2078,6 +2137,80 @@ async function renderDashboardVendedor(c,leads,tarefas){
     </div>
   `;
 }
+
+/* ===== ANIVERSARIANTES ===== */
+function calcularAniversario(dataNasc){
+  if(!dataNasc)return null;
+  const hoje=new Date();const ano=hoje.getFullYear();
+  const [y,m,d]=dataNasc.split('-').map(Number);
+  const idade=ano-y-(hoje<new Date(ano,m-1,d)?1:0);
+  let prox=new Date(ano,m-1,d);if(prox<hoje)prox=new Date(ano+1,m-1,d);
+  const diff=prox-hoje;const diasAte=Math.ceil(diff/86400000);
+  const hojeFlag=diasAte===0||prox.toDateString()===hoje.toDateString()||(diasAte===365&&new Date(ano,m-1,d).toDateString()===hoje.toDateString());
+  const dataFmt=(d<10?'0'+d:d)+'/'+(m<10?'0'+m:m);
+  return{idade,diasAte:hojeFlag?0:diasAte,hojeFlag,dataFmt};
+}
+function enviarParabens(leadId){
+  const l=allLeads.find(x=>x.id===leadId);if(!l||!l.whatsapp)return;
+  const r=l.data_nascimento?calcularAniversario(l.data_nascimento):null;
+  const anos=r?r.idade:'';
+  const msg=`🎂 Parabéns, ${l.nome}!\n\nDesejamos a você um feliz aniversário${anos?' de '+anos+' anos':''}! 🥂\n\nQue este novo ciclo traga muitas realizações — especialmente as financeiras!\n\nCom carinho,\nEquipe 4P Patrimonial 🏆`;
+  window.open('https://wa.me/55'+l.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+}
+async function atualizarBadgeAniversario(){
+  const badge=document.getElementById('badge-aniversario');if(!badge)return;
+  const{data}=await sb.from('crm_leads').select('data_nascimento').not('data_nascimento','is',null).catch(()=>({data:[]}));
+  const count=(data||[]).filter(l=>{const r=calcularAniversario(l.data_nascimento);return r&&(r.hojeFlag||r.diasAte<=7);}).length;
+  badge.style.display=count>0?'':'none';
+}
+
+/* ===== NPS ===== */
+async function triggerFechadoActions(leadId,leadData){
+  const l=leadData||allLeads.find(x=>x.id===leadId)||{};
+  const leadNome=l.nome||'Lead';
+  // Insert NPS
+  const{data:npsIns}=await sb.from('crm_nps').insert({lead_id:leadId,lead_nome:leadNome,enviado_em:new Date().toISOString(),criado_em:new Date().toISOString()}).select().single().catch(()=>({data:null}));
+  // Perguntar se quer enviar NPS via WPP
+  if(l.whatsapp){
+    const numLimpo=l.whatsapp.replace(/\D/g,'');
+    const msgNPS=`Olá ${leadNome}! 🎉\n\nFicamos muito felizes em tê-lo como cliente da 4P Patrimonial!\n\nPoderia nos dar uma nota de 0 a 10 sobre sua experiência conosco? 🌟\n\nSua opinião é muito importante para continuarmos melhorando!\n\n4P Patrimonial 🏆`;
+    if(confirm(`Deseja enviar pesquisa NPS via WhatsApp para ${leadNome}?`))window.open('https://wa.me/55'+numLimpo+'?text='+encodeURIComponent(msgNPS),'_blank');
+  }
+  // Agradecimento ao indicador
+  if((l.origem||'')==='indicacao'&&l.indicado_por){
+    if(confirm(`${leadNome} foi indicado por ${l.indicado_por}. Deseja enviar uma mensagem de agradecimento?`)){
+      const numInd=prompt('WhatsApp do indicador '+l.indicado_por+' (somente números):');
+      if(numInd&&numInd.trim()){
+        const msgInd=`Olá ${l.indicado_por}! 🤝\n\nQueríamos agradecer pessoalmente pela indicação do ${leadNome}!\n\nSua confiança na 4P Patrimonial significa muito para nós. 🏆\n\nGrande abraço!\nEquipe 4P Patrimonial`;
+        window.open('https://wa.me/55'+numInd.replace(/\D/g,'')+'?text='+encodeURIComponent(msgInd),'_blank');
+      }
+    }
+  }
+}
+function abrirModalNPS(npsId){
+  _npsLeadId=npsId;
+  document.querySelectorAll('.nps-btn').forEach(b=>b.classList.remove('selected'));
+  const si=document.getElementById('nps-nota-selecionada');if(si)si.value='';
+  const lbl=document.getElementById('nps-categoria-label');if(lbl)lbl.textContent='';
+  const com=document.getElementById('nps-comentario');if(com)com.value='';
+  openModal('modal-nps-resposta');
+}
+function selecionarNotaNPS(nota,el){
+  document.querySelectorAll('.nps-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  const si=document.getElementById('nps-nota-selecionada');if(si)si.value=nota;
+  const lbl=document.getElementById('nps-categoria-label');
+  if(lbl){const cat=nota>=9?'Promotor ✅':nota>=7?'Neutro ⚡':'Detrator ❌';const cor=nota>=9?'#22c55e':nota>=7?'#fbbf24':'#ef4444';lbl.textContent=cat;lbl.style.color=cor;}
+}
+async function salvarRespostaNPS(){
+  const nota=parseInt(document.getElementById('nps-nota-selecionada')?.value);
+  if(isNaN(nota)){toast('Selecione uma nota de 0 a 10','error');return;}
+  const comentario=document.getElementById('nps-comentario')?.value?.trim()||null;
+  const{error}=await sb.from('crm_nps').update({resposta_nota:nota,resposta_comentario:comentario,respondido_em:new Date().toISOString()}).eq('id',_npsLeadId);
+  if(error){toast('Erro: '+error.message,'error');return;}
+  toast('Resposta NPS salva!');closeModal('modal-nps-resposta');
+  if(_verLeadId)verLead(_verLeadId);
+}
 </script>
 
 <!-- MODAL IMPORTAR LEADS -->
@@ -2302,6 +2435,39 @@ async function renderDashboardVendedor(c,leads,tarefas){
 </div>
 
 <div id="_proposta_print_only"></div>
+
+<!-- MODAL NPS RESPOSTA -->
+<div class="modal-overlay" id="modal-nps-resposta">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header"><h2>⭐ Registrar Resposta NPS</h2><button class="modal-close" onclick="closeModal('modal-nps-resposta')">×</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Qual nota o cliente deu de 0 a 10?</p>
+      <input type="hidden" id="nps-nota-selecionada">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="nps-btn" style="background:rgba(239,68,68,0.15);color:#ef4444" onclick="selecionarNotaNPS(0,this)">0</button>
+        <button class="nps-btn" style="background:rgba(239,68,68,0.15);color:#ef4444" onclick="selecionarNotaNPS(1,this)">1</button>
+        <button class="nps-btn" style="background:rgba(239,68,68,0.15);color:#ef4444" onclick="selecionarNotaNPS(2,this)">2</button>
+        <button class="nps-btn" style="background:rgba(239,68,68,0.15);color:#ef4444" onclick="selecionarNotaNPS(3,this)">3</button>
+        <button class="nps-btn" style="background:rgba(239,68,68,0.15);color:#ef4444" onclick="selecionarNotaNPS(4,this)">4</button>
+        <button class="nps-btn" style="background:rgba(239,68,68,0.15);color:#ef4444" onclick="selecionarNotaNPS(5,this)">5</button>
+        <button class="nps-btn" style="background:rgba(239,68,68,0.15);color:#ef4444" onclick="selecionarNotaNPS(6,this)">6</button>
+        <button class="nps-btn" style="background:rgba(234,179,8,0.15);color:#fbbf24" onclick="selecionarNotaNPS(7,this)">7</button>
+        <button class="nps-btn" style="background:rgba(234,179,8,0.15);color:#fbbf24" onclick="selecionarNotaNPS(8,this)">8</button>
+        <button class="nps-btn" style="background:rgba(34,197,94,0.15);color:#22c55e" onclick="selecionarNotaNPS(9,this)">9</button>
+        <button class="nps-btn" style="background:rgba(34,197,94,0.15);color:#22c55e" onclick="selecionarNotaNPS(10,this)">10</button>
+      </div>
+      <div id="nps-categoria-label" style="font-size:13px;font-weight:700;margin-bottom:14px;min-height:20px"></div>
+      <div class="form-group">
+        <label>Comentário do cliente (opcional)</label>
+        <textarea id="nps-comentario" placeholder="O que o cliente disse sobre a experiência..." rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-nps-resposta')">Cancelar</button>
+      <button class="btn btn-gold" onclick="salvarRespostaNPS()">Salvar Resposta</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL MOTIVO DE PERDA -->
 <div class="modal-overlay" id="modal-motivo-perda">
