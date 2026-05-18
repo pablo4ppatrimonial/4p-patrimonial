@@ -618,8 +618,8 @@ function goTo(page){
   document.getElementById('page-title').textContent=titles[page]||page;
   const ha=document.getElementById('header-action');ha.innerHTML='';
   if(page==='leads'){ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoLead()">+ Novo Lead</button>';if(isAdmin())ha.innerHTML+=' <button class="btn btn-ghost" onclick="abrirImportar()" style="margin-left:4px">📥 Importar</button> <button class="btn btn-ghost" onclick="exportarLeadsExcel()" style="margin-left:4px">📤 Exportar</button>';}
-  if(page==='tarefas'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovaTarefa()">+ Nova Tarefa</button>';
-  if(page==='tickets'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoTicket()">+ Novo Ticket</button>';
+  if(page==='tarefas')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovaTarefa()">+ Nova Tarefa</button>';
+  if(page==='tickets')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoTicket()">+ Novo Ticket</button>';
   if(page==='config'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoUsuario()">+ Novo Usuário</button>';
   ({dashboard:renderDashboard,leads:renderLeads,pipeline:renderPipeline,tarefas:renderTarefas,tickets:renderTickets,relatorios:renderRelatorios,metas:renderMetas,config:renderConfig}[page]||renderDashboard)();
   document.getElementById('sidebar').classList.remove('open');
@@ -817,7 +817,7 @@ function renderLeadsTable(leads,s='',e='',k=''){
     <td><div style="display:flex;gap:6px">
       <button class="action-btn action-btn-view" onclick="verLead('${l.id}')">👁 Ver</button>
       <button class="action-btn action-btn-edit" onclick="editarLead('${l.id}')">✏️ Editar</button>
-      ${isAdmin()?`<button class="action-btn action-btn-del" onclick="excluirLead('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}')">🗑</button>`:''}
+      <button class="action-btn action-btn-del" onclick="excluirLead('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}')">🗑</button>
     </div></td>
   </tr>`;}).join('')+'</tbody></table>';
 }
@@ -940,7 +940,7 @@ async function renderPipeline(){
     const cards=allLeads.filter(l=>(l.etapa||'lead')===etapa);
     const col=document.createElement('div');col.className='kanban-col';col.dataset.etapa=etapa;
     col.innerHTML=`<div class="kanban-col-header"><span class="kanban-col-title">${etapaLabel[etapa]}</span><span class="kanban-count">${cards.length}</span></div>
-    <div class="kanban-cards">${cards.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);const dotColor=sc>=70?'#ef4444':sc>=40?'#f97316':'#3b82f6';return`<div class="kanban-card" draggable="true" data-id="${l.id}" onclick="abrirCardPipeline('${l.id}')" style="border-left:3px solid ${dotColor}"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px"><div class="kanban-card-name" style="flex:1;padding-right:4px">${l.nome||'—'}</div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><div style="width:7px;height:7px;border-radius:50%;background:${dotColor}"></div><span style="font-size:11px">${tmp.label.split(' ')[0]}</span></div></div><div class="kanban-card-info">${l.cidade||''}${l.responsavel?' · '+l.responsavel:''}</div>${l.capital_disponivel?`<div class="kanban-card-capital">${l.capital_disponivel}</div>`:''}${fmtFollowupKanban(l.proximo_followup)}</div>`;}).join('')}</div>`;
+    <div class="kanban-cards">${cards.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);const dotColor=sc>=70?'#ef4444':sc>=40?'#f97316':'#3b82f6';return`<div class="kanban-card" draggable="true" data-id="${l.id}" onclick="abrirCardPipeline('${l.id}')" style="border-left:3px solid ${dotColor}"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px"><div class="kanban-card-name" style="flex:1;padding-right:4px">${l.nome||'—'}</div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><div style="width:7px;height:7px;border-radius:50%;background:${dotColor}"></div><span style="font-size:11px">${tmp.label.split(' ')[0]}</span></div></div><div class="kanban-card-info">${l.cidade||''}${l.responsavel?' · '+l.responsavel:''}</div>${l.capital_disponivel?`<div class="kanban-card-capital">${l.capital_disponivel}</div>`:''}${fmtFollowupKanban(l.proximo_followup)}<div style="display:flex;gap:4px;margin-top:8px" onclick="event.stopPropagation()" draggable="false"><button onclick="event.stopPropagation();editarLead('${l.id}')" draggable="false" style="padding:3px 6px;border-radius:4px;font-size:11px;background:transparent;border:1px solid #2a2a2a;color:#888;cursor:pointer" onmouseenter="this.style.borderColor='#c9a84c';this.style.color='#c9a84c'" onmouseleave="this.style.borderColor='#2a2a2a';this.style.color='#888'">✏️</button><button onclick="event.stopPropagation();excluirLeadPipeline('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}');" draggable="false" style="padding:3px 6px;border-radius:4px;font-size:11px;background:transparent;border:1px solid #2a2a2a;color:#888;cursor:pointer" onmouseenter="this.style.borderColor='#ef4444';this.style.color='#ef4444'" onmouseleave="this.style.borderColor='#2a2a2a';this.style.color='#888'">🗑</button></div></div>`;}).join('')}</div>`;
     board.appendChild(col);
   });
   board.addEventListener('dragstart',e=>{const cd=e.target.closest('.kanban-card');if(!cd)return;dragId=cd.dataset.id;cd.classList.add('dragging');});
@@ -975,7 +975,7 @@ async function abrirCardPipeline(id){
   document.getElementById('mpc-acoes').innerHTML=`
     <button class="btn btn-ghost" onclick="closeModal('modal-pipeline-card');editarLead('${l.id}')">✏️ Editar lead completo</button>
     ${l.whatsapp?`<button class="btn btn-ghost" style="color:var(--green);border-color:rgba(34,197,94,.4)" onclick="closeModal('modal-pipeline-card');abrirTemplatesWPPById('${l.id}')">📱 Enviar Mensagem</button>`:''}
-    ${isAdmin()?`<button class="btn btn-danger" onclick="closeModal('modal-pipeline-card');excluirLeadPipeline('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}')">🗑 Excluir lead</button>`:''}`;
+    <button class="btn btn-danger" onclick="closeModal('modal-pipeline-card');excluirLeadPipeline('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}')">🗑 Excluir lead</button>`;
   openModal('modal-pipeline-card');
 }
 async function moverEtapaPipeline(id,novaEtapa){
