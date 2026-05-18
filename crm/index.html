@@ -159,6 +159,12 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
 @media(max-width:768px){:root{--sidebar:0px;}#sidebar{transform:translateX(-240px);width:240px;}#sidebar.open{transform:translateX(0);}#main{margin-left:0;}.hamburger{display:flex!important;}.form-grid{grid-template-columns:1fr;}.dash-grid{grid-template-columns:1fr;}.stats-grid{grid-template-columns:1fr 1fr;}.page-content{padding:16px;}.page-header{padding:16px;}}
 .hamburger{display:none;flex-direction:column;gap:4px;cursor:pointer;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;}
 .hamburger span{width:18px;height:2px;background:var(--text-dim);border-radius:2px;}
+.bell-btn{position:relative;background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--text-dim);font-size:18px;display:flex;align-items:center;transition:all .15s;font-family:var(--font);}
+.bell-btn:hover{border-color:var(--gold);color:var(--gold);}
+.bell-badge{position:absolute;top:-7px;right:-7px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;font-family:var(--mono);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);}
+@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.alerta-drawer{position:fixed;right:0;top:0;height:100vh;width:360px;background:#111;border-left:1px solid #2a2a2a;z-index:300;display:none;flex-direction:column;}
+.alerta-drawer.open{display:flex;animation:slideInRight .25s ease;}
 </style>
 </head>
 <body>
@@ -197,6 +203,7 @@ tbody tr:hover{background:var(--surface2);border-left-color:var(--gold);}
       <h1 id="page-title">Dashboard</h1>
       <span id="access-tag"></span>
     </div>
+    <button class="bell-btn" id="bell-btn" onclick="abrirDrawerAlertas()">🔔<span class="bell-badge" id="bell-badge" style="display:none">0</span></button>
     <div id="header-action"></div>
   </div>
   <div class="page-content" id="page-content"><div class="loading"><span class="spinner"></span> Carregando...</div></div>
@@ -358,6 +365,103 @@ function enviarTemplateWPP(key){
   closeModal('modal-templates-wpp');
 }
 
+function tempoRelativo(iso){
+  if(!iso)return'';const d=new Date(iso);const agora=new Date();const diff=agora-d;const min=Math.floor(diff/60000);
+  if(min<1)return'agora mesmo';if(min<60)return`há ${min} min`;
+  const h=Math.floor(min/60);if(h<24)return`há ${h} hora${h>1?'s':''}`;
+  const di=Math.floor(h/24);return`há ${di} dia${di>1?'s':''}`;
+}
+function fmtFollowupBadge(fu){
+  if(!fu)return'—';
+  const hoje=new Date().toISOString().slice(0,10);const fuDate=new Date(fu).toISOString().slice(0,10);
+  if(fuDate<hoje)return`<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.4)">⚠️ Vencido</span>`;
+  if(fuDate===hoje)return`<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:rgba(234,179,8,0.15);color:#fbbf24;border:1px solid rgba(234,179,8,0.4)">📅 Hoje</span>`;
+  return`<span style="font-size:11px;color:var(--text-muted)">${fmtDate(fu)}</span>`;
+}
+function fmtFollowupKanban(fu){
+  if(!fu)return'';
+  const hoje=new Date().toISOString().slice(0,10);const fuDate=new Date(fu).toISOString().slice(0,10);
+  if(fuDate<hoje)return`<div style="font-size:10px;font-weight:600;margin-top:4px;padding:2px 6px;border-radius:6px;background:rgba(239,68,68,0.15);color:#f87171;display:inline-block">⚠️ Follow-up vencido</div>`;
+  if(fuDate===hoje)return`<div style="font-size:10px;font-weight:600;margin-top:4px;padding:2px 6px;border-radius:6px;background:rgba(234,179,8,0.15);color:#fbbf24;display:inline-block">📅 Follow-up hoje</div>`;
+  return`<div style="font-size:10px;color:var(--text-muted);margin-top:4px">📅 ${fmtDate(fu)}</div>`;
+}
+function scoreBreakdown(l){
+  const cap={'Acima de R$1M':40,'R$500k a R$1M':35,'R$300k a R$500k':30,'R$150k a R$300k':25,'R$50k a R$150k':15,'Até R$50k':5};
+  const etapa={fechado:30,negociacao:25,proposta:20,qualificado:15,contato:10,lead:5,perdido:0};
+  const c=cap[l.capital_disponivel]||0;const e=etapa[l.etapa||'lead']||0;
+  const w=l.whatsapp?10:0;const em=l.email?5:0;const ci=l.cidade?5:0;const n=l.notas?5:0;
+  return`Capital: +${c} | Etapa: +${e} | WPP: +${w} | Email: +${em} | Cidade: +${ci} | Notas: +${n} | Total: ${c+e+w+em+ci+n}pts`;
+}
+async function agendarFollowup(leadId){
+  const val=document.getElementById('followup-data')?.value;
+  if(!val){toast('Selecione uma data','error');return;}
+  const iso=new Date(val).toISOString();
+  const{error}=await sb.from('crm_leads').update({proximo_followup:iso,ultimo_contato:new Date().toISOString()}).eq('id',leadId);
+  if(error){toast('Erro: '+error.message,'error');return;}
+  const fmt=new Date(val).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+  await registrarAtividade(leadId,'followup','Follow-up agendado para '+fmt);
+  const idx=allLeads.findIndex(x=>x.id===leadId);if(idx>=0)allLeads[idx]={...allLeads[idx],proximo_followup:iso};
+  const fuEl=document.getElementById('followup-atual');
+  if(fuEl)fuEl.innerHTML=`<div style="color:var(--gold);font-size:12px;font-weight:600">📅 Agendado: ${fmt}</div>`;
+  toast('Follow-up agendado!');
+}
+async function registrarContato(leadId){
+  const{error}=await sb.from('crm_leads').update({ultimo_contato:new Date().toISOString()}).eq('id',leadId);
+  if(error){toast('Erro: '+error.message,'error');return;}
+  await registrarAtividade(leadId,'contato','Contato realizado com o lead');
+  const idx=allLeads.findIndex(x=>x.id===leadId);if(idx>=0)allLeads[idx]={...allLeads[idx],ultimo_contato:new Date().toISOString()};
+  toast('Contato registrado!');
+}
+async function verificarAlertas(){
+  if(!currentUser)return;
+  const agora=new Date();const ha7d=new Date(agora.getTime()-7*86400000).toISOString();const ha3d=new Date(agora.getTime()-3*86400000).toISOString();
+  const{data:leads}=await sb.from('crm_leads').select('id,nome,ultimo_contato,proximo_followup,criado_em,etapa,score,capital_disponivel,whatsapp,email,cidade,notas').neq('etapa','perdido');
+  if(!leads)return;
+  for(const l of leads){
+    const uc=l.ultimo_contato||l.criado_em;
+    if(!uc||uc<ha7d){const{data:ex}=await sb.from('crm_alertas').select('id').eq('lead_id',l.id).eq('tipo','sem_contato').eq('lido',false).maybeSingle();if(!ex)await sb.from('crm_alertas').insert({lead_id:l.id,tipo:'sem_contato',mensagem:`Lead ${l.nome} sem contato há mais de 7 dias`,lido:false,criado_em:new Date().toISOString()});}
+    if(l.proximo_followup&&l.proximo_followup<agora.toISOString()){const{data:ex}=await sb.from('crm_alertas').select('id').eq('lead_id',l.id).eq('tipo','followup_vencido').eq('lido',false).maybeSingle();if(!ex)await sb.from('crm_alertas').insert({lead_id:l.id,tipo:'followup_vencido',mensagem:`Follow-up vencido com ${l.nome}`,lido:false,criado_em:new Date().toISOString()});}
+    if(calcularScore(l)>=70){const uc3=l.ultimo_contato||l.criado_em;if(!uc3||uc3<ha3d){const{data:ex}=await sb.from('crm_alertas').select('id').eq('lead_id',l.id).eq('tipo','lead_quente_parado').eq('lido',false).maybeSingle();if(!ex)await sb.from('crm_alertas').insert({lead_id:l.id,tipo:'lead_quente_parado',mensagem:`Lead quente ${l.nome} parado há 3 dias!`,lido:false,criado_em:new Date().toISOString()});}}
+  }
+  atualizarBadgeAlertas();
+}
+async function atualizarBadgeAlertas(){
+  const{data}=await sb.from('crm_alertas').select('id').eq('lido',false);
+  const count=(data||[]).length;
+  const badge=document.getElementById('bell-badge');
+  if(badge){badge.textContent=count>99?'99+':String(count);badge.style.display=count?'flex':'none';}
+}
+async function abrirDrawerAlertas(){
+  document.getElementById('alerta-drawer').classList.add('open');
+  document.getElementById('drawer-overlay').style.display='block';
+  const lista=document.getElementById('alertas-lista');
+  lista.innerHTML='<div class="loading"><span class="spinner"></span> Carregando...</div>';
+  const{data:alertas}=await sb.from('crm_alertas').select('*,crm_leads(id,nome)').order('criado_em',{ascending:false}).limit(50);
+  if(!alertas||!alertas.length){lista.innerHTML='<div class="empty"><div class="empty-icon">🔔</div>Nenhum alerta</div>';return;}
+  const tipoIcon={sem_contato:'👤',followup_vencido:'📅',lead_quente_parado:'🔥'};
+  lista.innerHTML=alertas.map(a=>`<div id="alerta-${a.id}" style="${!a.lido?'background:rgba(201,168,76,0.08);border-left:3px solid #c9a84c':'opacity:.5;border-left:3px solid transparent'};padding:12px;border-radius:8px;margin-bottom:8px"><div style="display:flex;align-items:flex-start;gap:10px"><span style="font-size:18px;flex-shrink:0">${tipoIcon[a.tipo]||'📌'}</span><div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--text);font-weight:${a.lido?'400':'600'}">${a.mensagem}</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px">${tempoRelativo(a.criado_em)}</div></div></div><div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">${a.crm_leads?.id?`<button class="action-btn action-btn-view" style="font-size:10px;padding:3px 8px" onclick="fecharDrawerAlertas();verLead('${a.crm_leads.id}')">Ver lead</button>`:''} ${!a.lido?`<button class="action-btn" style="font-size:10px;padding:3px 8px;border-color:var(--border);color:var(--text-muted)" onclick="marcarAlertaLido('${a.id}')">✓ Lido</button>`:''}</div></div>`).join('');
+}
+function fecharDrawerAlertas(){
+  document.getElementById('alerta-drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').style.display='none';
+}
+async function marcarAlertaLido(id){
+  await sb.from('crm_alertas').update({lido:true}).eq('id',id);
+  const el=document.getElementById('alerta-'+id);
+  if(el){el.style.opacity='.5';el.style.borderLeft='3px solid transparent';el.style.background='';}
+  atualizarBadgeAlertas();
+}
+async function marcarTodosLidos(){
+  await sb.from('crm_alertas').update({lido:true}).eq('lido',false);
+  fecharDrawerAlertas();atualizarBadgeAlertas();toast('Todos os alertas marcados como lidos!');
+}
+async function atualizarTemperaturasTodosLeads(){
+  const{data:leads}=await sb.from('crm_leads').select('*');
+  if(!leads||!leads.length)return;
+  const lotes=[];for(let i=0;i<leads.length;i+=10)lotes.push(leads.slice(i,i+10));
+  for(const lote of lotes)await Promise.all(lote.map(l=>{const s=calcularScore(l);return l.score===s?Promise.resolve():sb.from('crm_leads').update({score:s}).eq('id',l.id);}));
+}
+
 async function doLogin(){
   const email=(document.getElementById('login-email').value||'').trim().toLowerCase();
   const senha=document.getElementById('login-pass').value;
@@ -378,6 +482,9 @@ function entrarNoApp(){
   document.getElementById('app').style.display='flex';
   updateSidebarUser();
   goTo('dashboard');
+  verificarAlertas();
+  atualizarTemperaturasTodosLeads();
+  if(!window._alertaInterval)window._alertaInterval=setInterval(verificarAlertas,300000);
 }
 function updateSidebarUser(){
   const el=document.getElementById('sidebar-user-info');
@@ -447,7 +554,9 @@ async function renderDashboard(){
   const c=document.getElementById('page-content');c.innerHTML='<div class="loading"><span class="spinner"></span> Carregando...</div>';
   const[{data:L},{data:T},{data:TK}]=await Promise.all([sb.from('crm_leads').select('*').order('criado_em',{ascending:false}),sb.from('crm_tarefas').select('*'),sb.from('crm_tickets').select('*')]);
   const leads=L||[],tarefas=T||[],tickets=TK||[];
-  const hotLeads=leads.filter(l=>calcularScore(l)>=70).sort((a,b)=>calcularScore(b)-calcularScore(a)).slice(0,3);
+  const hotLeads=leads.filter(l=>calcularScore(l)>=70).sort((a,b)=>calcularScore(b)-calcularScore(a)).slice(0,5);
+  const _agora=new Date();const _ha7d=new Date(_agora.getTime()-7*86400000).toISOString();
+  const atencaoLeads=leads.filter(l=>{const hasVenc=l.proximo_followup&&l.proximo_followup<_agora.toISOString();const uc=l.ultimo_contato||l.criado_em;return(hasVenc||!uc||uc<_ha7d)&&l.etapa!=='perdido'&&l.etapa!=='fechado';}).slice(0,5);
   const hoje=new Date().toISOString().slice(0,10);
   const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
   const dc=days.map(d=>({d,n:leads.filter(l=>l.criado_em&&l.criado_em.slice(0,10)===d).length}));
@@ -476,7 +585,11 @@ async function renderDashboard(){
         <div style="position:relative;height:220px"><canvas id="chart-capital"></canvas></div>
       </div>
     </div>
-    ${hotLeads.length?`<div class="dash-card" style="border-left:3px solid #ef4444;margin-bottom:20px"><div class="dash-card-title">🔥 Leads Quentes — Prioridade Alta</div>${hotLeads.map(l=>{const sc=calcularScore(l);return`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${l.nome||'—'}</div><div style="font-size:11px;color:var(--text-muted)">${l.capital_disponivel||'—'} · ${l.responsavel||'sem responsável'}</div></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:700;font-family:var(--mono);color:#ef4444">${sc}pts</span>${badge(l.etapa||'lead')}${l.whatsapp?`<a href="https://wa.me/55${l.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:var(--green);text-decoration:none;font-size:18px">📱</a>`:''}</div></div>`;}).join('')}</div>`:''}
+    <div class="dash-card" style="background:linear-gradient(135deg,#111 0%,rgba(201,168,76,0.05) 100%);border:1px solid rgba(201,168,76,0.2);margin-bottom:16px">
+      <div class="dash-card-title">🔥 Leads Quentes</div>
+      ${!hotLeads.length?'<div style="color:var(--text-muted);font-size:12px;padding:8px 0">Nenhum lead quente ainda. Cadastre mais leads!</div>':hotLeads.map(l=>{const sc=calcularScore(l);return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="width:32px;height:32px;border-radius:50%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);display:flex;align-items:center;justify-content:center;font-weight:700;color:#ef4444;font-size:13px;flex-shrink:0">${(l.nome||'?')[0].toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.nome||'—'}</div><div style="font-size:11px;color:var(--text-muted)">${l.capital_disponivel||'—'} · <span style="color:#ef4444;font-weight:700">${sc}pts</span></div></div>${badge(l.etapa||'lead')}<button class="action-btn action-btn-view" style="font-size:11px" onclick="verLead('${l.id}')">Ver</button></div>`;}).join('')}
+    </div>
+    ${atencaoLeads.length?`<div class="dash-card" style="background:linear-gradient(135deg,#111 0%,rgba(239,68,68,0.04) 100%);border:1px solid rgba(239,68,68,0.2);margin-bottom:16px"><div class="dash-card-title">⚠️ Precisam de Atenção</div>${atencaoLeads.map(l=>{const uc=l.ultimo_contato||l.criado_em;const dias=Math.floor((new Date()-new Date(uc))/86400000);const fuVenc=l.proximo_followup&&l.proximo_followup<new Date().toISOString();return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="width:32px;height:32px;border-radius:50%;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">⚠️</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">${l.nome||'—'}</div><div style="font-size:11px;color:#f87171">${fuVenc?'Follow-up vencido':'Sem contato há '+dias+' dia'+(dias!==1?'s':'')}</div></div><button class="action-btn action-btn-view" style="font-size:11px" onclick="verLead('${l.id}')">Ver</button></div>`;}).join('')}</div>`:''}
     <div class="dash-card">
       <div class="dash-card-title">Leads Recentes</div>
       ${!leads.length?'<div class="empty">Nenhum lead ainda</div>':'<table><thead><tr><th>Nome</th><th>Capital</th><th>Etapa</th><th>Temp.</th><th>Responsável</th></tr></thead><tbody>'+leads.slice(0,5).map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);return`<tr><td><div class="td-name">${l.nome||'—'}</div><div class="td-sub">${l.email||''}</div></td><td style="color:var(--gold);font-weight:600">${l.capital_disponivel||'—'}</td><td>${badge(l.etapa||'lead')}</td><td><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:${tmp.bg};color:${tmp.color};border:1px solid ${tmp.border}">${tmp.label}</span></td><td>${l.responsavel||'—'}</td></tr>`;}).join('')+'</tbody></table>'}
@@ -587,13 +700,14 @@ function renderLeadsTable(leads,s='',e='',k=''){
   if(e)f=f.filter(l=>l.etapa===e);if(k)f=f.filter(l=>l.capital_disponivel===k);
   const el=document.getElementById('leads-table');if(!el)return;
   if(!f.length){el.innerHTML='<div class="empty"><div class="empty-icon">👥</div>Nenhum lead encontrado</div>';return;}
-  el.innerHTML='<table><thead><tr><th>Nome / E-mail</th><th>WhatsApp</th><th>Capital</th><th>Cidade</th><th>Etapa</th><th>Temp.</th><th>Responsável</th><th>Origem</th><th>Ações</th></tr></thead><tbody>'+
-  f.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);return`<tr>
+  el.innerHTML='<table><thead><tr><th>Nome / E-mail</th><th>WhatsApp</th><th>Capital</th><th>Cidade</th><th>Etapa</th><th>Temp.</th><th>Follow-Up</th><th>Responsável</th><th>Origem</th><th>Ações</th></tr></thead><tbody>'+
+  f.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);return`<tr style="${sc>=70?'background:rgba(239,68,68,0.05);':''}border-left:${sc>=70?'3px solid #ef4444':'2px solid transparent'}">
     <td><div class="td-name">${l.nome||'—'}</div><div class="td-sub">${l.email||''}</div></td>
     <td>${l.whatsapp?`<div style="display:flex;flex-direction:column;gap:3px"><a href="https://wa.me/55${l.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:var(--green);text-decoration:none;font-size:12px">📱 ${l.whatsapp}</a><button class="action-btn" style="font-size:10px;padding:2px 8px;border-color:rgba(34,197,94,.3);color:var(--green)" onclick="abrirTemplatesWPPById('${l.id}')">Modelos →</button></div>`:'—'}</td>
     <td style="color:var(--gold);font-weight:600">${l.capital_disponivel||'—'}</td>
     <td>${l.cidade||'—'}</td><td>${badge(l.etapa||'lead')}</td>
-    <td><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:${tmp.bg};color:${tmp.color};border:1px solid ${tmp.border}">${tmp.label}</span></td>
+    <td><span title="${scoreBreakdown(l)}" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:${tmp.bg};color:${tmp.color};border:1px solid ${tmp.border};cursor:help">${tmp.label}</span></td>
+    <td>${fmtFollowupBadge(l.proximo_followup)}</td>
     <td>${l.responsavel||'—'}</td><td>${l.origem||'—'}</td>
     <td><div style="display:flex;gap:6px">
       <button class="action-btn action-btn-view" onclick="verLead('${l.id}')">👁 Ver</button>
@@ -669,6 +783,15 @@ async function verLead(id){
         <textarea id="ver-nota" placeholder="Registrar observação..." style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:12px;resize:none;min-height:60px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
         <button class="btn btn-gold" onclick="salvarNotaLead('${id}')">Salvar</button>
       </div>
+    </div>
+    <div style="margin-top:14px;padding:14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+      <div class="dash-card-title" style="margin-bottom:10px">📅 Follow-up</div>
+      <div id="followup-atual" style="margin-bottom:10px">${l.proximo_followup?`<div style="color:var(--gold);font-size:12px;font-weight:600">📅 Agendado: ${new Date(l.proximo_followup).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>`:'<div style="color:var(--text-muted);font-size:12px">Nenhum follow-up agendado</div>'}</div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div style="flex:1"><label style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:5px">Próximo follow-up</label><input id="followup-data" type="datetime-local" style="width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
+        <button class="btn btn-gold" onclick="agendarFollowup('${id}')">Agendar</button>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:10px;width:100%;color:var(--green);border-color:rgba(34,197,94,.4)" onclick="registrarContato('${id}')">📞 Registrar Contato</button>
     </div>`;
   document.getElementById('btn-editar-do-ver').onclick=()=>{closeModal('modal-ver-lead');editarLead(id);};
   document.getElementById('btn-wpp-do-ver').onclick=()=>abrirTemplatesWPPById(id);
@@ -712,7 +835,7 @@ async function renderPipeline(){
     const cards=allLeads.filter(l=>(l.etapa||'lead')===etapa);
     const col=document.createElement('div');col.className='kanban-col';col.dataset.etapa=etapa;
     col.innerHTML=`<div class="kanban-col-header"><span class="kanban-col-title">${etapaLabel[etapa]}</span><span class="kanban-count">${cards.length}</span></div>
-    <div class="kanban-cards">${cards.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);return`<div class="kanban-card" draggable="true" data-id="${l.id}" onclick="abrirCardPipeline('${l.id}')"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px"><div class="kanban-card-name" style="flex:1;padding-right:4px">${l.nome||'—'}</div><span style="font-size:11px;flex-shrink:0">${tmp.label.split(' ')[0]}</span></div><div class="kanban-card-info">${l.cidade||''}${l.responsavel?' · '+l.responsavel:''}</div>${l.capital_disponivel?`<div class="kanban-card-capital">${l.capital_disponivel}</div>`:''}</div>`;}).join('')}</div>`;
+    <div class="kanban-cards">${cards.map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);const dotColor=sc>=70?'#ef4444':sc>=40?'#f97316':'#3b82f6';return`<div class="kanban-card" draggable="true" data-id="${l.id}" onclick="abrirCardPipeline('${l.id}')" style="border-left:3px solid ${dotColor}"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px"><div class="kanban-card-name" style="flex:1;padding-right:4px">${l.nome||'—'}</div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><div style="width:7px;height:7px;border-radius:50%;background:${dotColor}"></div><span style="font-size:11px">${tmp.label.split(' ')[0]}</span></div></div><div class="kanban-card-info">${l.cidade||''}${l.responsavel?' · '+l.responsavel:''}</div>${l.capital_disponivel?`<div class="kanban-card-capital">${l.capital_disponivel}</div>`:''}${fmtFollowupKanban(l.proximo_followup)}</div>`;}).join('')}</div>`;
     board.appendChild(col);
   });
   board.addEventListener('dragstart',e=>{const cd=e.target.closest('.kanban-card');if(!cd)return;dragId=cd.dataset.id;cd.classList.add('dragging');});
@@ -1152,5 +1275,17 @@ function excluirUsuario(id,nome){
     </div>
   </div>
 </div>
+<!-- DRAWER ALERTAS -->
+<div class="alerta-drawer" id="alerta-drawer">
+  <div style="padding:20px;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div style="font-size:15px;font-weight:700;font-family:var(--display)">🔔 Alertas</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="marcarTodosLidos()">Marcar todos lidos</button>
+      <button class="modal-close" onclick="fecharDrawerAlertas()">×</button>
+    </div>
+  </div>
+  <div id="alertas-lista" style="flex:1;overflow-y:auto;padding:12px"></div>
+</div>
+<div id="drawer-overlay" style="display:none;position:fixed;inset:0;z-index:299;background:rgba(0,0,0,.4)" onclick="fecharDrawerAlertas()"></div>
 </body>
 </html>
