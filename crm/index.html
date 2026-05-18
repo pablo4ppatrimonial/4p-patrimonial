@@ -601,8 +601,15 @@ function filtrarTarefas(){const s=document.getElementById('t-search')?.value.toL
 function renderTarefasList(tarefas){
   const el=document.getElementById('tarefas-list');if(!el)return;
   if(!tarefas.length){el.innerHTML='<div class="empty"><div class="empty-icon">✅</div>Nenhuma tarefa</div>';return;}
-  const agora=new Date();
-  el.innerHTML=tarefas.map(t=>{const v=t.data_vencimento&&new Date(t.data_vencimento)<agora&&t.status!=='concluida';return`<div class="task-item${v?' vencida':''}"><div class="task-check${t.status==='concluida'?' done':''}" onclick="toggleTarefa('${t.id}','${t.status}')"></div><div class="task-info"><div class="task-title" style="${t.status==='concluida'?'text-decoration:line-through;color:var(--text-muted)':''}">${t.titulo||'—'}</div><div class="task-meta">${t.responsavel_nome?'👤 '+t.responsavel_nome:''}${t.data_vencimento?' · 📅 '+fmtDate(t.data_vencimento):''}${v?' <span style="color:var(--red);font-weight:600">VENCIDA</span>':''}</div></div><div class="task-actions">${badge(t.prioridade||'media')} ${badge(t.status||'pendente')} <button class="action-btn action-btn-del" onclick="excluirTarefa('${t.id}')">🗑</button></div></div>`;}).join('');
+  const hojeStr=new Date().toISOString().slice(0,10);
+  el.innerHTML=tarefas.map(t=>{
+    const venc=t.data_vencimento;
+    const v=venc&&venc.slice(0,10)<hojeStr&&t.status!=='concluida';
+    const h=venc&&venc.slice(0,10)===hojeStr&&t.status!=='concluida';
+    const badgeHoje=h?'<span style="display:inline-block;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(234,179,8,.2);color:#fbbf24;margin-left:6px">HOJE</span>':'';
+    const badgeAtraso=v?'<span style="display:inline-block;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(239,68,68,.2);color:#f87171;margin-left:6px">ATRASADA</span>':'';
+    return`<div class="task-item${v?' vencida':''}"><div class="task-check${t.status==='concluida'?' done':''}" onclick="toggleTarefa('${t.id}','${t.status}')"></div><div class="task-info"><div class="task-title" style="${t.status==='concluida'?'text-decoration:line-through;color:var(--text-muted)':''}">${t.titulo||'—'}${badgeHoje}${badgeAtraso}</div><div class="task-meta">${t.responsavel_nome?'👤 '+t.responsavel_nome:''}${venc?' · 📅 '+fmtDate(venc):''}</div></div><div class="task-actions">${badge(t.prioridade||'media')} ${badge(t.status||'pendente')} <button class="action-btn action-btn-del" onclick="excluirTarefa('${t.id}')">🗑</button></div></div>`;
+  }).join('');
 }
 async function toggleTarefa(id,status){const novo=status==='concluida'?'pendente':'concluida';const p={status:novo};if(novo==='concluida')p.concluida_em=new Date().toISOString();const{error}=await sb.from('crm_tarefas').update(p).eq('id',id);if(error){toast('Erro: '+error.message,'error');return;}toast(novo==='concluida'?'Concluída!':'Reaberta!');renderTarefas();}
 async function abrirNovaTarefa(){['titulo','desc','resp'].forEach(f=>document.getElementById('t-'+f).value='');document.getElementById('t-data').value='';document.getElementById('t-prior').value='media';document.getElementById('t-status').value='pendente';const sel=document.getElementById('t-lead');sel.innerHTML='<option value="">Nenhum</option>';const{data}=await sb.from('crm_leads').select('id,nome').order('nome');(data||[]).forEach(l=>{const o=document.createElement('option');o.value=l.id;o.textContent=l.nome;sel.appendChild(o);});openModal('modal-tarefa');}
@@ -614,9 +621,28 @@ async function renderTickets(){
   const c=document.getElementById('page-content');c.innerHTML='<div class="loading"><span class="spinner"></span> Carregando...</div>';
   const{data}=await sb.from('crm_tickets').select('*, crm_leads(nome)').order('criado_em',{ascending:false});
   allTickets=data||[];
-  if(!allTickets.length){c.innerHTML='<div class="table-wrap"><div class="empty"><div class="empty-icon">🎫</div>Nenhum ticket</div></div>';return;}
-  c.innerHTML='<div class="table-wrap"><table><thead><tr><th>#</th><th>Lead</th><th>Título</th><th>Status</th><th>Prioridade</th><th>Responsável</th><th>Data</th><th>Ações</th></tr></thead><tbody>'+
-  allTickets.map((t,i)=>`<tr><td style="font-family:var(--mono);color:var(--text-muted)">${String(i+1).padStart(3,'0')}</td><td>${t.crm_leads?.nome||'—'}</td><td><strong>${t.titulo||'—'}</strong>${t.descricao?`<div class="td-sub">${t.descricao.slice(0,50)}${t.descricao.length>50?'...':''}</div>`:''}</td><td>${badge(t.status||'aberto')}</td><td>${badge(t.prioridade||'media')}</td><td>${t.responsavel_nome||'—'}</td><td>${fmtDate(t.criado_em)}</td><td><div style="display:flex;gap:6px">${t.status!=='resolvido'?`<button class="action-btn action-btn-edit" onclick="resolverTicket('${t.id}')">✅ Resolver</button>`:''}<button class="action-btn action-btn-del" onclick="excluirTicket('${t.id}')">🗑</button></div></td></tr>`).join('')+'</tbody></table></div>';
+  c.innerHTML=`<div class="filters">
+    <input class="search-input" id="tk-search" placeholder="🔍 Buscar por título..." oninput="filtrarTickets()">
+    <select class="filter-select" id="tk-f-status" onchange="filtrarTickets()"><option value="">Todos status</option><option value="aberto">Aberto</option><option value="em_andamento">Em andamento</option><option value="resolvido">Resolvido</option></select>
+    <select class="filter-select" id="tk-f-prior" onchange="filtrarTickets()"><option value="">Todas prioridades</option><option value="alta">Alta</option><option value="media">Média</option><option value="baixa">Baixa</option></select>
+  </div><div id="tickets-table"></div>`;
+  filtrarTickets();
+}
+function filtrarTickets(){
+  const s=(document.getElementById('tk-search')?.value||'').toLowerCase();
+  const st=document.getElementById('tk-f-status')?.value||'';
+  const p=document.getElementById('tk-f-prior')?.value||'';
+  let f=allTickets;
+  if(s)f=f.filter(t=>(t.titulo||'').toLowerCase().includes(s));
+  if(st)f=f.filter(t=>t.status===st);
+  if(p)f=f.filter(t=>t.prioridade===p);
+  renderTicketsTable(f);
+}
+function renderTicketsTable(tickets){
+  const el=document.getElementById('tickets-table');if(!el)return;
+  if(!tickets.length){el.innerHTML='<div class="table-wrap"><div class="empty"><div class="empty-icon">🎫</div>Nenhum ticket encontrado</div></div>';return;}
+  el.innerHTML='<div class="table-wrap"><table><thead><tr><th>#</th><th>Lead</th><th>Título</th><th>Status</th><th>Prioridade</th><th>Responsável</th><th>Data</th><th>Ações</th></tr></thead><tbody>'+
+  tickets.map((t,i)=>`<tr><td style="font-family:var(--mono);color:var(--text-muted)">${String(i+1).padStart(3,'0')}</td><td>${t.crm_leads?.nome||'—'}</td><td><strong>${t.titulo||'—'}</strong>${t.descricao?`<div class="td-sub">${t.descricao.slice(0,50)}${t.descricao.length>50?'...':''}</div>`:''}</td><td>${badge(t.status||'aberto')}</td><td>${badge(t.prioridade||'media')}</td><td>${t.responsavel_nome||'—'}</td><td>${fmtDate(t.criado_em)}</td><td><div style="display:flex;gap:6px">${t.status!=='resolvido'?`<button class="action-btn action-btn-edit" onclick="resolverTicket('${t.id}')">✅ Resolver</button>`:''}<button class="action-btn action-btn-del" onclick="excluirTicket('${t.id}')">🗑</button></div></td></tr>`).join('')+'</tbody></table></div>';
 }
 async function abrirNovoTicket(){['titulo','desc','resp'].forEach(f=>document.getElementById('tk-'+f).value='');document.getElementById('tk-prior').value='media';const sel=document.getElementById('tk-lead');sel.innerHTML='<option value="">Nenhum</option>';const{data}=await sb.from('crm_leads').select('id,nome').order('nome');(data||[]).forEach(l=>{const o=document.createElement('option');o.value=l.id;o.textContent=l.nome;sel.appendChild(o);});openModal('modal-ticket');}
 async function salvarTicket(){const titulo=document.getElementById('tk-titulo').value.trim();if(!titulo){toast('Título é obrigatório','error');return;}const{error}=await sb.from('crm_tickets').insert({titulo,descricao:document.getElementById('tk-desc').value.trim(),lead_id:document.getElementById('tk-lead').value||null,prioridade:document.getElementById('tk-prior').value,responsavel_nome:document.getElementById('tk-resp').value.trim(),status:'aberto',criado_em:new Date().toISOString()});if(error){toast('Erro: '+error.message,'error');return;}toast('Ticket criado!');closeModal('modal-ticket');renderTickets();}
@@ -649,6 +675,13 @@ async function loadRelatorios(){
     if(l.origem)pOri[l.origem]=(pOri[l.origem]||0)+1;
     if(l.cidade)pCid[l.cidade]=(pCid[l.cidade]||0)+1;
   });
+  const desde6m=new Date();desde6m.setMonth(desde6m.getMonth()-6);
+  const{data:leads6mData}=await sb.from('crm_leads').select('id,etapa,criado_em').gte('criado_em',desde6m.toISOString());
+  const all6m=leads6mData||[];
+  const meses=[];for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);meses.push({label:d.toLocaleString('pt-BR',{month:'short',year:'2-digit'}),y:d.getFullYear(),m:d.getMonth()});}
+  const mCaptados=meses.map(mm=>all6m.filter(l=>l.criado_em&&new Date(l.criado_em).getFullYear()===mm.y&&new Date(l.criado_em).getMonth()===mm.m).length);
+  const mFechados=meses.map(mm=>all6m.filter(l=>l.etapa==='fechado'&&l.criado_em&&new Date(l.criado_em).getFullYear()===mm.y&&new Date(l.criado_em).getMonth()===mm.m).length);
+  const mLabels=meses.map(mm=>mm.label);
   const listItems=(obj)=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>`
     <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
       <span style="color:var(--text-dim)">${k}</span><span style="color:var(--gold);font-weight:700;font-family:var(--mono)">${v}</span>
@@ -671,7 +704,30 @@ async function loadRelatorios(){
         <div class="dash-card"><div class="dash-card-title">Por Origem</div>${listItems(pOri)}</div>
         <div class="dash-card"><div class="dash-card-title">Por Cidade</div>${listItems(pCid)}</div>
       </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+      <div style="background:#111111;border:1px solid #2a2a2a;border-radius:10px;padding:20px">
+        <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Leads por Origem</div>
+        <div style="position:relative;height:200px"><canvas id="chart-rel-origem"></canvas></div>
+      </div>
+      <div style="background:#111111;border:1px solid #2a2a2a;border-radius:10px;padding:20px">
+        <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Leads por Cidade</div>
+        <div style="position:relative;height:200px"><canvas id="chart-rel-cidade"></canvas></div>
+      </div>
+    </div>
+    <div style="background:#111111;border:1px solid #2a2a2a;border-radius:10px;padding:20px;margin-top:16px">
+      <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Leads por Mês — últimos 6 meses</div>
+      <div style="position:relative;height:200px"><canvas id="chart-rel-mensal"></canvas></div>
     </div>`;
+  if(window._origemChart)window._origemChart.destroy();
+  const ctxO=document.getElementById('chart-rel-origem');
+  if(ctxO){const oriEntries=Object.entries(pOri).sort((a,b)=>b[1]-a[1]).slice(0,8);window._origemChart=new Chart(ctxO,{type:'bar',data:{labels:oriEntries.map(x=>x[0]),datasets:[{label:'Leads',data:oriEntries.map(x=>x[1]),backgroundColor:'rgba(201,168,76,0.3)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+' lead(s)'}}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true},y:{border:{display:false},grid:{display:false},ticks:{color:'#888',font:{size:11}}}}}})}
+  if(window._cidadeChart)window._cidadeChart.destroy();
+  const ctxCi=document.getElementById('chart-rel-cidade');
+  if(ctxCi){const cidEntries=Object.entries(pCid).sort((a,b)=>b[1]-a[1]).slice(0,8);window._cidadeChart=new Chart(ctxCi,{type:'bar',data:{labels:cidEntries.map(x=>x[0]),datasets:[{label:'Leads',data:cidEntries.map(x=>x[1]),backgroundColor:'rgba(201,168,76,0.3)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+' lead(s)'}}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true},y:{border:{display:false},grid:{display:false},ticks:{color:'#888',font:{size:11}}}}}})}
+  if(window._mensalChart)window._mensalChart.destroy();
+  const ctxM=document.getElementById('chart-rel-mensal');
+  if(ctxM){window._mensalChart=new Chart(ctxM,{type:'bar',data:{labels:mLabels,datasets:[{label:'Captados',data:mCaptados,backgroundColor:'rgba(201,168,76,0.8)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4},{label:'Fechados',data:mFechados,backgroundColor:'rgba(34,197,94,0.8)',borderColor:'#22c55e',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#888',font:{size:11},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1a1a1a',borderColor:'#2a2a2a',borderWidth:1,titleColor:'#c9a84c',bodyColor:'#aaa',padding:10}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true}}}})}
 }
 
 // CONFIGURAÇÕES
