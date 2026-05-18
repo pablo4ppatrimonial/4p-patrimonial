@@ -811,7 +811,7 @@ function renderLeadsTable(leads,s='',e='',k=''){
     <td>${l.whatsapp?`<div style="display:flex;flex-direction:column;gap:3px"><a href="https://wa.me/55${l.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:var(--green);text-decoration:none;font-size:12px">📱 ${l.whatsapp}</a><button class="action-btn" style="font-size:10px;padding:2px 8px;border-color:rgba(34,197,94,.3);color:var(--green)" onclick="abrirTemplatesWPPById('${l.id}')">Modelos →</button></div>`:'—'}</td>
     <td style="color:var(--gold);font-weight:600">${l.capital_disponivel||'—'}</td>
     <td>${l.cidade||'—'}</td><td>${badge(l.etapa||'lead')}</td>
-    <td><span title="${scoreBreakdown(l)}" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:${tmp.bg};color:${tmp.color};border:1px solid ${tmp.border};cursor:help">${tmp.label}</span></td>
+    <td style="white-space:nowrap"><span title="${scoreBreakdown(l)}" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:${tmp.bg};color:${tmp.color};border:1px solid ${tmp.border};cursor:help;white-space:nowrap">${tmp.label}</span></td>
     <td>${fmtFollowupBadge(l.proximo_followup)}</td>
     <td>${l.responsavel||'—'}</td><td>${l.origem||'—'}</td>
     <td><div style="display:flex;gap:6px">
