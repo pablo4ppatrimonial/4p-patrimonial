@@ -612,8 +612,8 @@
 
       <div class="form-success" id="formSuccess">
         <span class="success-icon">✅</span>
-        <h3>Cadastro recebido!</h3>
-        <p>Nossa equipe entrará em contato em até 24h pelo WhatsApp.</p>
+        <h3 style="color:#22c55e">Cadastro realizado!</h3>
+        <p>Em breve entraremos em contato.</p>
       </div>
     </div>
   </section>
@@ -733,7 +733,7 @@
       try {
         const payload = {
           nome,
-          whatsapp,
+          whatsapp: whatsapp.replace(/\D/g, ''),
           email,
           capital_disponivel: capital,
           cidade,
