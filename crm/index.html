@@ -1273,7 +1273,9 @@ async function renderRelatorios(){
   loadRelatorios();
 }
 function setPeriodo(p){relPeriodo=p;renderRelatorios();}
+function destroyChart(id){try{const c=document.getElementById(id);if(c){const e=Chart.getChart(c);if(e)e.destroy();}}catch(e){}}
 async function loadRelatorios(){
+  try{
   const desde=new Date();desde.setDate(desde.getDate()-relPeriodo);
   const{data:leads}=await sb.from('crm_leads').select('*').gte('criado_em',desde.toISOString());
   const all=leads||[];_relLeads=all;
@@ -1428,25 +1430,20 @@ async function loadRelatorios(){
       <div style="margin-bottom:12px;position:relative;height:160px"><canvas id="chart-indicadores"></canvas></div>
       <table><thead><tr><th>#</th><th>Indicador</th><th>Indicações</th><th>Fechadas</th><th>Conversão</th><th>Valor gerado</th></tr></thead><tbody>${indRank.map((ind,i)=>`<tr><td style="color:${i===0?'#c9a84c':i===1?'#94a3b8':'#cd7f32'};font-weight:700;text-align:center;font-family:var(--mono)">${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)}</td><td style="font-weight:600">${ind.nome}</td><td style="font-family:var(--mono);color:var(--gold)">${ind.qtd}</td><td style="font-family:var(--mono);color:#22c55e">${ind.fechadas}</td><td style="font-family:var(--mono);color:var(--gold)">${ind.qtd?Math.round(ind.fechadas/ind.qtd*100):0}%</td><td style="font-family:var(--mono);color:var(--gold)">${fmtMoeda(ind.valor)}</td></tr>`).join('')}</tbody></table></div>`:'';
     })()} `;
-  if(window._origemChart)window._origemChart.destroy();
+  ['chart-rel-origem','chart-rel-cidade','chart-rel-mensal','chart-prev-real','chart-prob-etapa','chart-indicadores','chart-hist','chart-cidade','chart-receita'].forEach(destroyChart);
   const ctxO=document.getElementById('chart-rel-origem');
   if(ctxO){const oriEntries=Object.entries(pOri).sort((a,b)=>b[1]-a[1]).slice(0,8);window._origemChart=new Chart(ctxO,{type:'bar',data:{labels:oriEntries.map(x=>x[0]),datasets:[{label:'Leads',data:oriEntries.map(x=>x[1]),backgroundColor:'rgba(201,168,76,0.3)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+' lead(s)'}}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true},y:{border:{display:false},grid:{display:false},ticks:{color:'#888',font:{size:11}}}}}})}
-  if(window._cidadeChart)window._cidadeChart.destroy();
   const ctxCi=document.getElementById('chart-rel-cidade');
   if(ctxCi){const cidEntries=Object.entries(pCid).sort((a,b)=>b[1]-a[1]).slice(0,8);window._cidadeChart=new Chart(ctxCi,{type:'bar',data:{labels:cidEntries.map(x=>x[0]),datasets:[{label:'Leads',data:cidEntries.map(x=>x[1]),backgroundColor:'rgba(201,168,76,0.3)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+' lead(s)'}}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true},y:{border:{display:false},grid:{display:false},ticks:{color:'#888',font:{size:11}}}}}})}
-  if(window._mensalChart)window._mensalChart.destroy();
   const ctxM=document.getElementById('chart-rel-mensal');
   if(ctxM){window._mensalChart=new Chart(ctxM,{type:'bar',data:{labels:mLabels,datasets:[{label:'Captados',data:mCaptados,backgroundColor:'rgba(201,168,76,0.8)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4},{label:'Fechados',data:mFechados,backgroundColor:'rgba(34,197,94,0.8)',borderColor:'#22c55e',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#888',font:{size:11},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1a1a1a',borderColor:'#2a2a2a',borderWidth:1,titleColor:'#c9a84c',bodyColor:'#aaa',padding:10}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true}}}})}
-  if(window._prevRealChart)window._prevRealChart.destroy();
   const ctxPR=document.getElementById('chart-prev-real');
   if(ctxPR){window._prevRealChart=new Chart(ctxPR,{type:'bar',data:{labels:mLabels,datasets:[{label:'Realizado',data:mRecFechada,backgroundColor:'rgba(34,197,94,0.7)',borderColor:'#22c55e',borderWidth:1,borderRadius:4},{label:'Pipeline',data:mRecPipeline,backgroundColor:'rgba(96,165,250,0.5)',borderColor:'#60a5fa',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#888',font:{size:11},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1a1a1a',borderColor:'#2a2a2a',borderWidth:1,titleColor:'#c9a84c',bodyColor:'#aaa',padding:10,callbacks:{label:i=>i.dataset.label+': '+fmtMoeda(i.raw)}}},scales:{x:{border:{display:false},grid:{display:false},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},callback:v=>fmtMoeda(v)},beginAtZero:true}}}})}
-  if(window._probEtapaChart)window._probEtapaChart.destroy();
   const ctxPE=document.getElementById('chart-prob-etapa');
   if(ctxPE){const etapasP=['lead','contato','qualificado','proposta','negociacao','fechado'];const probMedP=etapasP.map(e=>{const ls=all.filter(l=>l.etapa===e);return ls.length?Math.round(ls.reduce((s,l)=>s+calcularProbabilidade(l),0)/ls.length):0;});window._probEtapaChart=new Chart(ctxPE,{type:'bar',data:{labels:['Lead','Contato','Qualif.','Proposta','Negoc.','Fechado'],datasets:[{label:'Prob. média',data:probMedP,backgroundColor:probMedP.map(p=>p>=60?'rgba(34,197,94,0.7)':p>=30?'rgba(234,179,8,0.7)':'rgba(239,68,68,0.7)'),borderColor:probMedP.map(p=>p>=60?'#22c55e':p>=30?'#fbbf24':'#ef4444'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+'%'}}},scales:{x:{border:{display:false},grid:{display:false},ticks:{color:'#555',font:{size:11}}},y:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},callback:v=>v+'%'},beginAtZero:true,max:100}}}});}
-  // chart-indicadores
-  if(window._indChart)window._indChart.destroy();
   const ctxInd=document.getElementById('chart-indicadores');
   if(ctxInd){const indMap2={};(all||[]).forEach(l=>{if(!l.indicado_por)return;if(!indMap2[l.indicado_por])indMap2[l.indicado_por]=0;indMap2[l.indicado_por]++;});const indEntries=Object.entries(indMap2).sort((a,b)=>b[1]-a[1]).slice(0,8);if(indEntries.length)window._indChart=new Chart(ctxInd,{type:'bar',data:{labels:indEntries.map(x=>x[0]),datasets:[{label:'Indicações',data:indEntries.map(x=>x[1]),backgroundColor:'rgba(201,168,76,0.35)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+' indicação(ões)'}}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true},y:{border:{display:false},grid:{display:false},ticks:{color:'#888',font:{size:11}}}}}});}
+  }catch(err){console.error('loadRelatorios:',err);const el=document.getElementById('rel-content');if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-muted)"><div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="margin-bottom:16px">Erro ao carregar relatórios.</div><button class="btn btn-gold" onclick="loadRelatorios()">Tentar novamente</button></div>';}
 }
 
 // CONFIGURAÇÕES
@@ -1850,8 +1847,9 @@ async function enviarMensagem(){
   const inp=document.getElementById('chat-input');
   const txt=(inp?.value||'').trim();if(!txt)return;
   inp.value='';
-  const{error}=await sb.from('crm_chat').insert({usuario_nome:currentUser?.nome||'Usuário',usuario_id:currentUser?.id||'master',mensagem:txt});
-  if(error){toast('Erro ao enviar mensagem','error');return;}
+  const payload={usuario_nome:currentUser?.nome||'Admin',usuario_id:String(currentUser?.id||'admin'),mensagem:txt,criado_em:new Date().toISOString()};
+  const{error}=await sb.from('crm_chat').insert(payload);
+  if(error){toast('Erro no chat: '+error.message,'error');return;}
   localStorage.setItem('chat_last_read',new Date().toISOString());
   carregarMensagens();
 }
@@ -1930,15 +1928,18 @@ async function enviarWPPMassa(){
 /* ===== FEATURE 2: AGENDA E CALENDÁRIO ===== */
 async function renderAgenda(){
   const c=document.getElementById('page-content');
-  c.innerHTML='<div class="loading"><span class="spinner"></span> Carregando agenda...</div>';
-  const mesInicio=new Date(_agendaAno,_agendaMes,1);
-  const mesFim=new Date(_agendaAno,_agendaMes+1,0,23,59,59);
-  const [{data:reunioes},{data:followups}]=await Promise.all([
-    sb.from('crm_reunioes').select('*,crm_leads(nome)').gte('data_hora',mesInicio.toISOString()).lte('data_hora',mesFim.toISOString()).catch(()=>({data:[]})),
-    sb.from('crm_leads').select('id,nome,followup_em').not('followup_em','is',null).gte('followup_em',mesInicio.toISOString().split('T')[0]).lte('followup_em',mesFim.toISOString().split('T')[0])
-  ]);
-  _reunioesCache=reunioes||[];
-  const fups=followups||[];
+  c.innerHTML='<div style="padding:20px;color:var(--text-dim)">Carregando agenda...</div>';
+  let _reunioes=[],fups=[];
+  try{
+    const mesInicio=new Date(_agendaAno,_agendaMes,1);
+    const mesFim=new Date(_agendaAno,_agendaMes+1,0,23,59,59);
+    const [{data:r1},{data:r2}]=await Promise.all([
+      sb.from('crm_reunioes').select('*,crm_leads(nome)').gte('data_hora',mesInicio.toISOString()).lte('data_hora',mesFim.toISOString()),
+      sb.from('crm_leads').select('id,nome,followup_em').not('followup_em','is',null).gte('followup_em',mesInicio.toISOString().split('T')[0]).lte('followup_em',mesFim.toISOString().split('T')[0]).catch(()=>({data:[]}))
+    ]);
+    _reunioes=r1||[];fups=r2||[];
+  }catch(e){console.warn('renderAgenda:',e);}
+  _reunioesCache=_reunioes;
   const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   c.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
@@ -1996,16 +1997,24 @@ function abrirNovaReuniao(){
   document.getElementById('modal-reuniao').classList.add('open');
 }
 async function salvarReuniao(){
-  const titulo=(document.getElementById('r-titulo')?.value||'').trim();
-  const dataHora=document.getElementById('r-datahora')?.value;
-  if(!titulo){toast('Informe o título','error');return;}
-  if(!dataHora){toast('Informe data e hora','error');return;}
-  const payload={lead_id:document.getElementById('r-lead')?.value||null,titulo,descricao:(document.getElementById('r-descricao')?.value||'').trim(),data_hora:new Date(dataHora).toISOString(),duracao:parseInt(document.getElementById('r-duracao')?.value)||60,link:(document.getElementById('r-link')?.value||'').trim(),responsavel:(document.getElementById('r-responsavel')?.value||currentUser?.nome||'').trim(),status:'agendada'};
-  const{error}=await sb.from('crm_reunioes').insert(payload);
-  if(error){toast('Erro ao salvar: '+error.message,'error');return;}
-  if(payload.lead_id)await registrarAtividade(payload.lead_id,'reuniao','Reunião agendada: '+titulo);
-  toast('Reunião agendada!');closeModal('modal-reuniao');atualizarBadgeAgenda();renderAgenda();
-  const _rLink=gerarLinkGoogleAgenda(payload.titulo,dataHora,payload.duracao||60,payload.descricao||'',payload.link||'');window.open(_rLink,'_blank');
+  try{
+    const tituloVal=(document.getElementById('r-titulo')?.value||'').trim();
+    const dataHoraRaw=document.getElementById('r-datahora')?.value||document.getElementById('r-data')?.value||document.getElementById('reuniao-data')?.value||'';
+    const leadIdVal=document.getElementById('r-lead')?.value||null;
+    const duracaoVal=parseInt(document.getElementById('r-duracao')?.value)||60;
+    const descricaoVal=(document.getElementById('r-descricao')?.value||'').trim();
+    const linkVal=(document.getElementById('r-link')?.value||'').trim();
+    const respVal=(document.getElementById('r-responsavel')?.value||currentUser?.nome||'').trim();
+    console.log('[salvarReuniao]',{tituloVal,dataHoraRaw,leadIdVal,duracaoVal,descricaoVal,linkVal,respVal});
+    if(!tituloVal){toast('Informe o título','error');return;}
+    if(!dataHoraRaw){toast('Informe a data e hora da reunião','error');return;}
+    const dataHoraVal=new Date(dataHoraRaw).toISOString();
+    const{error}=await sb.from('crm_reunioes').insert({titulo:tituloVal,lead_id:leadIdVal||null,data_hora:dataHoraVal,duracao_minutos:duracaoVal,descricao:descricaoVal,link_reuniao:linkVal,usuario_nome:currentUser?.nome||'Admin',status:'agendada',criado_em:new Date().toISOString()});
+    if(error){toast('Erro ao salvar reunião: '+error.message,'error');return;}
+    if(leadIdVal)await registrarAtividade(leadIdVal,'reuniao','Reunião agendada: '+tituloVal);
+    toast('Reunião agendada!');closeModal('modal-reuniao');atualizarBadgeAgenda();renderAgenda();
+    const _rLink=gerarLinkGoogleAgenda(tituloVal,dataHoraRaw,duracaoVal,descricaoVal,linkVal);window.open(_rLink,'_blank');
+  }catch(e){toast('Erro inesperado: '+e.message,'error');console.error('salvarReuniao:',e);}
 }
 function abrirDetalheReuniao(id){
   const r=_reunioesCache.find(x=>x.id===id);if(!r)return;
