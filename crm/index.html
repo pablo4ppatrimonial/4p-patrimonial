@@ -694,6 +694,16 @@ function entrarNoApp(){
   atualizarBadgeChat();atualizarBadgeAgenda();atualizarBadgeAniversario();
   setInterval(atualizarBadgeChat,30000);setInterval(atualizarBadgeAgenda,60000);setInterval(atualizarBadgeAniversario,3600000);
   verificarRegua();setInterval(verificarRegua,600000);
+  (async()=>{
+    const hoje=new Date().toLocaleDateString('pt-BR');
+    const ultimoEnvio=localStorage.getItem('relatorio_semanal_enviado');
+    const ehSegunda=new Date().getDay()===1;
+    if(ehSegunda&&ultimoEnvio!==hoje){
+      await gerarRelatorioSemanal(7);
+      localStorage.setItem('relatorio_semanal_enviado',hoje);
+      toast('📧 Relatório semanal enviado para seu e-mail!');
+    }
+  })();
 }
 function updateSidebarUser(){
   const el=document.getElementById('sidebar-user-info');
@@ -1258,7 +1268,7 @@ async function renderRelatorios(){
     <button class="btn ${relPeriodo===7?'btn-gold':'btn-ghost'}" onclick="setPeriodo(7)">7 dias</button>
     <button class="btn ${relPeriodo===30?'btn-gold':'btn-ghost'}" onclick="setPeriodo(30)">30 dias</button>
     <button class="btn ${relPeriodo===90?'btn-gold':'btn-ghost'}" onclick="setPeriodo(90)">90 dias</button>
-    ${isAdmin()?'<div style="flex:1"></div><button class="btn btn-ghost" onclick="exportarRelatorioExcel()">📥 Exportar Excel</button><button class="btn btn-ghost" onclick="exportarRelatorioPDF()" style="margin-left:4px">📄 Exportar PDF</button>':''}
+    ${isAdmin()?'<div style="flex:1"></div><button class="btn btn-ghost" onclick="enviarRelatorioAgora()" style="font-size:12px">📧 Enviar por E-mail</button><button class="btn btn-ghost" onclick="exportarRelatorioExcel()" style="margin-left:4px">📥 Exportar Excel</button><button class="btn btn-ghost" onclick="exportarRelatorioPDF()" style="margin-left:4px">📄 Exportar PDF</button>':''}
   </div><div id="rel-content"><div class="loading"><span class="spinner"></span> Carregando...</div></div>`;
   loadRelatorios();
 }
@@ -2150,6 +2160,33 @@ async function renderDashboardVendedor(c,leads,tarefas){
       ${meusQuentes.length?`<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Capital</th><th>Etapa</th><th>Temp.</th><th>Follow-Up</th><th>Ações</th></tr></thead><tbody>${meusQuentes.slice(0,10).map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);return`<tr><td><div class="td-name">${l.nome}</div><div class="td-sub">${l.email||''}</div></td><td style="color:var(--gold);font-weight:600;font-size:12px">${l.capital_disponivel||'—'}</td><td><span class="badge badge-${l.etapa||'lead'}">${l.etapa||'lead'}</span></td><td style="white-space:nowrap"><span style="font-size:15px">${tmp.icon}</span> <span style="font-size:11px;color:${tmp.cor}">${tmp.label}</span></td><td style="font-size:12px;color:${l.followup_em&&new Date(l.followup_em)<new Date()?'var(--red)':'var(--text-dim)'}">${l.followup_em?new Date(l.followup_em).toLocaleDateString('pt-BR'):'—'}</td><td style="white-space:nowrap"><button class="action-btn action-btn-view" onclick="verLead('${l.id}')">Ver</button>${l.whatsapp?`<button class="action-btn action-btn-edit" onclick="abrirTemplatesWPPById('${l.id}')" style="color:var(--green);margin-left:4px">📱</button>`:''}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><div class="empty-icon">📊</div>Nenhum lead quente ainda. Continue prospectando!</div>'}
     </div>
   `;
+}
+
+/* ===== RELATÓRIO SEMANAL ===== */
+async function gerarRelatorioSemanal(diasAtras=7){
+  const dataInicio=new Date(Date.now()-diasAtras*86400000).toISOString();
+  const[{data:leadsD},{data:tarefasD},{data:atividadesD}]=await Promise.all([
+    sb.from('crm_leads').select('*').gte('criado_em',dataInicio),
+    sb.from('crm_tarefas').select('*').gte('criado_em',dataInicio),
+    sb.from('crm_atividades_log').select('*').gte('criado_em',dataInicio)
+  ]);
+  const leads=leadsD||[];const tarefas=tarefasD||[];const atividades=atividadesD||[];
+  const total=leads.length;
+  const fechados=leads.filter(l=>l.etapa==='fechado');
+  const perdidos=leads.filter(l=>l.etapa==='perdido');
+  const quentes=leads.filter(l=>l.score>=70).sort((a,b)=>b.score-a.score).slice(0,3);
+  const porOrigem={};leads.forEach(l=>{if(l.origem)porOrigem[l.origem]=(porOrigem[l.origem]||0)+1;});
+  const tarefasConcluidas=tarefas.filter(t=>t.status==='concluida');
+  const dataInicioFmt=new Date(dataInicio).toLocaleDateString('pt-BR');
+  const dataFimFmt=new Date().toLocaleDateString('pt-BR');
+  const htmlEmail=`<div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fff"><div style="background:linear-gradient(135deg,#0a0a0a,#1a1a1a);padding:32px;text-align:center"><h1 style="color:#c9a84c;font-size:22px;margin:0;letter-spacing:2px">4P PATRIMONIAL</h1><p style="color:#888;margin:8px 0 0;font-size:12px">RELATÓRIO SEMANAL — ${dataInicioFmt} A ${dataFimFmt}</p></div><div style="padding:24px;background:#f9f9f9"><div style="display:flex;gap:12px;margin-bottom:24px"><div style="flex:1;background:#fff;border-radius:8px;padding:16px;text-align:center;border-top:3px solid #c9a84c"><div style="font-size:28px;font-weight:700;color:#c9a84c">${total}</div><div style="font-size:11px;color:#888;margin-top:4px">LEADS CAPTADOS</div></div><div style="flex:1;background:#fff;border-radius:8px;padding:16px;text-align:center;border-top:3px solid #22c55e"><div style="font-size:28px;font-weight:700;color:#22c55e">${fechados.length}</div><div style="font-size:11px;color:#888;margin-top:4px">FECHADOS</div></div><div style="flex:1;background:#fff;border-radius:8px;padding:16px;text-align:center;border-top:3px solid #ef4444"><div style="font-size:28px;font-weight:700;color:#ef4444">${perdidos.length}</div><div style="font-size:11px;color:#888;margin-top:4px">PERDIDOS</div></div><div style="flex:1;background:#fff;border-radius:8px;padding:16px;text-align:center;border-top:3px solid #3b82f6"><div style="font-size:28px;font-weight:700;color:#3b82f6">${tarefasConcluidas.length}</div><div style="font-size:11px;color:#888;margin-top:4px">TAREFAS OK</div></div></div>${quentes.length?`<h3 style="color:#333;font-size:14px;margin:0 0 12px;border-bottom:2px solid #c9a84c;padding-bottom:8px">🔥 TOP LEADS QUENTES</h3><table style="width:100%;border-collapse:collapse;margin-bottom:20px"><tr style="background:#f0f0f0"><th style="padding:8px;text-align:left;font-size:11px">Nome</th><th style="padding:8px;text-align:left;font-size:11px">Capital</th><th style="padding:8px;text-align:left;font-size:11px">Etapa</th><th style="padding:8px;text-align:left;font-size:11px">Score</th></tr>${quentes.map(l=>`<tr style="border-bottom:1px solid #eee"><td style="padding:8px;font-size:12px">${l.nome}</td><td style="padding:8px;font-size:12px;color:#c9a84c">${l.capital_disponivel||'—'}</td><td style="padding:8px;font-size:12px">${l.etapa}</td><td style="padding:8px;font-size:12px;font-weight:700">${l.score}pts</td></tr>`).join('')}</table>`:''}${Object.keys(porOrigem).length?`<h3 style="color:#333;font-size:14px;margin:0 0 12px;border-bottom:2px solid #c9a84c;padding-bottom:8px">📣 LEADS POR ORIGEM</h3><div style="margin-bottom:20px">${Object.entries(porOrigem).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:12px"><span>${k}</span><strong style="color:#c9a84c">${v}</strong></div>`).join('')}</div>`:''}${atividades.length?`<p style="font-size:12px;color:#888;margin:0">📊 ${atividades.length} atividades registradas no período</p>`:''}</div><div style="background:#0a0a0a;padding:16px;text-align:center"><p style="color:#888;font-size:11px;margin:0">4P Patrimonial CRM · Relatório automático · <a href="https://4ppatrimonial.com.br/crm" style="color:#c9a84c">Acessar CRM</a></p></div></div>`;
+  await fetch('https://api.resend.com/emails',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+RESEND},body:JSON.stringify({from:'contato@4ppatrimonial.com.br',to:PABLO_EMAIL,subject:'📊 Relatório Semanal 4P Patrimonial — '+dataInicioFmt+' a '+dataFimFmt,html:htmlEmail})}).catch(()=>{});
+  return{total,fechados:fechados.length,perdidos:perdidos.length,quentes:quentes.length};
+}
+async function enviarRelatorioAgora(){
+  toast('Gerando relatório...');
+  await gerarRelatorioSemanal(relPeriodo);
+  toast('📧 Relatório enviado para '+PABLO_EMAIL+'!');
 }
 
 /* ===== GOOGLE AGENDA ===== */
