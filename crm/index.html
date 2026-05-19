@@ -694,6 +694,7 @@ function entrarNoApp(){
   atualizarBadgeChat();atualizarBadgeAgenda();atualizarBadgeAniversario();
   setInterval(atualizarBadgeChat,30000);setInterval(atualizarBadgeAgenda,60000);setInterval(atualizarBadgeAniversario,3600000);
   verificarRegua();setInterval(verificarRegua,600000);
+  distribuirLeadsAutomatico();setInterval(distribuirLeadsAutomatico,1800000);
   (async()=>{
     const hoje=new Date().toLocaleDateString('pt-BR');
     const ultimoEnvio=localStorage.getItem('relatorio_semanal_enviado');
@@ -1591,6 +1592,43 @@ async function renderConfig(){
               </tr>`).join('')}
         </tbody>
       </table>
+    </div>
+
+    <!-- Distribuição Automática -->
+    <div class="dash-card" style="margin-top:28px;border-left:3px solid #f59e0b">
+      <div class="dash-card-title" style="display:flex;align-items:center;gap:8px"><span>⚡</span> Distribuição Automática de Leads</div>
+      <div style="font-size:12px;color:var(--text-muted);margin:8px 0 16px">Leads sem responsável serão distribuídos automaticamente entre os vendedores ativos após o tempo configurado.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Status</div>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" id="toggle-distrib-auto" onchange="localStorage.setItem('distrib_auto_ativa',this.checked?'true':'false')" style="width:16px;height:16px;accent-color:var(--gold)" ${localStorage.getItem('distrib_auto_ativa')==='false'?'':'checked'}>
+            <span style="font-size:13px">Ativar distribuição automática</span>
+          </label>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Distribuir após</div>
+          <select onchange="localStorage.setItem('distrib_auto_horas',this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;width:100%">
+            <option value="1" ${(localStorage.getItem('distrib_auto_horas')||'10')==='1'?'selected':''}>1 hora</option>
+            <option value="2" ${(localStorage.getItem('distrib_auto_horas')||'10')==='2'?'selected':''}>2 horas</option>
+            <option value="5" ${(localStorage.getItem('distrib_auto_horas')||'10')==='5'?'selected':''}>5 horas</option>
+            <option value="10" ${(localStorage.getItem('distrib_auto_horas')||'10')==='10'?'selected':''}>10 horas</option>
+            <option value="24" ${(localStorage.getItem('distrib_auto_horas')||'10')==='24'?'selected':''}>24 horas</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Modo</div>
+          <select onchange="localStorage.setItem('distrib_auto_modo',this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;width:100%">
+            <option value="round_robin" ${(localStorage.getItem('distrib_auto_modo')||'round_robin')==='round_robin'?'selected':''}>Round Robin</option>
+            <option value="carga" ${(localStorage.getItem('distrib_auto_modo')||'round_robin')==='carga'?'selected':''}>Por carga de trabalho</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Última execução</div>
+          <div style="font-size:13px;color:var(--text-dim)">${localStorage.getItem('distrib_auto_ultima')||'Nunca executado'}</div>
+        </div>
+      </div>
+      <button class="btn btn-gold" onclick="distribuirLeadsAutomatico().then(()=>renderConfig())">⚡ Executar agora</button>
     </div>`;
 }
 
@@ -2239,6 +2277,30 @@ async function verificarRegua(){
     }
     sb.from('crm_regua').update({executado:true,executado_em:new Date().toISOString()}).eq('id',item.id);
   }
+}
+
+/* ===== DISTRIBUIÇÃO AUTOMÁTICA ===== */
+async function distribuirLeadsAutomatico(){
+  if(localStorage.getItem('distrib_auto_ativa')==='false')return;
+  const horas=parseInt(localStorage.getItem('distrib_auto_horas')||'10');
+  const tempoAtras=new Date(Date.now()-horas*3600000).toISOString();
+  try{
+    const{data:leadsSemDono}=await sb.from('crm_leads').select('*').or('responsavel.is.null,responsavel.eq.').lt('criado_em',tempoAtras).neq('etapa','fechado').neq('etapa','perdido');
+    if(!leadsSemDono||!leadsSemDono.length){localStorage.setItem('distrib_auto_ultima',new Date().toLocaleString('pt-BR'));return;}
+    const{data:vendedores}=await sb.from('crm_usuarios').select('*').eq('ativo',true).neq('cargo','admin');
+    const vends=vendedores&&vendedores.length?vendedores:[{nome:'Admin'}];
+    let count=0;
+    for(let i=0;i<leadsSemDono.length;i++){
+      const lead=leadsSemDono[i];
+      const vendedor=vends[i%vends.length];
+      await sb.from('crm_leads').update({responsavel:vendedor.nome}).eq('id',lead.id);
+      registrarAtividade(lead.id,'distribuicao_auto','Lead distribuído automaticamente após '+horas+'h sem responsável para '+vendedor.nome);
+      sb.from('crm_alertas').insert({tipo:'novo_lead_atribuido',mensagem:'Lead atribuído automaticamente: '+lead.nome,lead_id:lead.id,lido:false,criado_em:new Date().toISOString()});
+      count++;
+    }
+    localStorage.setItem('distrib_auto_ultima',new Date().toLocaleString('pt-BR'));
+    if(count>0)toast('⚡ '+count+' lead'+(count>1?'s':'')+' distribuído'+(count>1?'s':'')+' automaticamente!');
+  }catch(e){console.warn('distribuirLeadsAutomatico:',e.message);}
 }
 
 /* ===== ANIVERSARIANTES ===== */
