@@ -529,6 +529,9 @@ async function agendarFollowup(leadId){
   const fuEl=document.getElementById('followup-atual');
   if(fuEl)fuEl.innerHTML=`<div style="color:var(--gold);font-size:12px;font-weight:600">📅 Agendado: ${fmt}</div>`;
   toast('Follow-up agendado!');
+  const _fuLead=allLeads.find(x=>x.id===leadId)||{};
+  const _fuLink=gerarLinkGoogleAgenda('Follow-up: '+(_fuLead.nome||'Lead'),val,30,'Lead: '+(_fuLead.nome||'')+'\nCapital: '+(_fuLead.capital_disponivel||'')+'\nWhatsApp: '+(_fuLead.whatsapp||'')+'\nCRM 4P Patrimonial',_fuLead.cidade||'Praia Grande');
+  _toastGoogleLink('📅 Follow-up agendado! <a href="'+_fuLink+'" target="_blank" style="color:#c9a84c;font-weight:700;margin-left:8px">+ Google Agenda</a>');
 }
 async function registrarContato(leadId){
   const{error}=await sb.from('crm_leads').update({ultimo_contato:new Date().toISOString()}).eq('id',leadId);
@@ -1212,7 +1215,7 @@ function renderTarefasList(tarefas){
 }
 async function toggleTarefa(id,status){const novo=status==='concluida'?'pendente':'concluida';const p={status:novo};if(novo==='concluida')p.concluida_em=new Date().toISOString();const{error}=await sb.from('crm_tarefas').update(p).eq('id',id);if(error){toast('Erro: '+error.message,'error');return;}toast(novo==='concluida'?'Concluída!':'Reaberta!');renderTarefas();}
 async function abrirNovaTarefa(){['titulo','desc','resp'].forEach(f=>document.getElementById('t-'+f).value='');document.getElementById('t-data').value='';document.getElementById('t-prior').value='media';document.getElementById('t-status').value='pendente';const sel=document.getElementById('t-lead');sel.innerHTML='<option value="">Nenhum</option>';const{data}=await sb.from('crm_leads').select('id,nome').order('nome');(data||[]).forEach(l=>{const o=document.createElement('option');o.value=l.id;o.textContent=l.nome;sel.appendChild(o);});openModal('modal-tarefa');}
-async function salvarTarefa(){const titulo=document.getElementById('t-titulo').value.trim();if(!titulo){toast('Título é obrigatório','error');return;}const negocioId=document.getElementById('t-lead').value||null;const{error}=await sb.from('crm_tarefas').insert({titulo,descricao:document.getElementById('t-desc').value.trim(),responsavel_nome:document.getElementById('t-resp').value.trim(),data_vencimento:document.getElementById('t-data').value||null,prioridade:document.getElementById('t-prior').value,status:document.getElementById('t-status').value,negocio_id:negocioId,criado_em:new Date().toISOString()});if(error){toast('Erro: '+error.message,'error');return;}toast('Tarefa criada!');if(negocioId)registrarAtividade(negocioId,'tarefa','Tarefa criada: '+titulo);closeModal('modal-tarefa');renderTarefas();}
+async function salvarTarefa(){const titulo=document.getElementById('t-titulo').value.trim();if(!titulo){toast('Título é obrigatório','error');return;}const negocioId=document.getElementById('t-lead').value||null;const{error}=await sb.from('crm_tarefas').insert({titulo,descricao:document.getElementById('t-desc').value.trim(),responsavel_nome:document.getElementById('t-resp').value.trim(),data_vencimento:document.getElementById('t-data').value||null,prioridade:document.getElementById('t-prior').value,status:document.getElementById('t-status').value,negocio_id:negocioId,criado_em:new Date().toISOString()});if(error){toast('Erro: '+error.message,'error');return;}toast('Tarefa criada!');const _tData=document.getElementById('t-data').value;if(_tData){const _tLink=gerarLinkGoogleAgenda('Tarefa CRM: '+titulo,_tData,30,'Tarefa do CRM 4P Patrimonial','');_toastGoogleLink('✅ Tarefa criada! <a href="'+_tLink+'" target="_blank" style="color:#c9a84c;font-weight:700;margin-left:8px">+ Google Agenda</a>');}if(negocioId)registrarAtividade(negocioId,'tarefa','Tarefa criada: '+titulo);closeModal('modal-tarefa');renderTarefas();}
 function excluirTarefa(id){confirmar('Excluir esta tarefa?',async()=>{const{error}=await sb.from('crm_tarefas').delete().eq('id',id);if(error){toast('Erro: '+error.message,'error');return;}toast('Excluída!');renderTarefas();});}
 
 // TICKETS
@@ -1934,6 +1937,7 @@ async function renderAgenda(){
         <h2 style="font-family:var(--display);font-size:18px;color:var(--gold)">${meses[_agendaMes]} ${_agendaAno}</h2>
         <button class="btn btn-ghost" onclick="navegarAgenda(1)">Próximo →</button>
         <button class="btn btn-ghost" onclick="_agendaMes=new Date().getMonth();_agendaAno=new Date().getFullYear();renderAgenda()">Hoje</button>
+        <button class="btn btn-ghost" onclick="window.open('https://calendar.google.com/calendar/r/week','_blank')" style="color:var(--gold);border-color:rgba(201,168,76,.4)">📅 Google Agenda</button>
       </div>
       <span style="font-size:12px;color:var(--text-dim)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(59,130,246,0.4);margin-right:4px;vertical-align:middle"></span>Reuniões <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(201,168,76,0.3);margin-right:4px;vertical-align:middle;margin-left:10px"></span>Follow-ups</span>
     </div>
@@ -1959,7 +1963,7 @@ function _renderCalMensal(ano,mes,reunioes,followups){
     const dayF=followups.filter(f=>f.followup_em?.startsWith(dateStr));
     return `<div class="cal-day${d.outro?' cal-other':''}${isHoje?' cal-today':''}">
       <div class="cal-num">${d.num}</div>
-      ${dayR.slice(0,2).map(r=>`<span class="cal-chip chip-reuniao" title="${r.titulo}" onclick="abrirDetalheReuniao('${r.id}')">${r.titulo.substring(0,14)}</span>`).join('')}
+      ${dayR.slice(0,2).map(r=>{const _cLink=gerarLinkGoogleAgenda(r.titulo,r.data_hora,r.duracao||60,r.descricao||'','');return`<span class="cal-chip chip-reuniao" title="${r.titulo}" onclick="abrirDetalheReuniao('${r.id}')">${r.titulo.substring(0,12)} <a href="${_cLink}" target="_blank" onclick="event.stopPropagation()" style="color:#c9a84c;font-size:9px;font-weight:700;text-decoration:none;vertical-align:middle;opacity:.8">＋G</a></span>`;}).join('')}
       ${dayR.length>2?`<span class="cal-chip chip-reuniao">+${dayR.length-2} mais</span>`:''}
       ${dayF.slice(0,1).map(f=>`<span class="cal-chip chip-followup">⭐ ${f.nome.split(' ')[0]}</span>`).join('')}
     </div>`;
@@ -1991,6 +1995,7 @@ async function salvarReuniao(){
   if(error){toast('Erro ao salvar: '+error.message,'error');return;}
   if(payload.lead_id)await registrarAtividade(payload.lead_id,'reuniao','Reunião agendada: '+titulo);
   toast('Reunião agendada!');closeModal('modal-reuniao');atualizarBadgeAgenda();renderAgenda();
+  const _rLink=gerarLinkGoogleAgenda(payload.titulo,dataHora,payload.duracao||60,payload.descricao||'',payload.link||'');window.open(_rLink,'_blank');
 }
 function abrirDetalheReuniao(id){
   const r=_reunioesCache.find(x=>x.id===id);if(!r)return;
@@ -2145,6 +2150,17 @@ async function renderDashboardVendedor(c,leads,tarefas){
       ${meusQuentes.length?`<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Capital</th><th>Etapa</th><th>Temp.</th><th>Follow-Up</th><th>Ações</th></tr></thead><tbody>${meusQuentes.slice(0,10).map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);return`<tr><td><div class="td-name">${l.nome}</div><div class="td-sub">${l.email||''}</div></td><td style="color:var(--gold);font-weight:600;font-size:12px">${l.capital_disponivel||'—'}</td><td><span class="badge badge-${l.etapa||'lead'}">${l.etapa||'lead'}</span></td><td style="white-space:nowrap"><span style="font-size:15px">${tmp.icon}</span> <span style="font-size:11px;color:${tmp.cor}">${tmp.label}</span></td><td style="font-size:12px;color:${l.followup_em&&new Date(l.followup_em)<new Date()?'var(--red)':'var(--text-dim)'}">${l.followup_em?new Date(l.followup_em).toLocaleDateString('pt-BR'):'—'}</td><td style="white-space:nowrap"><button class="action-btn action-btn-view" onclick="verLead('${l.id}')">Ver</button>${l.whatsapp?`<button class="action-btn action-btn-edit" onclick="abrirTemplatesWPPById('${l.id}')" style="color:var(--green);margin-left:4px">📱</button>`:''}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><div class="empty-icon">📊</div>Nenhum lead quente ainda. Continue prospectando!</div>'}
     </div>
   `;
+}
+
+/* ===== GOOGLE AGENDA ===== */
+function gerarLinkGoogleAgenda(titulo,dataHora,duracao,detalhes,local){
+  const inicio=new Date(dataHora).toISOString().replace(/-|:|\.\d\d\d/g,'');
+  const fim=new Date(new Date(dataHora).getTime()+(duracao||30)*60000).toISOString().replace(/-|:|\.\d\d\d/g,'');
+  return'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(titulo)+'&dates='+inicio+'/'+fim+'&details='+encodeURIComponent(detalhes||'')+'&location='+encodeURIComponent(local||'');
+}
+function _toastGoogleLink(html){
+  const tc=document.getElementById('toast-container');if(!tc)return;
+  const el=document.createElement('div');el.className='toast success';el.innerHTML=html;tc.appendChild(el);setTimeout(()=>el.remove(),8000);
 }
 
 /* ===== RÉGUA DE COMUNICAÇÃO ===== */
