@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>4P Patrimonial — CRM</title>
+<meta name="theme-color" content="#c9a84c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="4P CRM">
+<link rel="manifest" href="/crm/manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -198,9 +204,43 @@ input[type=checkbox].cb-lead{width:15px;height:15px;accent-color:var(--gold);cur
 .nps-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:all .15s;user-select:none;font-family:var(--mono);}
 .nps-btn:hover{opacity:.8;}
 .nps-btn.selected{outline:3px solid currentColor;transform:scale(1.12);}
+/* ===== PERF FEED FADE-IN ===== */
+@keyframes feedIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.perf-feed-item{animation:feedIn .3s ease;}
+/* ===== PWA INSTALL BANNER ===== */
+#pwa-banner{position:fixed;top:0;left:0;right:0;z-index:99999;background:var(--gold);color:#000;display:none;align-items:center;justify-content:center;gap:12px;padding:10px 16px;font-size:13px;font-weight:600;}
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+  :root{--sidebar:0px;}
+  body{flex-direction:column;}
+  #sidebar{width:100%;min-height:0;height:56px;bottom:0;top:auto;flex-direction:row;border-right:none;border-top:1px solid var(--border);position:fixed;z-index:100;overflow:visible;}
+  .sidebar-shimmer,.sidebar-logo,.sidebar-footer{display:none!important;}
+  .sidebar-nav{display:flex;flex-direction:row;width:100%;padding:0;overflow-x:auto;scrollbar-width:none;}
+  .sidebar-nav::-webkit-scrollbar{display:none;}
+  .nav-item{flex:1;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;font-size:9px;border-left:none;border-top:2px solid transparent;min-width:52px;text-align:center;}
+  .nav-item.active{border-left:none;border-top-color:var(--gold);}
+  .nav-icon{font-size:18px;width:auto;}
+  .nav-badge-aniv{margin-left:0;font-size:10px;}
+  #main{margin-left:0;padding-bottom:64px;}
+  .page-header{padding:14px 16px 12px;}
+  .page-content{padding:14px 16px;}
+  .stats-grid{grid-template-columns:1fr 1fr!important;}
+  .modal-overlay{padding:0;align-items:flex-end;}
+  .modal{max-width:100%!important;border-radius:16px 16px 0 0;max-height:92vh;}
+  .table-wrap{overflow-x:auto;}
+  table{min-width:560px;}
+  .action-btn span{display:none;}
+  .filters{gap:8px;}
+  .search-input{min-width:0;}
+}
 </style>
 </head>
 <body>
+<div id="pwa-banner">
+  <span>📱 Instale o app 4P CRM no seu celular!</span>
+  <button onclick="pwaBannerInstall()" style="background:#000;color:var(--gold);border:none;padding:6px 14px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px">Instalar</button>
+  <button onclick="document.getElementById('pwa-banner').style.display='none'" style="background:transparent;border:none;font-size:18px;cursor:pointer;color:#000;line-height:1">×</button>
+</div>
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo"><strong>4P Patrimonial</strong><p>CRM COMERCIAL</p></div>
@@ -224,6 +264,7 @@ input[type=checkbox].cb-lead{width:15px;height:15px;accent-color:var(--gold);cur
     <div class="nav-item" onclick="goTo('tickets')"><span class="nav-icon">🎫</span> Tickets</div>
     <div class="nav-item" onclick="goTo('relatorios')"><span class="nav-icon">📈</span> Relatórios</div>
     <div class="nav-item" onclick="goTo('metas')"><span class="nav-icon">🏅</span> Metas</div>
+    <div class="nav-item" id="nav-perf" onclick="goTo('performance')" style="display:none"><span class="nav-icon">📊</span> Performance</div>
     <div class="nav-item" id="nav-config" onclick="goToConfig()"><span class="nav-icon">⚙️</span> Configurações</div>
   </div>
   <div class="sidebar-footer">
@@ -356,7 +397,7 @@ const RESEND='re_XkRB47R9_PkrxabbMvVGpMLScdBMfs7iJ';
 const PABLO_WPP='5513992097189';
 const PABLO_EMAIL='pabloangelyscamilaoficial@gmail.com';
 const sb=supabase.createClient(SB_URL,SB_KEY);
-let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null,_relLeads=[],_importHeaders=[],_importRows=[],_chatInterval=null,_chatOpen=false,leadsSelecionados=[],_agendaMes=new Date().getMonth(),_agendaAno=new Date().getFullYear(),_agendaVista='mensal',_reunioesCache=[],_ligacaoLeadId=null,_propostaLeadId=null,_propostaLead=null,_pendingPerdaCallback=null,_npsLeadId=null;
+let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null,_relLeads=[],_importHeaders=[],_importRows=[],_chatInterval=null,_chatOpen=false,leadsSelecionados=[],_agendaMes=new Date().getMonth(),_agendaAno=new Date().getFullYear(),_agendaVista='mensal',_reunioesCache=[],_ligacaoLeadId=null,_propostaLeadId=null,_propostaLead=null,_pendingPerdaCallback=null,_npsLeadId=null,_perfInterval=null,_perfVivo=false,_pwaDeferredPrompt=null;
 
 const TEMPLATES_WPP={
   primeiro_contato:{label:'Primeiro Contato',texto:l=>`Olá ${l.nome||''}! 👋\n\nSou da equipe 4P Patrimonial. Identificamos seu interesse em investimento imobiliário.\n\nPodemos agendar uma conversa rápida para apresentar nossas oportunidades exclusivas?\n\nAguardo! 🏆`},
@@ -727,6 +768,8 @@ function updateSidebarUser(){
     navConfig.style.opacity=isAdmin()?'':'0.4';
     navConfig.style.cursor=isAdmin()?'':'not-allowed';
   }
+  const navPerf=document.getElementById('nav-perf');
+  if(navPerf)navPerf.style.display=isAdmin()?'flex':'none';
 }
 function doLogout(){
   currentUser=null;
@@ -752,7 +795,7 @@ function goTo(page){
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   const map={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',agenda:'Agenda',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relat',metas:'Metas',config:'Config'};
   document.querySelectorAll('.nav-item').forEach(el=>{if(el.textContent.trim().startsWith(map[page]||page)||el.textContent.trim().includes(map[page]||page))el.classList.add('active');});
-  const titles={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',agenda:'Agenda',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relatórios',metas:'Metas & Comissões',config:'Configurações'};
+  const titles={dashboard:'Dashboard',leads:'Leads',pipeline:'Pipeline',agenda:'Agenda',tarefas:'Tarefas',tickets:'Tickets',relatorios:'Relatórios',metas:'Metas & Comissões',performance:'Performance em Tempo Real',config:'Configurações'};
   document.getElementById('page-title').textContent=titles[page]||page;
   const ha=document.getElementById('header-action');ha.innerHTML='';
   if(page==='leads'){ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoLead()">+ Novo Lead</button>';if(isAdmin())ha.innerHTML+=' <button class="btn btn-ghost" onclick="abrirImportar()" style="margin-left:4px">📥 Importar</button> <button class="btn btn-ghost" onclick="exportarLeadsExcel()" style="margin-left:4px">📤 Exportar</button>';}
@@ -760,7 +803,9 @@ function goTo(page){
   if(page==='tarefas')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovaTarefa()">+ Nova Tarefa</button>';
   if(page==='tickets')ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoTicket()">+ Novo Ticket</button>';
   if(page==='config'&&isAdmin())ha.innerHTML='<button class="btn btn-gold" onclick="abrirNovoUsuario()">+ Novo Usuário</button>';
-  ({dashboard:renderDashboard,leads:renderLeads,pipeline:renderPipeline,agenda:renderAgenda,tarefas:renderTarefas,tickets:renderTickets,relatorios:renderRelatorios,metas:renderMetas,config:renderConfig}[page]||renderDashboard)();
+  if(page==='performance'&&isAdmin())ha.innerHTML='<button class="btn btn-ghost" onclick="togglePerfVivo()" id="btn-ao-vivo-hdr">🔄 Ao vivo</button>';
+  if(page!=='performance'){clearInterval(_perfInterval);_perfInterval=null;_perfVivo=false;}
+  ({dashboard:renderDashboard,leads:renderLeads,pipeline:renderPipeline,agenda:renderAgenda,tarefas:renderTarefas,tickets:renderTickets,relatorios:renderRelatorios,metas:renderMetas,performance:renderPerformance,config:renderConfig}[page]||renderDashboard)();
   document.getElementById('sidebar').classList.remove('open');
 }
 
@@ -1449,6 +1494,140 @@ async function loadRelatorios(){
   const ctxInd=document.getElementById('chart-indicadores');
   if(ctxInd){const indMap2={};(all||[]).forEach(l=>{if(!l.indicado_por)return;if(!indMap2[l.indicado_por])indMap2[l.indicado_por]=0;indMap2[l.indicado_por]++;});const indEntries=Object.entries(indMap2).sort((a,b)=>b[1]-a[1]).slice(0,8);if(indEntries.length)window._indChart=new Chart(ctxInd,{type:'bar',data:{labels:indEntries.map(x=>x[0]),datasets:[{label:'Indicações',data:indEntries.map(x=>x[1]),backgroundColor:'rgba(201,168,76,0.35)',borderColor:'#c9a84c',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>i.raw+' indicação(ões)'}}},scales:{x:{border:{display:false},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:11},stepSize:1,precision:0},beginAtZero:true},y:{border:{display:false},grid:{display:false},ticks:{color:'#888',font:{size:11}}}}}});}
   }catch(err){console.error('loadRelatorios:',err);const el=document.getElementById('rel-content');if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-muted)"><div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="margin-bottom:16px">Erro ao carregar relatórios.</div><button class="btn btn-gold" onclick="loadRelatorios()">Tentar novamente</button></div>';}
+}
+
+// PERFORMANCE
+async function renderPerformance(){
+  if(!isAdmin()){document.getElementById('page-content').innerHTML='<div class="empty" style="padding:80px 20px"><div class="empty-icon">🔒</div><div>Acesso restrito</div></div>';return;}
+  const c=document.getElementById('page-content');
+  c.innerHTML='<div class="loading"><span class="spinner"></span> Carregando...</div>';
+  const hoje=new Date();
+  const hojeStr=hoje.toISOString().slice(0,10);
+  const ontem=new Date(hoje);ontem.setDate(hoje.getDate()-1);
+  const ontemStr=ontem.toISOString().slice(0,10);
+  const mesInicio=new Date(hoje.getFullYear(),hoje.getMonth(),1).toISOString();
+  let lH=[],lOn=[],aH=[],aOn=[],users=[],ativs=[],ativos=[],fechMes=[];
+  try{
+    const[r1,r2,r3,r4,r5,r6,r7,r8]=await Promise.all([
+      sb.from('crm_leads').select('id,etapa,responsavel,criado_em').gte('criado_em',hojeStr+'T00:00:00'),
+      sb.from('crm_leads').select('id,etapa,criado_em').gte('criado_em',ontemStr+'T00:00:00').lt('criado_em',hojeStr+'T00:00:00'),
+      sb.from('crm_atividades_log').select('*').gte('criado_em',hojeStr+'T00:00:00'),
+      sb.from('crm_atividades_log').select('*').gte('criado_em',ontemStr+'T00:00:00').lt('criado_em',hojeStr+'T00:00:00'),
+      sb.from('crm_usuarios').select('*').eq('ativo',true),
+      sb.from('crm_atividades_log').select('*').order('criado_em',{ascending:false}).limit(100),
+      sb.from('crm_leads').select('id,etapa,responsavel').not('etapa','in','(fechado,perdido)'),
+      sb.from('crm_leads').select('id,responsavel,etapa').eq('etapa','fechado').gte('updated_at',mesInicio)
+    ]);
+    lH=r1.data||[];lOn=r2.data||[];aH=r3.data||[];aOn=r4.data||[];
+    users=r5.data||[];ativs=r6.data||[];ativos=r7.data||[];fechMes=r8.data||[];
+  }catch(e){console.warn('renderPerformance:',e.message);}
+
+  const leadsCapHoje=lH.length,leadsCapOntem=lOn.length;
+  const contatosHoje=aH.filter(a=>['contato','ligacao'].includes(a.tipo)).length;
+  const contatosOntem=aOn.filter(a=>['contato','ligacao'].includes(a.tipo)).length;
+  const fechadosHoje=lH.filter(l=>l.etapa==='fechado').length;
+  const fechadosOntem=lOn.filter(l=>l.etapa==='fechado').length;
+  const mensagensHoje=aH.filter(a=>a.tipo==='mensagem').length;
+  const mensagensOntem=aOn.filter(a=>a.tipo==='mensagem').length;
+
+  const seta=(a,b)=>a>b?'<span style="color:#22c55e;font-size:16px">▲</span>':a<b?'<span style="color:#ef4444;font-size:16px">▼</span>':'<span style="color:#555;font-size:16px">—</span>';
+  const tempoRel=iso=>{if(!iso)return '—';const d=Math.floor((Date.now()-new Date(iso))/1000);if(d<60)return 'agora';if(d<3600)return 'há '+Math.floor(d/60)+'min';if(d<86400)return 'há '+Math.floor(d/3600)+'h';return 'há '+Math.floor(d/86400)+'d';};
+  const statusVend=iso=>{if(!iso)return{cor:'#555',label:'Sem atividade'};const m=(Date.now()-new Date(iso))/60000;if(m<30)return{cor:'#22c55e',label:'Ativo'};if(m<120)return{cor:'#fbbf24',label:'Ocioso'};return{cor:'#ef4444',label:'Inativo'};};
+
+  const tableRows=users.map(u=>{
+    const leadsAtivos=ativos.filter(l=>l.responsavel===u.nome).length;
+    const contactadosHoje=aH.filter(a=>a.usuario_nome===u.nome).length;
+    const fechMesU=fechMes.filter(l=>l.responsavel===u.nome).length;
+    const meta=u.meta_mensal||0;
+    const metaPct=meta?Math.min(Math.round(fechMesU/meta*100),999):0;
+    const metaCor=metaPct>=100?'#22c55e':metaPct>=50?'#fbbf24':'#ef4444';
+    const ultimaA=ativs.find(a=>a.usuario_nome===u.nome);
+    const{cor,label}=statusVend(ultimaA?.criado_em);
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--gold-glow);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--gold);font-size:13px;flex-shrink:0">${(u.nome||'?')[0].toUpperCase()}</div>
+        <div><div style="font-weight:600">${u.nome}</div><div style="font-size:11px;color:var(--text-muted)">${u.cargo||'vendedor'}</div></div>
+      </div></td>
+      <td style="font-family:var(--mono);font-weight:600;text-align:center">${leadsAtivos}</td>
+      <td style="font-family:var(--mono);text-align:center">${contactadosHoje}</td>
+      <td style="font-family:var(--mono);text-align:center">${fechMesU}</td>
+      <td style="min-width:130px"><div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="width:${Math.min(metaPct,100)}%;height:100%;background:${metaCor};border-radius:3px"></div></div>
+        <span style="font-size:11px;color:${metaCor};font-weight:700;font-family:var(--mono);min-width:36px">${metaPct}%</span>
+      </div></td>
+      <td style="font-size:12px;color:var(--text-dim)">${tempoRel(ultimaA?.criado_em)}</td>
+      <td><div style="display:flex;align-items:center;gap:6px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${cor};box-shadow:0 0 6px ${cor}"></div>
+        <span style="font-size:12px;color:${cor}">${label}</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  const tipoIcon={fechamento:'🏆',ligacao:'📞',mensagem:'💬',proposta:'📄',nota:'📝',criacao:'✨',contato:'📲',distribuicao_auto:'⚡',regua:'📋'};
+  const tipoCor={fechamento:'#22c55e',ligacao:'#3b82f6',mensagem:'#c9a84c',proposta:'#a855f7',nota:'#888',criacao:'#22c55e',contato:'#3b82f6',distribuicao_auto:'#f59e0b',regua:'#888'};
+  const feedHTML=ativs.slice(0,20).map(a=>`<div class="perf-feed-item" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+    <div style="width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${tipoIcon[a.tipo]||'📌'}</div>
+    <div style="flex:1;min-width:0"><span style="font-weight:600;color:${tipoCor[a.tipo]||'var(--text)'}">${a.usuario_nome||'Sistema'}</span> <span style="color:var(--text-dim);font-size:12px">${a.descricao||a.tipo}</span></div>
+    <span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${tempoRel(a.criado_em)}</span>
+  </div>`).join('');
+
+  const horaAtual=new Date().getHours();
+  const porHora=Array(24).fill(0);
+  aH.forEach(a=>{const h=new Date(a.criado_em).getHours();if(h>=0&&h<24)porHora[h]++;});
+
+  c.innerHTML=`
+    <div class="stats-grid" style="margin-bottom:28px">
+      <div class="stat-card"><div class="stat-card-icon">👥</div><div class="stat-label">Leads captados hoje</div>
+        <div class="stat-value" style="display:flex;align-items:center;gap:8px">${leadsCapHoje} ${seta(leadsCapHoje,leadsCapOntem)}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Ontem: ${leadsCapOntem}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">📞</div><div class="stat-label">Contatos realizados hoje</div>
+        <div class="stat-value" style="display:flex;align-items:center;gap:8px">${contatosHoje} ${seta(contatosHoje,contatosOntem)}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Ontem: ${contatosOntem}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-label">Leads fechados hoje</div>
+        <div class="stat-value green" style="display:flex;align-items:center;gap:8px">${fechadosHoje} ${seta(fechadosHoje,fechadosOntem)}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Ontem: ${fechadosOntem}</div></div>
+      <div class="stat-card"><div class="stat-card-icon">💬</div><div class="stat-label">Mensagens enviadas hoje</div>
+        <div class="stat-value gold" style="display:flex;align-items:center;gap:8px">${mensagensHoje} ${seta(mensagensHoje,mensagensOntem)}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Ontem: ${mensagensOntem}</div></div>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:28px;padding:0;overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:15px;font-weight:700;font-family:var(--display)">Performance por Vendedor</div>
+        <span style="font-size:11px;color:var(--text-muted)">Mês atual</span>
+      </div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Vendedor</th><th>Leads Ativos</th><th>Contactados Hoje</th><th>Fechados Mês</th><th>Meta %</th><th>Última Atividade</th><th>Status</th></tr></thead>
+        <tbody>${tableRows||'<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px">Nenhum vendedor cadastrado</td></tr>'}</tbody>
+      </table></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px">
+      <div class="dash-card">
+        <div class="dash-card-title" style="margin-bottom:12px">⚡ Feed de Atividades <span style="float:right;font-size:11px;color:var(--text-muted);font-weight:400">Últimas 20</span></div>
+        <div style="max-height:400px;overflow-y:auto">${feedHTML||'<div style="text-align:center;color:var(--text-muted);padding:20px">Sem atividades</div>'}</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-title" style="margin-bottom:12px">⏱ Atividades por Hora — Hoje</div>
+        <canvas id="chart-atividades-hora" height="220"></canvas>
+      </div>
+    </div>`;
+
+  destroyChart('chart-atividades-hora');
+  const ctx=document.getElementById('chart-atividades-hora');
+  if(ctx){new Chart(ctx,{type:'bar',data:{labels:Array.from({length:24},(_,i)=>i+'h'),datasets:[{data:porHora,backgroundColor:porHora.map((_,i)=>i===horaAtual?'rgba(201,168,76,0.9)':'rgba(201,168,76,0.3)'),borderColor:porHora.map((_,i)=>i===horaAtual?'#c9a84c':'rgba(201,168,76,0.5)'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#555',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#555',stepSize:1},beginAtZero:true}}}});}
+}
+function togglePerfVivo(){
+  _perfVivo=!_perfVivo;
+  const btn=document.getElementById('btn-ao-vivo-hdr');
+  if(_perfVivo){
+    _perfInterval=setInterval(renderPerformance,30000);
+    if(btn){btn.style.borderColor='#22c55e';btn.style.color='#22c55e';btn.innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulseDot 1.5s ease-in-out infinite;margin-right:6px"></span>🔄 Ao vivo';}
+    toast('🔄 Atualização automática ativada (30s)');
+  }else{
+    clearInterval(_perfInterval);_perfInterval=null;
+    if(btn){btn.style.borderColor='';btn.style.color='';btn.innerHTML='🔄 Ao vivo';}
+  }
 }
 
 // CONFIGURAÇÕES
@@ -2387,6 +2566,21 @@ async function salvarRespostaNPS(){
   if(error){toast('Erro: '+error.message,'error');return;}
   toast('Resposta NPS salva!');closeModal('modal-nps-resposta');
   if(_verLeadId)verLead(_verLeadId);
+}
+
+/* ===== PWA ===== */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/crm/sw.js').then(()=>console.log('SW registrado')).catch(()=>{});
+}
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();_pwaDeferredPrompt=e;
+  const banner=document.getElementById('pwa-banner');
+  if(banner)banner.style.display='flex';
+});
+function pwaBannerInstall(){
+  if(!_pwaDeferredPrompt)return;
+  _pwaDeferredPrompt.prompt();
+  _pwaDeferredPrompt.userChoice.then(()=>{_pwaDeferredPrompt=null;const b=document.getElementById('pwa-banner');if(b)b.style.display='none';});
 }
 </script>
 
