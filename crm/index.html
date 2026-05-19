@@ -1500,122 +1500,91 @@ async function loadRelatorios(){
 async function renderPerformance(){
   if(!isAdmin()){document.getElementById('page-content').innerHTML='<div class="empty" style="padding:80px 20px"><div class="empty-icon">🔒</div><div>Acesso restrito</div></div>';return;}
   const c=document.getElementById('page-content');
-  c.innerHTML='<div class="loading"><span class="spinner"></span> Carregando...</div>';
-  const hoje=new Date();
-  const hojeStr=hoje.toISOString().slice(0,10);
-  const ontem=new Date(hoje);ontem.setDate(hoje.getDate()-1);
-  const ontemStr=ontem.toISOString().slice(0,10);
-  const mesInicio=new Date(hoje.getFullYear(),hoje.getMonth(),1).toISOString();
-  let lH=[],lOn=[],aH=[],aOn=[],users=[],ativs=[],ativos=[],fechMes=[];
+  c.innerHTML='<div class="loading"><span class="spinner"></span> Carregando performance...</div>';
   try{
-    const[r1,r2,r3,r4,r5,r6,r7,r8]=await Promise.all([
-      sb.from('crm_leads').select('id,etapa,responsavel,criado_em').gte('criado_em',hojeStr+'T00:00:00'),
-      sb.from('crm_leads').select('id,etapa,criado_em').gte('criado_em',ontemStr+'T00:00:00').lt('criado_em',hojeStr+'T00:00:00'),
-      sb.from('crm_atividades_log').select('*').gte('criado_em',hojeStr+'T00:00:00'),
-      sb.from('crm_atividades_log').select('*').gte('criado_em',ontemStr+'T00:00:00').lt('criado_em',hojeStr+'T00:00:00'),
-      sb.from('crm_usuarios').select('*').eq('ativo',true),
-      sb.from('crm_atividades_log').select('*').order('criado_em',{ascending:false}).limit(100),
-      sb.from('crm_leads').select('id,etapa,responsavel').not('etapa','in','(fechado,perdido)'),
-      sb.from('crm_leads').select('id,responsavel,etapa').eq('etapa','fechado').gte('updated_at',mesInicio)
+    const hoje=new Date().toISOString().slice(0,10);
+    const inicioMes=new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString();
+    const[leadsR,atividadesR,usuariosR]=await Promise.all([
+      sb.from('crm_leads').select('*').order('criado_em',{ascending:false}),
+      sb.from('crm_atividades_log').select('*').gte('criado_em',inicioMes),
+      sb.from('crm_usuarios').select('*').eq('ativo',true)
     ]);
-    lH=r1.data||[];lOn=r2.data||[];aH=r3.data||[];aOn=r4.data||[];
-    users=r5.data||[];ativs=r6.data||[];ativos=r7.data||[];fechMes=r8.data||[];
-  }catch(e){console.warn('renderPerformance:',e.message);}
-
-  const leadsCapHoje=lH.length,leadsCapOntem=lOn.length;
-  const contatosHoje=aH.filter(a=>['contato','ligacao'].includes(a.tipo)).length;
-  const contatosOntem=aOn.filter(a=>['contato','ligacao'].includes(a.tipo)).length;
-  const fechadosHoje=lH.filter(l=>l.etapa==='fechado').length;
-  const fechadosOntem=lOn.filter(l=>l.etapa==='fechado').length;
-  const mensagensHoje=aH.filter(a=>a.tipo==='mensagem').length;
-  const mensagensOntem=aOn.filter(a=>a.tipo==='mensagem').length;
-
-  const seta=(a,b)=>a>b?'<span style="color:#22c55e;font-size:16px">▲</span>':a<b?'<span style="color:#ef4444;font-size:16px">▼</span>':'<span style="color:#555;font-size:16px">—</span>';
-  const tempoRel=iso=>{if(!iso)return '—';const d=Math.floor((Date.now()-new Date(iso))/1000);if(d<60)return 'agora';if(d<3600)return 'há '+Math.floor(d/60)+'min';if(d<86400)return 'há '+Math.floor(d/3600)+'h';return 'há '+Math.floor(d/86400)+'d';};
-  const statusVend=iso=>{if(!iso)return{cor:'#555',label:'Sem atividade'};const m=(Date.now()-new Date(iso))/60000;if(m<30)return{cor:'#22c55e',label:'Ativo'};if(m<120)return{cor:'#fbbf24',label:'Ocioso'};return{cor:'#ef4444',label:'Inativo'};};
-
-  const tableRows=users.map(u=>{
-    const leadsAtivos=ativos.filter(l=>l.responsavel===u.nome).length;
-    const contactadosHoje=aH.filter(a=>a.usuario_nome===u.nome).length;
-    const fechMesU=fechMes.filter(l=>l.responsavel===u.nome).length;
-    const meta=u.meta_mensal||0;
-    const metaPct=meta?Math.min(Math.round(fechMesU/meta*100),999):0;
-    const metaCor=metaPct>=100?'#22c55e':metaPct>=50?'#fbbf24':'#ef4444';
-    const ultimaA=ativs.find(a=>a.usuario_nome===u.nome);
-    const{cor,label}=statusVend(ultimaA?.criado_em);
-    return `<tr>
-      <td><div style="display:flex;align-items:center;gap:8px">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--gold-glow);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--gold);font-size:13px;flex-shrink:0">${(u.nome||'?')[0].toUpperCase()}</div>
-        <div><div style="font-weight:600">${u.nome}</div><div style="font-size:11px;color:var(--text-muted)">${u.cargo||'vendedor'}</div></div>
-      </div></td>
-      <td style="font-family:var(--mono);font-weight:600;text-align:center">${leadsAtivos}</td>
-      <td style="font-family:var(--mono);text-align:center">${contactadosHoje}</td>
-      <td style="font-family:var(--mono);text-align:center">${fechMesU}</td>
-      <td style="min-width:130px"><div style="display:flex;align-items:center;gap:8px">
-        <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="width:${Math.min(metaPct,100)}%;height:100%;background:${metaCor};border-radius:3px"></div></div>
-        <span style="font-size:11px;color:${metaCor};font-weight:700;font-family:var(--mono);min-width:36px">${metaPct}%</span>
-      </div></td>
-      <td style="font-size:12px;color:var(--text-dim)">${tempoRel(ultimaA?.criado_em)}</td>
-      <td><div style="display:flex;align-items:center;gap:6px">
-        <div style="width:8px;height:8px;border-radius:50%;background:${cor};box-shadow:0 0 6px ${cor}"></div>
-        <span style="font-size:12px;color:${cor}">${label}</span>
-      </div></td>
-    </tr>`;
-  }).join('');
-
-  const tipoIcon={fechamento:'🏆',ligacao:'📞',mensagem:'💬',proposta:'📄',nota:'📝',criacao:'✨',contato:'📲',distribuicao_auto:'⚡',regua:'📋'};
-  const tipoCor={fechamento:'#22c55e',ligacao:'#3b82f6',mensagem:'#c9a84c',proposta:'#a855f7',nota:'#888',criacao:'#22c55e',contato:'#3b82f6',distribuicao_auto:'#f59e0b',regua:'#888'};
-  const feedHTML=ativs.slice(0,20).map(a=>`<div class="perf-feed-item" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
-    <div style="width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${tipoIcon[a.tipo]||'📌'}</div>
-    <div style="flex:1;min-width:0"><span style="font-weight:600;color:${tipoCor[a.tipo]||'var(--text)'}">${a.usuario_nome||'Sistema'}</span> <span style="color:var(--text-dim);font-size:12px">${a.descricao||a.tipo}</span></div>
-    <span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${tempoRel(a.criado_em)}</span>
-  </div>`).join('');
-
-  const horaAtual=new Date().getHours();
-  const porHora=Array(24).fill(0);
-  aH.forEach(a=>{const h=new Date(a.criado_em).getHours();if(h>=0&&h<24)porHora[h]++;});
-
-  c.innerHTML=`
-    <div class="stats-grid" style="margin-bottom:28px">
-      <div class="stat-card"><div class="stat-card-icon">👥</div><div class="stat-label">Leads captados hoje</div>
-        <div class="stat-value" style="display:flex;align-items:center;gap:8px">${leadsCapHoje} ${seta(leadsCapHoje,leadsCapOntem)}</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Ontem: ${leadsCapOntem}</div></div>
-      <div class="stat-card"><div class="stat-card-icon">📞</div><div class="stat-label">Contatos realizados hoje</div>
-        <div class="stat-value" style="display:flex;align-items:center;gap:8px">${contatosHoje} ${seta(contatosHoje,contatosOntem)}</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Ontem: ${contatosOntem}</div></div>
-      <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-label">Leads fechados hoje</div>
-        <div class="stat-value green" style="display:flex;align-items:center;gap:8px">${fechadosHoje} ${seta(fechadosHoje,fechadosOntem)}</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Ontem: ${fechadosOntem}</div></div>
-      <div class="stat-card"><div class="stat-card-icon">💬</div><div class="stat-label">Mensagens enviadas hoje</div>
-        <div class="stat-value gold" style="display:flex;align-items:center;gap:8px">${mensagensHoje} ${seta(mensagensHoje,mensagensOntem)}</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Ontem: ${mensagensOntem}</div></div>
-    </div>
-
-    <div class="dash-card" style="margin-bottom:28px;padding:0;overflow:hidden">
-      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:15px;font-weight:700;font-family:var(--display)">Performance por Vendedor</div>
-        <span style="font-size:11px;color:var(--text-muted)">Mês atual</span>
+    const leads=leadsR.data||[];
+    const atividades=atividadesR.data||[];
+    const usuarios=usuariosR.data||[];
+    const leadsHoje=leads.filter(l=>l.criado_em&&l.criado_em.slice(0,10)===hoje).length;
+    const fechadosHoje=leads.filter(l=>l.etapa==='fechado'&&l.atualizado_em&&l.atualizado_em.slice(0,10)===hoje).length;
+    const atividadesHoje=atividades.filter(a=>a.criado_em&&a.criado_em.slice(0,10)===hoje).length;
+    c.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div style="font-size:12px;color:var(--text-muted)">Atualiza automaticamente a cada 60s</div>
+        <button class="btn btn-ghost" style="font-size:12px" onclick="renderPerformance()">🔄 Atualizar</button>
       </div>
-      <div style="overflow-x:auto"><table>
-        <thead><tr><th>Vendedor</th><th>Leads Ativos</th><th>Contactados Hoje</th><th>Fechados Mês</th><th>Meta %</th><th>Última Atividade</th><th>Status</th></tr></thead>
-        <tbody>${tableRows||'<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px">Nenhum vendedor cadastrado</td></tr>'}</tbody>
+      <div class="stats-grid" style="margin-bottom:24px">
+        <div class="stat-card"><div class="stat-card-icon">👥</div><div class="stat-label">Leads Hoje</div><div class="stat-value gold">${leadsHoje}</div></div>
+        <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-label">Fechados Hoje</div><div class="stat-value green">${fechadosHoje}</div></div>
+        <div class="stat-card"><div class="stat-card-icon">⚡</div><div class="stat-label">Atividades Hoje</div><div class="stat-value">${atividadesHoje}</div></div>
+        <div class="stat-card"><div class="stat-card-icon">👤</div><div class="stat-label">Vendedores Ativos</div><div class="stat-value" style="color:var(--blue)">${usuarios.length}</div></div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Performance por Vendedor</div>
+      <div class="table-wrap" style="margin-bottom:24px"><table>
+        <thead><tr>
+          <th>Vendedor</th><th>Leads Ativos</th><th>Atividades Hoje</th><th>Fechados Mês</th><th>Meta %</th><th>Última Atividade</th><th>Status</th>
+        </tr></thead>
+        <tbody>${usuarios.length===0?'<tr><td colspan="7"><div class="empty">Nenhum vendedor cadastrado</div></td></tr>':
+        usuarios.map(u=>{
+          const leadsAtivos=leads.filter(l=>l.responsavel===u.nome&&!['fechado','perdido'].includes(l.etapa)).length;
+          const atvsHoje=atividades.filter(a=>a.usuario_nome===u.nome&&a.criado_em&&a.criado_em.slice(0,10)===hoje).length;
+          const fechadosMes=leads.filter(l=>l.responsavel===u.nome&&l.etapa==='fechado'&&l.criado_em&&l.criado_em>=inicioMes).length;
+          const metaPorc=u.meta_mensal>0?Math.round(fechadosMes/u.meta_mensal*100):0;
+          const ultimaAtv=atividades.filter(a=>a.usuario_nome===u.nome).sort((a,b)=>new Date(b.criado_em)-new Date(a.criado_em))[0];
+          const ultimaAtvTime=ultimaAtv?new Date(ultimaAtv.criado_em):null;
+          const agora=new Date();
+          const diffMin=ultimaAtvTime?Math.floor((agora-ultimaAtvTime)/60000):999;
+          const status=diffMin<30?{c:'#22c55e',l:'Ativo'}:diffMin<120?{c:'#eab308',l:'Ocioso'}:{c:'#ef4444',l:'Inativo'};
+          const ultimaStr=ultimaAtvTime?(diffMin<60?'há '+diffMin+'min':diffMin<1440?'há '+Math.floor(diffMin/60)+'h':fmtDate(ultimaAtvTime)):'Sem atividade';
+          const metaColor=metaPorc>=100?'#22c55e':metaPorc>=50?'#eab308':'#ef4444';
+          return`<tr>
+            <td><div style="display:flex;align-items:center;gap:8px">
+              <div style="width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid #9a7a35;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gold)">${(u.nome||'?')[0].toUpperCase()}</div>
+              <div><div style="font-weight:600">${u.nome}</div><div style="font-size:10px;color:var(--text-muted)">${u.cargo}</div></div>
+            </div></td>
+            <td style="font-family:var(--mono);font-weight:700;text-align:center">${leadsAtivos}</td>
+            <td style="font-family:var(--mono);text-align:center">${atvsHoje}</td>
+            <td style="font-family:var(--mono);color:var(--green);font-weight:700;text-align:center">${fechadosMes}</td>
+            <td><div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;background:var(--surface2);border-radius:3px;height:6px;overflow:hidden">
+                <div style="width:${Math.min(metaPorc,100)}%;height:100%;background:${metaColor};border-radius:3px"></div>
+              </div>
+              <span style="font-size:11px;color:${metaColor};font-weight:700;font-family:var(--mono)">${metaPorc}%</span>
+            </div></td>
+            <td style="font-size:12px;color:var(--text-dim)">${ultimaStr}</td>
+            <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:${status.c}">
+              <span style="width:7px;height:7px;border-radius:50%;background:${status.c};${status.l==='Ativo'?'box-shadow:0 0 6px '+status.c:''}"></span>${status.l}
+            </span></td>
+          </tr>`;
+        }).join('')}
+        </tbody>
       </table></div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px">
-      <div class="dash-card">
-        <div class="dash-card-title" style="margin-bottom:12px">⚡ Feed de Atividades <span style="float:right;font-size:11px;color:var(--text-muted);font-weight:400">Últimas 20</span></div>
-        <div style="max-height:400px;overflow-y:auto">${feedHTML||'<div style="text-align:center;color:var(--text-muted);padding:20px">Sem atividades</div>'}</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-card-title" style="margin-bottom:12px">⏱ Atividades por Hora — Hoje</div>
-        <canvas id="chart-atividades-hora" height="220"></canvas>
-      </div>
-    </div>`;
-
-  destroyChart('chart-atividades-hora');
-  const ctx=document.getElementById('chart-atividades-hora');
-  if(ctx){new Chart(ctx,{type:'bar',data:{labels:Array.from({length:24},(_,i)=>i+'h'),datasets:[{data:porHora,backgroundColor:porHora.map((_,i)=>i===horaAtual?'rgba(201,168,76,0.9)':'rgba(201,168,76,0.3)'),borderColor:porHora.map((_,i)=>i===horaAtual?'#c9a84c':'rgba(201,168,76,0.5)'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#555',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#555',stepSize:1},beginAtZero:true}}}});}
+      <div style="font-size:13px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Feed de Atividades Recentes</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+        ${atividades.slice(0,15).map(a=>{
+          const icons={fechamento:'🏆',ligacao:'📞',mensagem:'💬',proposta:'📄',nota:'📝',criacao:'✨',edicao:'✏️',etapa:'🔄',regua:'⚡',distribuicao:'👥',followup:'📅',contato:'📱',aniversario:'🎂',nps:'⭐',distribuicao_auto:'⚡'};
+          const icon=icons[a.tipo]||'📌';
+          const tempo=Math.floor((new Date()-new Date(a.criado_em))/60000);
+          const tempoStr=tempo<60?'há '+tempo+'min':tempo<1440?'há '+Math.floor(tempo/60)+'h':fmtDate(a.criado_em);
+          return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:18px">${icon}</span>
+            <div style="flex:1"><span style="font-weight:600;font-size:13px">${a.usuario_nome||'Sistema'}</span> <span style="color:var(--text-dim);font-size:13px">— ${a.descricao||''}</span></div>
+            <span style="font-size:11px;color:var(--text-muted)">${tempoStr}</span>
+          </div>`;
+        }).join('')||'<div class="empty">Nenhuma atividade registrada</div>'}
+      </div>`;
+    clearInterval(_perfInterval);
+    _perfInterval=setInterval(renderPerformance,60000);
+  }catch(e){
+    document.getElementById('page-content').innerHTML='<div class="empty">Erro ao carregar performance: '+e.message+'</div>';
+  }
 }
 function togglePerfVivo(){
   _perfVivo=!_perfVivo;
@@ -1797,10 +1766,17 @@ async function renderConfig(){
         </div>
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Modo</div>
-          <select onchange="localStorage.setItem('distrib_auto_modo',this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;width:100%">
+          <select id="sel-distrib-modo" onchange="localStorage.setItem('distrib_auto_modo',this.value);document.getElementById('div-distrib-vendedor-esp').style.display=this.value==='especifico'?'block':'none'" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;width:100%">
             <option value="round_robin" ${(localStorage.getItem('distrib_auto_modo')||'round_robin')==='round_robin'?'selected':''}>Round Robin</option>
             <option value="carga" ${(localStorage.getItem('distrib_auto_modo')||'round_robin')==='carga'?'selected':''}>Por carga de trabalho</option>
+            <option value="especifico" ${(localStorage.getItem('distrib_auto_modo')||'round_robin')==='especifico'?'selected':''}>👤 Vendedor específico</option>
           </select>
+          <div id="div-distrib-vendedor-esp" style="margin-top:8px;display:${(localStorage.getItem('distrib_auto_modo')||'round_robin')==='especifico'?'block':'none'}">
+            <select onchange="localStorage.setItem('distrib_auto_vendedor',this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;width:100%">
+              <option value="">Selecione o vendedor...</option>
+              ${U.filter(u=>u.cargo!=='admin').map(u=>`<option value="${u.nome}" ${localStorage.getItem('distrib_auto_vendedor')===u.nome?'selected':''}>${u.nome}</option>`).join('')}
+            </select>
+          </div>
         </div>
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Última execução</div>
@@ -2038,8 +2014,15 @@ function fecharChat(){
   if(_chatInterval){clearInterval(_chatInterval);_chatInterval=null;}
 }
 async function carregarMensagens(){
-  const{data:msgs}=await sb.from('crm_chat').select('*').order('criado_em',{ascending:true}).limit(50);
-  renderMensagens(msgs||[]);
+  try{
+    const{data:msgs,error}=await sb.from('crm_chat').select('*').order('criado_em',{ascending:true}).limit(50);
+    if(error){
+      const el=document.getElementById('chat-msgs');
+      if(el)el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">💬 Execute no Supabase SQL Editor:<br><code style="color:var(--gold);display:block;margin-top:6px;padding:6px;background:var(--surface2);border-radius:4px">ALTER TABLE crm_chat DISABLE ROW LEVEL SECURITY;</code></div>';
+      return;
+    }
+    renderMensagens(msgs||[]);
+  }catch(e){console.warn('carregarMensagens:',e.message);}
 }
 function renderMensagens(msgs){
   const el=document.getElementById('chat-msgs');if(!el)return;
@@ -2070,7 +2053,14 @@ async function enviarMensagem(){
   inp.value='';
   const payload={usuario_nome:currentUser?.nome||'Admin',usuario_id:String(currentUser?.id||'admin'),mensagem:txt,criado_em:new Date().toISOString()};
   const{error}=await sb.from('crm_chat').insert(payload);
-  if(error){toast('Erro no chat: '+error.message,'error');return;}
+  if(error){
+    if(error.code==='42501'||error.message?.includes('row-level security')||error.message?.includes('RLS')){
+      toast('RLS bloqueando chat. Execute: ALTER TABLE crm_chat DISABLE ROW LEVEL SECURITY','error');
+    }else{
+      toast('Erro no chat: '+error.message,'error');
+    }
+    return;
+  }
   localStorage.setItem('chat_last_read',new Date().toISOString());
   carregarMensagens();
 }
@@ -2467,7 +2457,14 @@ async function distribuirLeadsAutomatico(){
     const{data:leadsSemDono}=await sb.from('crm_leads').select('*').or('responsavel.is.null,responsavel.eq.').lt('criado_em',tempoAtras).neq('etapa','fechado').neq('etapa','perdido');
     if(!leadsSemDono||!leadsSemDono.length){localStorage.setItem('distrib_auto_ultima',new Date().toLocaleString('pt-BR'));return;}
     const{data:vendedores}=await sb.from('crm_usuarios').select('*').eq('ativo',true).neq('cargo','admin');
-    const vends=vendedores&&vendedores.length?vendedores:[{nome:'Admin'}];
+    const modo=localStorage.getItem('distrib_auto_modo')||'round_robin';
+    let vends;
+    if(modo==='especifico'){
+      const vendNome=localStorage.getItem('distrib_auto_vendedor')||'Admin';
+      vends=[{nome:vendNome}];
+    }else{
+      vends=vendedores&&vendedores.length?vendedores:[{nome:'Admin'}];
+    }
     let count=0;
     for(let i=0;i<leadsSemDono.length;i++){
       const lead=leadsSemDono[i];
