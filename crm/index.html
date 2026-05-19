@@ -690,6 +690,7 @@ function entrarNoApp(){
   if(!window._alertaInterval)window._alertaInterval=setInterval(verificarAlertas,300000);
   atualizarBadgeChat();atualizarBadgeAgenda();atualizarBadgeAniversario();
   setInterval(atualizarBadgeChat,30000);setInterval(atualizarBadgeAgenda,60000);setInterval(atualizarBadgeAniversario,3600000);
+  verificarRegua();setInterval(verificarRegua,600000);
 }
 function updateSidebarUser(){
   const el=document.getElementById('sidebar-user-info');
@@ -1025,7 +1026,15 @@ async function salvarLead(){
     const{data:ins,error}=await sb.from('crm_leads').insert(payload).select().single();
     if(error){toast('Erro: '+error.message,'error');return;}
     toast('Lead criado!');
-    if(ins)registrarAtividade(ins.id,'criacao','Lead criado via CRM');
+    if(ins){
+      registrarAtividade(ins.id,'criacao','Lead criado via CRM');
+      const _agora=Date.now();
+      sb.from('crm_regua').insert([
+        {lead_id:ins.id,tipo:'whatsapp_1h',agendado_para:new Date(_agora+3600000).toISOString(),etapa:'primeiro_contato',executado:false,criado_em:new Date().toISOString()},
+        {lead_id:ins.id,tipo:'email_24h',agendado_para:new Date(_agora+86400000).toISOString(),etapa:'follow_up_email',executado:false,criado_em:new Date().toISOString()},
+        {lead_id:ins.id,tipo:'lembrete_3d',agendado_para:new Date(_agora+259200000).toISOString(),etapa:'lembrete',executado:false,criado_em:new Date().toISOString()}
+      ]).catch(()=>{});
+    }
     if(typeof fbq!=='undefined')fbq('track','Lead',{content_name:'CRM Lead',value:0,currency:'BRL'});
     notificarNovoLead(payload);
   }
@@ -2136,6 +2145,30 @@ async function renderDashboardVendedor(c,leads,tarefas){
       ${meusQuentes.length?`<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Capital</th><th>Etapa</th><th>Temp.</th><th>Follow-Up</th><th>Ações</th></tr></thead><tbody>${meusQuentes.slice(0,10).map(l=>{const sc=calcularScore(l);const tmp=getTemperatura(sc);return`<tr><td><div class="td-name">${l.nome}</div><div class="td-sub">${l.email||''}</div></td><td style="color:var(--gold);font-weight:600;font-size:12px">${l.capital_disponivel||'—'}</td><td><span class="badge badge-${l.etapa||'lead'}">${l.etapa||'lead'}</span></td><td style="white-space:nowrap"><span style="font-size:15px">${tmp.icon}</span> <span style="font-size:11px;color:${tmp.cor}">${tmp.label}</span></td><td style="font-size:12px;color:${l.followup_em&&new Date(l.followup_em)<new Date()?'var(--red)':'var(--text-dim)'}">${l.followup_em?new Date(l.followup_em).toLocaleDateString('pt-BR'):'—'}</td><td style="white-space:nowrap"><button class="action-btn action-btn-view" onclick="verLead('${l.id}')">Ver</button>${l.whatsapp?`<button class="action-btn action-btn-edit" onclick="abrirTemplatesWPPById('${l.id}')" style="color:var(--green);margin-left:4px">📱</button>`:''}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><div class="empty-icon">📊</div>Nenhum lead quente ainda. Continue prospectando!</div>'}
     </div>
   `;
+}
+
+/* ===== RÉGUA DE COMUNICAÇÃO ===== */
+async function verificarRegua(){
+  const{data:itens}=await sb.from('crm_regua').select('*, crm_leads(nome,whatsapp,email,capital_disponivel,cidade,etapa)').eq('executado',false).lte('agendado_para',new Date().toISOString()).catch(()=>({data:[]}));
+  if(!itens||!itens.length)return;
+  for(const item of itens){
+    const lead=item.crm_leads||{};
+    if(item.tipo==='whatsapp_1h'&&lead.etapa==='lead'){
+      if(lead.whatsapp){
+        const tc=document.getElementById('toast-container');
+        if(tc){const el=document.createElement('div');el.className='toast success';el.style.cursor='pointer';el.textContent='📱 Régua: '+lead.nome+' aguarda 1º contato — Clique para abrir WhatsApp';el.onclick=()=>window.open('https://wa.me/55'+lead.whatsapp.replace(/\D/g,''),'_blank');tc.appendChild(el);setTimeout(()=>el.remove(),8000);}
+      }
+      registrarAtividade(item.lead_id,'regua','Régua: lembrete de 1h ativado');
+    } else if(item.tipo==='email_24h'&&lead.etapa!=='fechado'&&lead.etapa!=='perdido'){
+      fetch('https://api.resend.com/emails',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+RESEND},body:JSON.stringify({from:'contato@4ppatrimonial.com.br',to:PABLO_EMAIL,subject:'⏰ Follow-up necessário: '+lead.nome,html:'<div style="font-family:sans-serif;padding:24px;background:#f9f9f9;border-radius:8px;border-top:4px solid #c9a84c"><h2 style="color:#c9a84c">⏰ Follow-up Necessário!</h2><p>O lead <strong>'+lead.nome+'</strong> está há 24h sem contato.</p><p><b>Capital:</b> '+lead.capital_disponivel+'</p><p><b>Cidade:</b> '+lead.cidade+'</p><p><b>WhatsApp:</b> '+lead.whatsapp+'</p><p><b>Etapa atual:</b> '+lead.etapa+'</p><hr><p style="color:#888;font-size:12px">4P Patrimonial CRM</p></div>'})}).catch(()=>{});
+      registrarAtividade(item.lead_id,'regua','Régua: e-mail de 24h enviado');
+    } else if(item.tipo==='lembrete_3d'&&lead.etapa!=='fechado'&&lead.etapa!=='perdido'){
+      sb.from('crm_tarefas').insert({titulo:'Follow-up urgente: '+lead.nome,descricao:'Lead há 3 dias sem avanço na régua',prioridade:'alta',status:'pendente',criado_em:new Date().toISOString()}).catch(()=>{});
+      sb.from('crm_alertas').insert({lead_id:item.lead_id,tipo:'regua_3d',mensagem:'Lead '+lead.nome+' na régua há 3 dias sem fechamento',lido:false,criado_em:new Date().toISOString()}).catch(()=>{});
+      registrarAtividade(item.lead_id,'regua','Régua: lembrete de 3 dias ativado');
+    }
+    sb.from('crm_regua').update({executado:true,executado_em:new Date().toISOString()}).eq('id',item.id).catch(()=>{});
+  }
 }
 
 /* ===== ANIVERSARIANTES ===== */
