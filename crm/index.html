@@ -1046,7 +1046,7 @@ async function salvarLead(){
         {lead_id:ins.id,tipo:'whatsapp_1h',agendado_para:new Date(_agora+3600000).toISOString(),etapa:'primeiro_contato',executado:false,criado_em:new Date().toISOString()},
         {lead_id:ins.id,tipo:'email_24h',agendado_para:new Date(_agora+86400000).toISOString(),etapa:'follow_up_email',executado:false,criado_em:new Date().toISOString()},
         {lead_id:ins.id,tipo:'lembrete_3d',agendado_para:new Date(_agora+259200000).toISOString(),etapa:'lembrete',executado:false,criado_em:new Date().toISOString()}
-      ]).catch(()=>{});
+      ]);
     }
     if(typeof fbq!=='undefined')fbq('track','Lead',{content_name:'CRM Lead',value:0,currency:'BRL'});
     notificarNovoLead(payload);
@@ -1107,7 +1107,7 @@ async function verLead(id){
   const tipoIcon={criacao:'✨',edicao:'✏️',etapa:'🎯',tarefa:'✅',nota:'📝'};
   hEl.innerHTML='<div style="max-height:200px;overflow-y:auto">'+hist.map(a=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:15px;width:22px;flex-shrink:0;text-align:center">${tipoIcon[a.tipo]||'📌'}</div><div style="flex:1"><div style="font-size:12px;color:var(--text)">${a.descricao||'—'}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px">${a.usuario_nome||'Sistema'} · ${fmtDate(a.criado_em)}</div></div></div>`).join('')+'</div>';
   // NPS async
-  const npsEl=document.getElementById('ver-nps-section');if(npsEl){const{data:npsR}=await sb.from('crm_nps').select('*').eq('lead_id',id).order('criado_em',{ascending:false}).limit(1).maybeSingle().catch(()=>({data:null}));if(npsR){const respondido=npsR.resposta_nota!=null;const notaColor=npsR.resposta_nota>=9?'#22c55e':npsR.resposta_nota>=7?'#fbbf24':'#ef4444';const catLabel=npsR.resposta_nota>=9?'Promotor':npsR.resposta_nota>=7?'Neutro':'Detrator';npsEl.innerHTML=`<div style="padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">⭐ NPS</div>${respondido?`<div style="font-size:13px;font-weight:700;color:${notaColor}">Nota: ${npsR.resposta_nota}/10 <span style="font-size:11px;font-weight:600;padding:2px 8px;background:rgba(34,197,94,0.12);border-radius:10px;color:${notaColor};border:1px solid ${notaColor}40">${catLabel}</span></div>${npsR.resposta_comentario?`<div style="font-size:12px;color:var(--text-dim);margin-top:6px;font-style:italic">"${npsR.resposta_comentario}"</div>`:''}<div style="font-size:11px;color:var(--text-muted);margin-top:4px">Respondido em ${fmtDate(npsR.respondido_em||npsR.criado_em)}</div>`:`<div style="font-size:12px;color:var(--text-muted)">⏳ Aguardando resposta</div><button class="btn btn-ghost" style="margin-top:8px;font-size:11px;padding:5px 12px;color:var(--gold);border-color:rgba(201,168,76,.4)" onclick="abrirModalNPS('${npsR.id}')">✏️ Registrar resposta manual</button>`}</div>`;} else if(l.etapa==='fechado'){npsEl.innerHTML=`<div style="padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-bottom:8px;font-size:12px;color:var(--text-muted)">⭐ NPS não enviado ainda. <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:var(--gold);border-color:rgba(201,168,76,.4);margin-left:8px" onclick="triggerFechadoActions('${id}',${JSON.stringify({...l}).replace(/"/g,"'")})">Enviar agora</button></div>`;} else{npsEl.innerHTML='';}}
+  const npsEl=document.getElementById('ver-nps-section');if(npsEl){let npsR=null;try{const{data:_nR}=await sb.from('crm_nps').select('*').eq('lead_id',id).order('criado_em',{ascending:false}).limit(1).maybeSingle();npsR=_nR;}catch(e){}if(npsR){const respondido=npsR.resposta_nota!=null;const notaColor=npsR.resposta_nota>=9?'#22c55e':npsR.resposta_nota>=7?'#fbbf24':'#ef4444';const catLabel=npsR.resposta_nota>=9?'Promotor':npsR.resposta_nota>=7?'Neutro':'Detrator';npsEl.innerHTML=`<div style="padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">⭐ NPS</div>${respondido?`<div style="font-size:13px;font-weight:700;color:${notaColor}">Nota: ${npsR.resposta_nota}/10 <span style="font-size:11px;font-weight:600;padding:2px 8px;background:rgba(34,197,94,0.12);border-radius:10px;color:${notaColor};border:1px solid ${notaColor}40">${catLabel}</span></div>${npsR.resposta_comentario?`<div style="font-size:12px;color:var(--text-dim);margin-top:6px;font-style:italic">"${npsR.resposta_comentario}"</div>`:''}<div style="font-size:11px;color:var(--text-muted);margin-top:4px">Respondido em ${fmtDate(npsR.respondido_em||npsR.criado_em)}</div>`:`<div style="font-size:12px;color:var(--text-muted)">⏳ Aguardando resposta</div><button class="btn btn-ghost" style="margin-top:8px;font-size:11px;padding:5px 12px;color:var(--gold);border-color:rgba(201,168,76,.4)" onclick="abrirModalNPS('${npsR.id}')">✏️ Registrar resposta manual</button>`}</div>`;} else if(l.etapa==='fechado'){npsEl.innerHTML=`<div style="padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-bottom:8px;font-size:12px;color:var(--text-muted)">⭐ NPS não enviado ainda. <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:var(--gold);border-color:rgba(201,168,76,.4);margin-left:8px" onclick="triggerFechadoActions('${id}',${JSON.stringify({...l}).replace(/"/g,"'")})">Enviar agora</button></div>`;} else{npsEl.innerHTML='';}}
 }
 async function salvarNotaLead(leadId){
   const nota=document.getElementById('ver-nota')?.value?.trim();
@@ -1290,8 +1290,8 @@ async function loadRelatorios(){
     sb.from('crm_leads').select('origem'),
     sb.from('crm_leads').select('cidade'),
     sb.from('crm_usuarios').select('*').eq('ativo',true),
-    sb.from('crm_ligacoes').select('*').gte('criado_em',desde.toISOString()).catch(()=>({data:[]})),
-    sb.from('crm_nps').select('*').order('criado_em',{ascending:false}).catch(()=>({data:[]}))
+    sb.from('crm_ligacoes').select('*').gte('criado_em',desde.toISOString()).then(r=>r,()=>({data:[]})),
+    sb.from('crm_nps').select('*').order('criado_em',{ascending:false}).then(r=>r,()=>({data:[]}))
   ]);
   const pOri={},pCid={};
   (oriData||[]).forEach(l=>{if(l.origem)pOri[l.origem]=(pOri[l.origem]||0)+1;});
@@ -1935,7 +1935,7 @@ async function renderAgenda(){
     const mesFim=new Date(_agendaAno,_agendaMes+1,0,23,59,59);
     const [{data:r1},{data:r2}]=await Promise.all([
       sb.from('crm_reunioes').select('*,crm_leads(nome)').gte('data_hora',mesInicio.toISOString()).lte('data_hora',mesFim.toISOString()),
-      sb.from('crm_leads').select('id,nome,followup_em').not('followup_em','is',null).gte('followup_em',mesInicio.toISOString().split('T')[0]).lte('followup_em',mesFim.toISOString().split('T')[0]).catch(()=>({data:[]}))
+      sb.from('crm_leads').select('id,nome,followup_em').not('followup_em','is',null).gte('followup_em',mesInicio.toISOString().split('T')[0]).lte('followup_em',mesFim.toISOString().split('T')[0])
     ]);
     _reunioes=r1||[];fups=r2||[];
   }catch(e){console.warn('renderAgenda:',e);}
@@ -2189,7 +2189,7 @@ async function gerarRelatorioSemanal(diasAtras=7){
   const dataInicioFmt=new Date(dataInicio).toLocaleDateString('pt-BR');
   const dataFimFmt=new Date().toLocaleDateString('pt-BR');
   const htmlEmail=`<div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fff"><div style="background:linear-gradient(135deg,#0a0a0a,#1a1a1a);padding:32px;text-align:center"><h1 style="color:#c9a84c;font-size:22px;margin:0;letter-spacing:2px">4P PATRIMONIAL</h1><p style="color:#888;margin:8px 0 0;font-size:12px">RELATÓRIO SEMANAL — ${dataInicioFmt} A ${dataFimFmt}</p></div><div style="padding:24px;background:#f9f9f9"><div style="display:flex;gap:12px;margin-bottom:24px"><div style="flex:1;background:#fff;border-radius:8px;padding:16px;text-align:center;border-top:3px solid #c9a84c"><div style="font-size:28px;font-weight:700;color:#c9a84c">${total}</div><div style="font-size:11px;color:#888;margin-top:4px">LEADS CAPTADOS</div></div><div style="flex:1;background:#fff;border-radius:8px;padding:16px;text-align:center;border-top:3px solid #22c55e"><div style="font-size:28px;font-weight:700;color:#22c55e">${fechados.length}</div><div style="font-size:11px;color:#888;margin-top:4px">FECHADOS</div></div><div style="flex:1;background:#fff;border-radius:8px;padding:16px;text-align:center;border-top:3px solid #ef4444"><div style="font-size:28px;font-weight:700;color:#ef4444">${perdidos.length}</div><div style="font-size:11px;color:#888;margin-top:4px">PERDIDOS</div></div><div style="flex:1;background:#fff;border-radius:8px;padding:16px;text-align:center;border-top:3px solid #3b82f6"><div style="font-size:28px;font-weight:700;color:#3b82f6">${tarefasConcluidas.length}</div><div style="font-size:11px;color:#888;margin-top:4px">TAREFAS OK</div></div></div>${quentes.length?`<h3 style="color:#333;font-size:14px;margin:0 0 12px;border-bottom:2px solid #c9a84c;padding-bottom:8px">🔥 TOP LEADS QUENTES</h3><table style="width:100%;border-collapse:collapse;margin-bottom:20px"><tr style="background:#f0f0f0"><th style="padding:8px;text-align:left;font-size:11px">Nome</th><th style="padding:8px;text-align:left;font-size:11px">Capital</th><th style="padding:8px;text-align:left;font-size:11px">Etapa</th><th style="padding:8px;text-align:left;font-size:11px">Score</th></tr>${quentes.map(l=>`<tr style="border-bottom:1px solid #eee"><td style="padding:8px;font-size:12px">${l.nome}</td><td style="padding:8px;font-size:12px;color:#c9a84c">${l.capital_disponivel||'—'}</td><td style="padding:8px;font-size:12px">${l.etapa}</td><td style="padding:8px;font-size:12px;font-weight:700">${l.score}pts</td></tr>`).join('')}</table>`:''}${Object.keys(porOrigem).length?`<h3 style="color:#333;font-size:14px;margin:0 0 12px;border-bottom:2px solid #c9a84c;padding-bottom:8px">📣 LEADS POR ORIGEM</h3><div style="margin-bottom:20px">${Object.entries(porOrigem).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:12px"><span>${k}</span><strong style="color:#c9a84c">${v}</strong></div>`).join('')}</div>`:''}${atividades.length?`<p style="font-size:12px;color:#888;margin:0">📊 ${atividades.length} atividades registradas no período</p>`:''}</div><div style="background:#0a0a0a;padding:16px;text-align:center"><p style="color:#888;font-size:11px;margin:0">4P Patrimonial CRM · Relatório automático · <a href="https://4ppatrimonial.com.br/crm" style="color:#c9a84c">Acessar CRM</a></p></div></div>`;
-  await fetch('https://api.resend.com/emails',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+RESEND},body:JSON.stringify({from:'contato@4ppatrimonial.com.br',to:PABLO_EMAIL,subject:'📊 Relatório Semanal 4P Patrimonial — '+dataInicioFmt+' a '+dataFimFmt,html:htmlEmail})}).catch(()=>{});
+  try{await fetch('https://api.resend.com/emails',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+RESEND},body:JSON.stringify({from:'contato@4ppatrimonial.com.br',to:PABLO_EMAIL,subject:'📊 Relatório Semanal 4P Patrimonial — '+dataInicioFmt+' a '+dataFimFmt,html:htmlEmail})});}catch(e){console.warn('Relatório: e-mail não enviado (CORS)',e.message);}
   return{total,fechados:fechados.length,perdidos:perdidos.length,quentes:quentes.length};
 }
 async function enviarRelatorioAgora(){
@@ -2211,8 +2211,9 @@ function _toastGoogleLink(html){
 
 /* ===== RÉGUA DE COMUNICAÇÃO ===== */
 async function verificarRegua(){
-  const{data:itens}=await sb.from('crm_regua').select('*, crm_leads(nome,whatsapp,email,capital_disponivel,cidade,etapa)').eq('executado',false).lte('agendado_para',new Date().toISOString()).catch(()=>({data:[]}));
-  if(!itens||!itens.length)return;
+  let itens=[];
+  try{const{data:_itens}=await sb.from('crm_regua').select('*, crm_leads(nome,whatsapp,email,capital_disponivel,cidade,etapa)').eq('executado',false).lte('agendado_para',new Date().toISOString());itens=_itens||[];}catch(e){return;}
+  if(!itens.length)return;
   for(const item of itens){
     const lead=item.crm_leads||{};
     if(item.tipo==='whatsapp_1h'&&lead.etapa==='lead'){
@@ -2222,14 +2223,14 @@ async function verificarRegua(){
       }
       registrarAtividade(item.lead_id,'regua','Régua: lembrete de 1h ativado');
     } else if(item.tipo==='email_24h'&&lead.etapa!=='fechado'&&lead.etapa!=='perdido'){
-      fetch('https://api.resend.com/emails',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+RESEND},body:JSON.stringify({from:'contato@4ppatrimonial.com.br',to:PABLO_EMAIL,subject:'⏰ Follow-up necessário: '+lead.nome,html:'<div style="font-family:sans-serif;padding:24px;background:#f9f9f9;border-radius:8px;border-top:4px solid #c9a84c"><h2 style="color:#c9a84c">⏰ Follow-up Necessário!</h2><p>O lead <strong>'+lead.nome+'</strong> está há 24h sem contato.</p><p><b>Capital:</b> '+lead.capital_disponivel+'</p><p><b>Cidade:</b> '+lead.cidade+'</p><p><b>WhatsApp:</b> '+lead.whatsapp+'</p><p><b>Etapa atual:</b> '+lead.etapa+'</p><hr><p style="color:#888;font-size:12px">4P Patrimonial CRM</p></div>'})}).catch(()=>{});
+      try{await fetch('https://api.resend.com/emails',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+RESEND},body:JSON.stringify({from:'contato@4ppatrimonial.com.br',to:PABLO_EMAIL,subject:'⏰ Follow-up necessário: '+lead.nome,html:'<div style="font-family:sans-serif;padding:24px;background:#f9f9f9;border-radius:8px;border-top:4px solid #c9a84c"><h2 style="color:#c9a84c">⏰ Follow-up Necessário!</h2><p>O lead <strong>'+lead.nome+'</strong> está há 24h sem contato.</p><p><b>Capital:</b> '+lead.capital_disponivel+'</p><p><b>Cidade:</b> '+lead.cidade+'</p><p><b>WhatsApp:</b> '+lead.whatsapp+'</p><p><b>Etapa atual:</b> '+lead.etapa+'</p><hr><p style="color:#888;font-size:12px">4P Patrimonial CRM</p></div>'})});}catch(e){console.warn('Régua: e-mail não enviado (CORS)',e.message);}
       registrarAtividade(item.lead_id,'regua','Régua: e-mail de 24h enviado');
     } else if(item.tipo==='lembrete_3d'&&lead.etapa!=='fechado'&&lead.etapa!=='perdido'){
-      sb.from('crm_tarefas').insert({titulo:'Follow-up urgente: '+lead.nome,descricao:'Lead há 3 dias sem avanço na régua',prioridade:'alta',status:'pendente',criado_em:new Date().toISOString()}).catch(()=>{});
-      sb.from('crm_alertas').insert({lead_id:item.lead_id,tipo:'regua_3d',mensagem:'Lead '+lead.nome+' na régua há 3 dias sem fechamento',lido:false,criado_em:new Date().toISOString()}).catch(()=>{});
+      sb.from('crm_tarefas').insert({titulo:'Follow-up urgente: '+lead.nome,descricao:'Lead há 3 dias sem avanço na régua',prioridade:'alta',status:'pendente',criado_em:new Date().toISOString()});
+      sb.from('crm_alertas').insert({lead_id:item.lead_id,tipo:'regua_3d',mensagem:'Lead '+lead.nome+' na régua há 3 dias sem fechamento',lido:false,criado_em:new Date().toISOString()});
       registrarAtividade(item.lead_id,'regua','Régua: lembrete de 3 dias ativado');
     }
-    sb.from('crm_regua').update({executado:true,executado_em:new Date().toISOString()}).eq('id',item.id).catch(()=>{});
+    sb.from('crm_regua').update({executado:true,executado_em:new Date().toISOString()}).eq('id',item.id);
   }
 }
 
@@ -2254,8 +2255,8 @@ function enviarParabens(leadId){
 }
 async function atualizarBadgeAniversario(){
   const badge=document.getElementById('badge-aniversario');if(!badge)return;
-  const{data}=await sb.from('crm_leads').select('data_nascimento').not('data_nascimento','is',null).catch(()=>({data:[]}));
-  const count=(data||[]).filter(l=>{const r=calcularAniversario(l.data_nascimento);return r&&(r.hojeFlag||r.diasAte<=7);}).length;
+  let data=[];try{const r=await sb.from('crm_leads').select('data_nascimento').not('data_nascimento','is',null);data=r.data||[];}catch(e){}
+  const count=data.filter(l=>{const r=calcularAniversario(l.data_nascimento);return r&&(r.hojeFlag||r.diasAte<=7);}).length;
   badge.style.display=count>0?'':'none';
 }
 
@@ -2264,7 +2265,7 @@ async function triggerFechadoActions(leadId,leadData){
   const l=leadData||allLeads.find(x=>x.id===leadId)||{};
   const leadNome=l.nome||'Lead';
   // Insert NPS
-  const{data:npsIns}=await sb.from('crm_nps').insert({lead_id:leadId,lead_nome:leadNome,enviado_em:new Date().toISOString(),criado_em:new Date().toISOString()}).select().single().catch(()=>({data:null}));
+  try{await sb.from('crm_nps').insert({lead_id:leadId,lead_nome:leadNome,enviado_em:new Date().toISOString(),criado_em:new Date().toISOString()});}catch(e){}
   // Perguntar se quer enviar NPS via WPP
   if(l.whatsapp){
     const numLimpo=l.whatsapp.replace(/\D/g,'');
