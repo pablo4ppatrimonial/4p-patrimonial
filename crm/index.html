@@ -450,11 +450,62 @@ const sb=supabase.createClient(SB_URL,SB_KEY);
 let editingLeadId=null,allLeads=[],allTarefas=[],allTickets=[],relPeriodo=30,dragId=null,currentUser=null,_tplLead=null,_verLeadId=null,_relLeads=[],_importHeaders=[],_importRows=[],_chatInterval=null,_chatOpen=false,leadsSelecionados=[],_agendaMes=new Date().getMonth(),_agendaAno=new Date().getFullYear(),_agendaVista='mensal',_reunioesCache=[],_ligacaoLeadId=null,_propostaLeadId=null,_propostaLead=null,_pendingPerdaCallback=null,_npsLeadId=null,_perfInterval=null,_perfVivo=false,_pwaDeferredPrompt=null;
 
 const TEMPLATES_WPP={
-  primeiro_contato:{label:'Primeiro Contato',texto:l=>`Olá ${l.nome||''}! 👋\n\nSou da equipe 4P Patrimonial. Identificamos seu interesse em investimento imobiliário.\n\nPodemos agendar uma conversa rápida para apresentar nossas oportunidades exclusivas?\n\nAguardo! 🏆`},
-  qualificacao:{label:'Qualificação',texto:l=>`Olá ${l.nome||''}!\n\nPara apresentar as melhores oportunidades para seu perfil, preciso entender:\n\n1️⃣ Capital disponível para investimento?\n2️⃣ Busca renda passiva ou valorização?\n3️⃣ Experiência com imóveis?\n\nMe conta! 😊`},
-  proposta:{label:'Envio de Proposta',texto:l=>`Olá ${l.nome||''}!\n\nConforme nossa conversa, preparei uma proposta personalizada para você.\n\nOportunidade com retorno acima do mercado e segurança jurídica total.\n\nPosso apresentar os detalhes? 📊`},
-  follow_up:{label:'Follow-up',texto:l=>`Olá ${l.nome||''}! Tudo bem?\n\nPassei para saber se você teve a oportunidade de analisar as informações que compartilhamos.\n\nAinda tem interesse? Tenho novidades que podem te interessar! 🏠`},
-  fechamento:{label:'Fechamento',texto:l=>`Olá ${l.nome||''}!\n\nÉ a hora! 🎯 Nosso grupo fecha em breve com as melhores condições já oferecidas.\n\nVamos agendar para finalizar? Tenho horários disponíveis essa semana!`},
+  primeiro_contato:{
+    label:'👋 Primeiro Contato',
+    variacoes:[
+      lead=>`Olá ${lead.nome?.split(' ')[0]}! 👋\n\nSou do grupo 4P Patrimonial. Percebemos seu interesse no mercado imobiliário e gostaria de saber se você teria interesse em conhecer oportunidades através de imóveis com alto potencial de valorização aqui na Baixada Santista 🏡📈\n\nPosso te explicar mais como funciona? 🙂`,
+      lead=>`Olá ${lead.nome?.split(' ')[0]}! Tudo bem? 😊\n\nSou da equipe 4P Patrimonial, especialistas em investimento imobiliário na Baixada Santista.\n\nVi que você tem interesse em investir na região e queria apresentar algumas oportunidades exclusivas que temos disponíveis 🏠\n\nPodemos conversar rapidinho?`,
+      lead=>`Oi ${lead.nome?.split(' ')[0]}! 👋\n\nAqui é da 4P Patrimonial! Trabalhamos com investimentos imobiliários de alto potencial na Baixada Santista 📈\n\nSelecionamos algumas oportunidades que podem ser perfeitas para o seu perfil de investidor.\n\nTem um minutinho para eu te apresentar? 🙂`
+    ]
+  },
+  qualificacao:{
+    label:'🎯 Qualificação',
+    variacoes:[
+      lead=>`Olá ${lead.nome?.split(' ')[0]}! 😊\n\nPara eu apresentar as melhores oportunidades para o seu perfil, preciso entender melhor seus objetivos:\n\n1️⃣ Qual capital você tem disponível para investir?\n2️⃣ Busca renda passiva ou valorização do patrimônio?\n3️⃣ Já tem experiência com imóveis?\n\nMe conta! 😄`,
+      lead=>`Oi ${lead.nome?.split(' ')[0]}! Tudo certo? 🙂\n\nAntes de te apresentar nossas oportunidades, me ajuda com algumas perguntas rápidas:\n\n💰 Qual faixa de investimento está pensando?\n🎯 Seu objetivo é renda mensal ou valorização?\n📍 Tem preferência de localização na Baixada Santista?\n\nAssim consigo encontrar a oportunidade ideal para você! 🏡`,
+      lead=>`${lead.nome?.split(' ')[0]}, olá! 👋\n\nPara personalizar nossa conversa, pode me responder rapidinho:\n\n🔹 Já investiu em imóveis antes?\n🔹 Está buscando retorno em quanto tempo?\n🔹 Prefere imóvel para alugar ou revender?\n\nCom isso já consigo te indicar as melhores opções! 📊`
+    ]
+  },
+  follow_up:{
+    label:'🔄 Follow-up',
+    variacoes:[
+      lead=>`Olá ${lead.nome?.split(' ')[0]}! 😊\n\nPassando para dar um retorno sobre nossa conversa. Temos algumas oportunidades incríveis na Baixada Santista que combinam muito com o seu perfil de investidor 🏡\n\nPodemos conversar essa semana? 📅`,
+      lead=>`Oi ${lead.nome?.split(' ')[0]}! Tudo bem? 👋\n\nSó passando para não deixar você sem retorno! Separei algumas oportunidades especiais na região que acho que vão te interessar muito 📈\n\nQuando tiver um momento, me avisa que apresento! 🙂`,
+      lead=>`${lead.nome?.split(' ')[0]}, boa tarde! ☀️\n\nPensando no seu perfil de investidor${lead.capital_disponivel?' com capital de '+lead.capital_disponivel:''}, encontrei algumas opções perfeitas aqui na Baixada Santista 🏠\n\nPosso te passar mais detalhes agora?`
+    ]
+  },
+  envio_proposta:{
+    label:'📋 Envio de Proposta',
+    variacoes:[
+      lead=>`Olá ${lead.nome?.split(' ')[0]}! 🏆\n\nConforme conversamos, preparei uma proposta personalizada para o seu perfil de investidor.\n\n💰 Capital: ${lead.capital_disponivel||'Conforme discutido'}\n📍 Região: ${lead.cidade||'Baixada Santista'}\n\nEsta é uma oportunidade exclusiva com alto potencial de valorização! 📈\n\nPosso te enviar os detalhes completos agora?`,
+      lead=>`${lead.nome?.split(' ')[0]}, tudo certo! 😊\n\nMontei uma análise especial baseada no que conversamos:\n\n🏡 Imóvel com alto potencial na Baixada Santista\n📊 Retorno estimado acima da média do mercado\n💰 Dentro do seu perfil de investimento\n\nVou te enviar agora! Qualquer dúvida, estou aqui 🙂`,
+      lead=>`Oi ${lead.nome?.split(' ')[0]}! 📋\n\nSua proposta ficou pronta! Selecionamos as melhores oportunidades para o seu perfil 🏆\n\nOs números estão bem atrativos, tenho certeza que vai gostar 📈\n\nPode receber as informações agora?`
+    ]
+  },
+  fechamento:{
+    label:'🤝 Fechamento',
+    variacoes:[
+      lead=>`Olá ${lead.nome?.split(' ')[0]}! 🎉\n\nSeja muito bem-vindo à família 4P Patrimonial! Estamos muito felizes em ter você como investidor!\n\nVou te enviar os próximos passos para finalizarmos tudo com segurança 🏡\n\nQualquer dúvida, estou sempre à disposição! 🤝`,
+      lead=>`${lead.nome?.split(' ')[0]}, que ótima notícia! 🏆\n\nBem-vindo ao grupo de investidores 4P Patrimonial! Você fez uma excelente escolha 📈\n\nAgora vou te orientar sobre os próximos passos. Posso ligar agora para alinharmos tudo?`,
+      lead=>`Olá ${lead.nome?.split(' ')[0]}! 🎊\n\nÉ uma honra ter você como parte da família 4P Patrimonial!\n\nSeu investimento vai trabalhar para você a partir de agora 💰🏡\n\nVou te enviar todas as informações por aqui mesmo. Pode deixar que cuidamos de tudo! 😊`
+    ]
+  },
+  reativacao:{
+    label:'💫 Reativação',
+    variacoes:[
+      lead=>`Olá ${lead.nome?.split(' ')[0]}! 😊\n\nFaz um tempinho que não conversamos, mas não te esqueci!\n\nTemos novidades incríveis no mercado imobiliário da Baixada Santista que podem ser perfeitas para você 🏡📈\n\nQue tal uma conversa rápida para te atualizar?`,
+      lead=>`Oi ${lead.nome?.split(' ')[0]}! Tudo bem? 👋\n\nSurgiram oportunidades muito interessantes na região que me fizeram pensar em você!\n\nO mercado de ${lead.cidade||'Baixada Santista'} está aquecido e temos algumas novidades exclusivas 🔥\n\nPodemos conversar?`,
+      lead=>`${lead.nome?.split(' ')[0]}, olá! 🏡\n\nPassando para dar uma atualização do mercado imobiliário na Baixada Santista.\n\nAlgumas oportunidades surgiram recentemente com excelente potencial de valorização 📊\n\nSeria interessante para você conhecer? 😊`
+    ]
+  },
+  urgencia:{
+    label:'⚡ Urgência / Oportunidade',
+    variacoes:[
+      lead=>`${lead.nome?.split(' ')[0]}, bom dia! ⚡\n\nPreciso te falar sobre uma oportunidade que acabou de surgir aqui na Baixada Santista!\n\n🏡 Alto potencial de valorização\n💰 Condições especiais por tempo limitado\n📍 Localização privilegiada\n\nSão poucas unidades disponíveis. Posso te apresentar hoje?`,
+      lead=>`Oi ${lead.nome?.split(' ')[0]}! 🔥\n\nSurgiu uma oportunidade incrível que não podia deixar de te contar!\n\nUm imóvel com excelente localização na Baixada Santista em condições muito abaixo do mercado 📈\n\nEstá disponível por pouco tempo. Tem interesse em saber mais? 🏡`,
+      lead=>`${lead.nome?.split(' ')[0]}, atenção! 📢\n\nTemos uma oportunidade exclusiva na Baixada Santista que encaixa perfeitamente no seu perfil${lead.capital_disponivel?' de '+lead.capital_disponivel:''}!\n\n⚡ Disponível por tempo limitado\n📊 ROI estimado acima da média\n🏡 Localização valorizada\n\nPosso te passar os detalhes agora?`
+    ]
+  }
 };
 
 function calcularScore(l){
@@ -567,17 +618,32 @@ function abrirTemplatesWPPById(id){const l=allLeads.find(x=>x.id===id);if(l)abri
 function abrirTemplatesWPP(lead){
   _tplLead=lead;
   const el=document.getElementById('modal-tpl-body');
-  el.innerHTML=Object.entries(TEMPLATES_WPP).map(([k,t])=>{
-    const msg=t.texto(lead);
-    return`<div style="margin-bottom:12px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px"><div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px">${t.label}</div><div style="font-size:12px;color:var(--text-dim);white-space:pre-wrap;margin-bottom:10px;line-height:1.6">${msg.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="enviarTemplateWPP('${k}')">${lead.whatsapp?'📱 Enviar':'📋 Copiar'}</button></div>`;
-  }).join('');
+  let html='';
+  Object.entries(TEMPLATES_WPP).forEach(([k,t])=>{
+    html+='<div style="margin-bottom:24px">';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">'+t.label+'</div>';
+    t.variacoes.forEach((fn,i)=>{
+      const msg=fn(lead);
+      const msgEsc=msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      html+='<div style="margin-bottom:8px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;border-left:3px solid var(--gold-dim)">';
+      html+='<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Variação '+(i+1)+'</div>';
+      html+='<div style="font-size:12px;color:var(--text-dim);white-space:pre-wrap;margin-bottom:10px;line-height:1.6;max-height:120px;overflow-y:auto">'+msgEsc+'</div>';
+      html+='<button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="enviarTemplateWPP(\''+k+'\','+i+')">'+(lead.whatsapp?'📱 Enviar via WhatsApp':'📋 Copiar texto')+'</button>';
+      html+='</div>';
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
   openModal('modal-templates-wpp');
 }
-function enviarTemplateWPP(key){
+function enviarTemplateWPP(key,varIndex){
+  varIndex=varIndex||0;
   const t=TEMPLATES_WPP[key];if(!t||!_tplLead)return;
-  const msg=t.texto(_tplLead);
+  const fn=t.variacoes[varIndex]||t.variacoes[0];
+  const msg=fn(_tplLead);
   if(_tplLead.whatsapp){const num=_tplLead.whatsapp.replace(/\D/g,'');window.open('https://wa.me/55'+num+'?text='+encodeURIComponent(msg),'_blank');}
   else{navigator.clipboard?.writeText(msg).then(()=>toast('Mensagem copiada!')).catch(()=>toast('Copie manualmente'));}
+  registrarAtividade(_tplLead.id,'mensagem','Template WPP: '+t.label+' — variação '+(varIndex+1));
   closeModal('modal-templates-wpp');
 }
 
@@ -2660,9 +2726,15 @@ function pwaBannerInstall(){
 
 <!-- MODAL TEMPLATES WPP -->
 <div class="modal-overlay" id="modal-templates-wpp">
-  <div class="modal" style="max-width:600px">
-    <div class="modal-header"><h2>📱 Enviar Mensagem WhatsApp</h2><button class="modal-close" onclick="closeModal('modal-templates-wpp')">×</button></div>
-    <div class="modal-body" id="modal-tpl-body" style="max-height:65vh;overflow-y:auto"></div>
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div>
+        <h2>📱 Templates WhatsApp</h2>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Selecione um template e uma variação para enviar</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-templates-wpp')">×</button>
+    </div>
+    <div class="modal-body" id="modal-tpl-body" style="max-height:70vh;overflow-y:auto"></div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-templates-wpp')">Fechar</button></div>
   </div>
 </div>
