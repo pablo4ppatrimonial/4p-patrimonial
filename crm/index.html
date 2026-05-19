@@ -1277,8 +1277,12 @@ function destroyChart(id){try{const c=document.getElementById(id);if(c){const e=
 async function loadRelatorios(){
   try{
   const desde=new Date();desde.setDate(desde.getDate()-relPeriodo);
-  const{data:leads}=await sb.from('crm_leads').select('*').gte('criado_em',desde.toISOString());
-  const all=leads||[];_relLeads=all;
+  let leads=[];
+  try{
+    const{data}=await sb.from('crm_leads').select('*').gte('criado_em',desde.toISOString());
+    leads=data||[];
+  }catch(e){console.warn('loadRelatorios leads:',e.message);leads=[];}
+  const all=leads;_relLeads=all;
   const fech=all.filter(l=>l.etapa==='fechado').length;
   const total=all.length;const conv=total?Math.round(fech/total*100):0;
   const etapas2=['lead','contato','qualificado','proposta','negociacao','fechado','perdido'];
@@ -2212,7 +2216,10 @@ function _toastGoogleLink(html){
 /* ===== RÉGUA DE COMUNICAÇÃO ===== */
 async function verificarRegua(){
   let itens=[];
-  try{const{data:_itens}=await sb.from('crm_regua').select('*, crm_leads(nome,whatsapp,email,capital_disponivel,cidade,etapa)').eq('executado',false).lte('agendado_para',new Date().toISOString());itens=_itens||[];}catch(e){return;}
+  try{
+    const{data}=await sb.from('crm_regua').select('*, crm_leads(nome,whatsapp,email,capital_disponivel,cidade,etapa)').eq('executado',false).lte('agendado_para',new Date().toISOString());
+    itens=data||[];
+  }catch(e){console.warn('verificarRegua:',e.message);return;}
   if(!itens.length)return;
   for(const item of itens){
     const lead=item.crm_leads||{};
@@ -2254,10 +2261,22 @@ function enviarParabens(leadId){
   window.open('https://wa.me/55'+l.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
 }
 async function atualizarBadgeAniversario(){
-  const badge=document.getElementById('badge-aniversario');if(!badge)return;
-  let data=[];try{const r=await sb.from('crm_leads').select('data_nascimento').not('data_nascimento','is',null);data=r.data||[];}catch(e){}
-  const count=data.filter(l=>{const r=calcularAniversario(l.data_nascimento);return r&&(r.hojeFlag||r.diasAte<=7);}).length;
-  badge.style.display=count>0?'':'none';
+  try{
+    const hoje=new Date();
+    const em7dias=new Date(Date.now()+7*86400000);
+    const{data}=await sb.from('crm_leads').select('id,nome,data_nascimento').not('data_nascimento','is',null);
+    const leads=data||[];
+    const aniversariantes=leads.filter(l=>{
+      if(!l.data_nascimento)return false;
+      try{
+        const nasc=new Date(l.data_nascimento);
+        const esteAno=new Date(hoje.getFullYear(),nasc.getMonth(),nasc.getDate());
+        return esteAno>=hoje&&esteAno<=em7dias;
+      }catch(e){return false;}
+    });
+    const badge=document.getElementById('badge-aniversario');
+    if(badge)badge.style.display=aniversariantes.length>0?'inline':'none';
+  }catch(e){console.warn('Badge aniversario:',e.message);}
 }
 
 /* ===== NPS ===== */
