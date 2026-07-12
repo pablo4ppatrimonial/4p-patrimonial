@@ -117,6 +117,11 @@
       .search-form {
         flex-direction: row;
       }
+
+      .select-uf {
+        flex: 0 0 auto;
+        width: 84px;
+      }
     }
 
     .input-cidade {
@@ -136,8 +141,22 @@
       color: var(--text-muted);
     }
 
-    .input-cidade:focus {
+    .input-cidade:focus,
+    .select-uf:focus {
       border-color: var(--gold);
+    }
+
+    .select-uf {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      cursor: pointer;
     }
 
     .btn-buscar {
@@ -246,6 +265,15 @@
     .tendencia.em-queda { color: #d16565; }
     .tendencia.estagnado { color: var(--text-muted); }
 
+    .disclaimer {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--text-muted);
+    }
+
     footer {
       position: relative;
       z-index: 1;
@@ -264,6 +292,36 @@
     <div class="search-card">
       <form id="form-busca" class="search-form">
         <input type="text" id="input-cidade" class="input-cidade" placeholder="Digite o nome da cidade..." autocomplete="off" />
+        <select id="input-uf" class="select-uf" required>
+          <option value="" disabled selected>UF</option>
+          <option value="AC">AC</option>
+          <option value="AL">AL</option>
+          <option value="AP">AP</option>
+          <option value="AM">AM</option>
+          <option value="BA">BA</option>
+          <option value="CE">CE</option>
+          <option value="DF">DF</option>
+          <option value="ES">ES</option>
+          <option value="GO">GO</option>
+          <option value="MA">MA</option>
+          <option value="MT">MT</option>
+          <option value="MS">MS</option>
+          <option value="MG">MG</option>
+          <option value="PA">PA</option>
+          <option value="PB">PB</option>
+          <option value="PR">PR</option>
+          <option value="PE">PE</option>
+          <option value="PI">PI</option>
+          <option value="RJ">RJ</option>
+          <option value="RN">RN</option>
+          <option value="RS">RS</option>
+          <option value="RO">RO</option>
+          <option value="RR">RR</option>
+          <option value="SC">SC</option>
+          <option value="SP">SP</option>
+          <option value="SE">SE</option>
+          <option value="TO">TO</option>
+        </select>
         <button type="submit" id="btn-buscar" class="btn-buscar">Buscar</button>
       </form>
 
@@ -277,6 +335,7 @@
   <script>
     const form = document.getElementById('form-busca');
     const input = document.getElementById('input-cidade');
+    const selectUf = document.getElementById('input-uf');
     const botao = document.getElementById('btn-buscar');
     const resultado = document.getElementById('resultado');
 
@@ -290,19 +349,20 @@
       evento.preventDefault();
 
       const cidade = input.value.trim();
-      if (!cidade) return;
+      const uf = selectUf.value;
+      if (!cidade || !uf) return;
 
       botao.disabled = true;
       botao.textContent = 'Buscando...';
       mostrarResultado('<p>Buscando...</p>', true);
 
-      try {
-        const headers = {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        };
+      const headers = {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      };
 
-        const url = `${SUPABASE_URL}/rest/v1/cidades?nome=ilike.*${encodeURIComponent(cidade)}*&select=id,nome,coeficiente_aproveitamento,gabarito_metros&limit=1`;
+      try {
+        const url = `${SUPABASE_URL}/rest/v1/cidades?nome=ilike.*${encodeURIComponent(cidade)}*&uf=eq.${uf}&select=id,nome,uf,coeficiente_aproveitamento,gabarito_metros&limit=1`;
         const resposta = await fetch(url, { headers });
 
         if (!resposta.ok) {
@@ -312,13 +372,13 @@
         const dados = await resposta.json();
 
         if (dados.length === 0) {
-          mostrarResultado('<p>Cidade ainda não cadastrada.</p>', true);
+          await pesquisarCidadeAutomaticamente(cidade, uf, headers);
         } else {
           const cidadeEncontrada = dados[0];
           const bairrosHtml = await buscarBairrosHtml(cidadeEncontrada.id, headers);
 
           mostrarResultado(`
-            <h3>${cidadeEncontrada.nome}</h3>
+            <h3>${cidadeEncontrada.nome} - ${cidadeEncontrada.uf}</h3>
             <p><strong>Coeficiente de aproveitamento:</strong> ${cidadeEncontrada.coeficiente_aproveitamento ?? 'não informado'}</p>
             <p><strong>Gabarito:</strong> ${cidadeEncontrada.gabarito_metros ?? 'não informado'} m</p>
             ${bairrosHtml}
@@ -331,6 +391,44 @@
         botao.textContent = 'Buscar';
       }
     });
+
+    async function pesquisarCidadeAutomaticamente(cidade, uf, headers) {
+      mostrarResultado('<p>Pesquisando dados públicos, aguarde...</p>', true);
+
+      const resposta = await fetch(`${SUPABASE_URL}/functions/v1/pesquisar-cidade`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: cidade, uf }),
+      });
+
+      if (!resposta.ok) {
+        throw new Error(`Erro na pesquisa automática (status ${resposta.status})`);
+      }
+
+      const cidadeEncontrada = await resposta.json();
+
+      const semDados =
+        cidadeEncontrada.coeficiente_aproveitamento == null &&
+        cidadeEncontrada.gabarito_metros == null &&
+        cidadeEncontrada.taxa_ocupacao == null;
+
+      const fonteHtml = cidadeEncontrada.fonte_dado
+        ? `<p><strong>Fonte:</strong> ${cidadeEncontrada.fonte_dado}</p>`
+        : '';
+
+      const disclaimerHtml = semDados
+        ? '<p class="disclaimer">Dado pesquisado automaticamente, sujeito a revisão.</p>'
+        : '<p class="disclaimer">Dado pesquisado automaticamente (via IA + busca na web), sujeito a revisão.</p>';
+
+      mostrarResultado(`
+        <h3>${cidadeEncontrada.nome} - ${cidadeEncontrada.uf}</h3>
+        <p><strong>Coeficiente de aproveitamento:</strong> ${cidadeEncontrada.coeficiente_aproveitamento ?? 'não encontrado'}</p>
+        <p><strong>Gabarito:</strong> ${cidadeEncontrada.gabarito_metros != null ? cidadeEncontrada.gabarito_metros + ' m' : 'não encontrado'}</p>
+        <p><strong>Taxa de ocupação:</strong> ${cidadeEncontrada.taxa_ocupacao ?? 'não encontrado'}</p>
+        ${fonteHtml}
+        ${disclaimerHtml}
+      `, false);
+    }
 
     function classeTendencia(tendencia) {
       if (tendencia === 'em alta') return 'em-alta';
