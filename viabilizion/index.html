@@ -199,6 +199,53 @@
       margin: 0;
     }
 
+    .bairros-lista {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .bairros-lista h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      color: var(--gold);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .bairro-item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.85rem;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(201,168,76,0.12);
+    }
+
+    .bairro-item:last-child {
+      border-bottom: none;
+    }
+
+    .bairro-nome {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .bairro-info {
+      color: var(--text-muted);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .tendencia {
+      font-weight: 600;
+    }
+
+    .tendencia.em-alta { color: var(--gold); }
+    .tendencia.em-queda { color: #d16565; }
+    .tendencia.estagnado { color: var(--text-muted); }
+
     footer {
       position: relative;
       z-index: 1;
@@ -250,13 +297,13 @@
       mostrarResultado('<p>Buscando...</p>', true);
 
       try {
-        const url = `${SUPABASE_URL}/rest/v1/cidades?nome=ilike.*${encodeURIComponent(cidade)}*&select=nome,coeficiente_aproveitamento,gabarito_metros&limit=1`;
-        const resposta = await fetch(url, {
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          },
-        });
+        const headers = {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        };
+
+        const url = `${SUPABASE_URL}/rest/v1/cidades?nome=ilike.*${encodeURIComponent(cidade)}*&select=id,nome,coeficiente_aproveitamento,gabarito_metros&limit=1`;
+        const resposta = await fetch(url, { headers });
 
         if (!resposta.ok) {
           throw new Error(`Erro na consulta (status ${resposta.status})`);
@@ -268,10 +315,13 @@
           mostrarResultado('<p>Cidade ainda não cadastrada.</p>', true);
         } else {
           const cidadeEncontrada = dados[0];
+          const bairrosHtml = await buscarBairrosHtml(cidadeEncontrada.id, headers);
+
           mostrarResultado(`
             <h3>${cidadeEncontrada.nome}</h3>
             <p><strong>Coeficiente de aproveitamento:</strong> ${cidadeEncontrada.coeficiente_aproveitamento ?? 'não informado'}</p>
             <p><strong>Gabarito:</strong> ${cidadeEncontrada.gabarito_metros ?? 'não informado'} m</p>
+            ${bairrosHtml}
           `, false);
         }
       } catch (erro) {
@@ -281,6 +331,38 @@
         botao.textContent = 'Buscar';
       }
     });
+
+    function classeTendencia(tendencia) {
+      if (tendencia === 'em alta') return 'em-alta';
+      if (tendencia === 'em queda') return 'em-queda';
+      return 'estagnado';
+    }
+
+    async function buscarBairrosHtml(cidadeId, headers) {
+      try {
+        const url = `${SUPABASE_URL}/rest/v1/bairros?cidade_id=eq.${cidadeId}&select=nome,preco_m2_medio,tendencia&order=nome.asc`;
+        const resposta = await fetch(url, { headers });
+
+        if (!resposta.ok) return '';
+
+        const bairros = await resposta.json();
+        if (bairros.length === 0) return '';
+
+        const itens = bairros.map((bairro) => `
+          <div class="bairro-item">
+            <span class="bairro-nome">${bairro.nome}</span>
+            <span class="bairro-info">
+              ${bairro.preco_m2_medio != null ? `R$ ${bairro.preco_m2_medio}/m²` : 'preço não informado'}
+              ${bairro.tendencia ? ` &middot; <span class="tendencia ${classeTendencia(bairro.tendencia)}">${bairro.tendencia}</span>` : ''}
+            </span>
+          </div>
+        `).join('');
+
+        return `<div class="bairros-lista"><h4>Bairros cadastrados</h4>${itens}</div>`;
+      } catch (erro) {
+        return '';
+      }
+    }
   </script>
 </body>
 </html>

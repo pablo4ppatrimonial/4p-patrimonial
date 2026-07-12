@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Viabilizion — Admin</title>
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #e0c06a;
+      --gold-dark: #a8832a;
+      --bg: #0A0A0A;
+      --bg-card: #111111;
+      --bg-card2: #181818;
+      --text: #F0EDE8;
+      --text-muted: #888880;
+      --border: rgba(201,168,76,0.25);
+      --radius: 12px;
+      --red: #d16565;
+      --green: #6fbf8c;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    h1, h2 {
+      font-family: 'Playfair Display', serif;
+      color: #fff;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--gold);
+    }
+
+    /* LOCK SCREEN */
+    #lock {
+      min-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 16px;
+    }
+
+    #lock h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      margin-bottom: 4px;
+    }
+
+    #lock p {
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    #lock-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .erro-senha {
+      display: none;
+      color: var(--red);
+      font-size: 0.85rem;
+    }
+
+    /* ADMIN PANEL */
+    #painel {
+      display: none;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    #painel > header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #painel h1 {
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+    }
+
+    .link-voltar {
+      color: var(--gold);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .link-voltar:hover { text-decoration: underline; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 18px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    form .full { grid-column: 1 / -1; }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    input, select {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--gold);
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    .btn {
+      grid-column: 1 / -1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 13px 24px;
+      background: var(--gold);
+      border: 1px solid var(--gold);
+      color: #0A0A0A;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 6px;
+    }
+
+    .btn:hover {
+      background: var(--gold-light);
+      border-color: var(--gold-light);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .status-msg {
+      grid-column: 1 / -1;
+      font-size: 0.85rem;
+      display: none;
+    }
+
+    .status-msg.show { display: block; }
+    .status-msg.ok { color: var(--green); }
+    .status-msg.erro { color: var(--red); }
+
+    @media (max-width: 560px) {
+      form { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="lock">
+    <h1>Viabiliz<em>ion</em> — Admin</h1>
+    <p>Área restrita. Digite a senha para continuar.</p>
+    <form id="lock-form">
+      <input type="password" id="input-senha" placeholder="Senha" autocomplete="off" />
+      <button type="submit" class="btn" style="grid-column: auto;">Entrar</button>
+      <span class="erro-senha" id="erro-senha">Senha incorreta.</span>
+    </form>
+  </div>
+
+  <div id="painel">
+    <header>
+      <h1>Viabiliz<em>ion</em> — Admin</h1>
+      <a class="link-voltar" href="index.html">&larr; voltar ao site</a>
+    </header>
+
+    <div class="card">
+      <h2>Cadastrar cidade</h2>
+      <form id="form-cidade">
+        <label class="full">Nome
+          <input type="text" name="nome" required />
+        </label>
+        <label>UF
+          <input type="text" name="uf" maxlength="2" required />
+        </label>
+        <label>População
+          <input type="number" name="populacao" />
+        </label>
+        <label>Coeficiente de aproveitamento
+          <input type="number" step="0.01" name="coeficiente_aproveitamento" />
+        </label>
+        <label>Gabarito (metros)
+          <input type="number" step="0.01" name="gabarito_metros" />
+        </label>
+        <label>Taxa de ocupação
+          <input type="number" step="0.01" name="taxa_ocupacao" />
+        </label>
+        <label class="full">Fonte do dado
+          <input type="text" name="fonte_dado" />
+        </label>
+        <button type="submit" class="btn">Salvar cidade</button>
+        <span class="status-msg" data-status></span>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Cadastrar bairro</h2>
+      <form id="form-bairro">
+        <label class="full">Cidade
+          <select name="cidade_id" required>
+            <option value="">Carregando cidades...</option>
+          </select>
+        </label>
+        <label class="full">Nome do bairro
+          <input type="text" name="nome" required />
+        </label>
+        <label>Preço m² médio
+          <input type="number" step="0.01" name="preco_m2_medio" />
+        </label>
+        <label>Velocidade de venda (dias)
+          <input type="number" name="velocidade_venda_dias" />
+        </label>
+        <label>Tipo predominante
+          <input type="text" name="tipo_predominante" />
+        </label>
+        <label>Tendência
+          <select name="tendencia">
+            <option value="">Selecione</option>
+            <option value="em alta">Em alta</option>
+            <option value="estagnado">Estagnado</option>
+            <option value="em queda">Em queda</option>
+          </select>
+        </label>
+        <button type="submit" class="btn">Salvar bairro</button>
+        <span class="status-msg" data-status></span>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Cadastrar empreendimento</h2>
+      <form id="form-empreendimento">
+        <label class="full">Bairro
+          <select name="bairro_id" required>
+            <option value="">Carregando bairros...</option>
+          </select>
+        </label>
+        <label class="full">Nome
+          <input type="text" name="nome" required />
+        </label>
+        <label>Construtora
+          <input type="text" name="construtora" />
+        </label>
+        <label>Tipologia
+          <input type="text" name="tipologia" placeholder="Ex: 2 quartos" />
+        </label>
+        <label>Status
+          <select name="status">
+            <option value="">Selecione</option>
+            <option value="lancamento">Lançamento</option>
+            <option value="em_obra">Em obra</option>
+            <option value="entregue">Entregue</option>
+          </select>
+        </label>
+        <label>Unidades
+          <input type="number" name="unidades" />
+        </label>
+        <label>Preço de venda
+          <input type="number" step="0.01" name="preco_venda" />
+        </label>
+        <label>Dias no mercado
+          <input type="number" name="dias_no_mercado" />
+        </label>
+        <label class="full">Fonte do dado
+          <input type="text" name="fonte_dado" />
+        </label>
+        <button type="submit" class="btn">Salvar empreendimento</button>
+        <span class="status-msg" data-status></span>
+      </form>
+    </div>
+  </div>
+
+  <script src="/viabilizion/config.js"></script>
+  <script>
+    const SENHA_ADMIN = "Viabilizion@2026";
+
+    const lock = document.getElementById('lock');
+    const painel = document.getElementById('painel');
+    const lockForm = document.getElementById('lock-form');
+    const inputSenha = document.getElementById('input-senha');
+    const erroSenha = document.getElementById('erro-senha');
+
+    lockForm.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      if (inputSenha.value === SENHA_ADMIN) {
+        lock.style.display = 'none';
+        painel.style.display = 'block';
+        carregarCidades();
+        carregarBairros();
+      } else {
+        erroSenha.style.display = 'block';
+      }
+    });
+
+    function headersSupabase(extra) {
+      return Object.assign({
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      }, extra || {});
+    }
+
+    function mostrarStatus(form, mensagem, ok) {
+      const status = form.querySelector('[data-status]');
+      status.textContent = mensagem;
+      status.classList.remove('ok', 'erro');
+      status.classList.add('show', ok ? 'ok' : 'erro');
+    }
+
+    function valorOuNulo(form, campo) {
+      const valor = form.elements[campo].value;
+      return valor === '' ? null : valor;
+    }
+
+    async function carregarCidades() {
+      const selects = document.querySelectorAll('select[name="cidade_id"]');
+      try {
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/cidades?select=id,nome,uf&order=nome.asc`, {
+          headers: headersSupabase(),
+        });
+        const cidades = await resposta.json();
+        selects.forEach((select) => {
+          select.innerHTML = '<option value="">Selecione a cidade</option>' +
+            cidades.map((c) => `<option value="${c.id}">${c.nome} - ${c.uf}</option>`).join('');
+        });
+      } catch (erro) {
+        selects.forEach((select) => {
+          select.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+        });
+      }
+    }
+
+    async function carregarBairros() {
+      const selects = document.querySelectorAll('select[name="bairro_id"]');
+      try {
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/bairros?select=id,nome,cidades(nome)&order=nome.asc`, {
+          headers: headersSupabase(),
+        });
+        const bairros = await resposta.json();
+        selects.forEach((select) => {
+          select.innerHTML = '<option value="">Selecione o bairro</option>' +
+            bairros.map((b) => `<option value="${b.id}">${b.nome}${b.cidades ? ' - ' + b.cidades.nome : ''}</option>`).join('');
+        });
+      } catch (erro) {
+        selects.forEach((select) => {
+          select.innerHTML = '<option value="">Erro ao carregar bairros</option>';
+        });
+      }
+    }
+
+    async function inserirSupabase(tabela, corpo) {
+      const resposta = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}`, {
+        method: 'POST',
+        headers: headersSupabase({
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        }),
+        body: JSON.stringify(corpo),
+      });
+
+      if (!resposta.ok) {
+        throw new Error(`Erro ao salvar (status ${resposta.status})`);
+      }
+    }
+
+    document.getElementById('form-cidade').addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      const form = evento.target;
+      const botao = form.querySelector('.btn');
+      botao.disabled = true;
+
+      try {
+        await inserirSupabase('cidades', {
+          nome: form.elements.nome.value,
+          uf: form.elements.uf.value.toUpperCase(),
+          populacao: valorOuNulo(form, 'populacao'),
+          coeficiente_aproveitamento: valorOuNulo(form, 'coeficiente_aproveitamento'),
+          gabarito_metros: valorOuNulo(form, 'gabarito_metros'),
+          taxa_ocupacao: valorOuNulo(form, 'taxa_ocupacao'),
+          fonte_dado: valorOuNulo(form, 'fonte_dado'),
+        });
+        mostrarStatus(form, 'Cidade salva com sucesso.', true);
+        form.reset();
+        carregarCidades();
+      } catch (erro) {
+        mostrarStatus(form, 'Não foi possível salvar a cidade.', false);
+      } finally {
+        botao.disabled = false;
+      }
+    });
+
+    document.getElementById('form-bairro').addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      const form = evento.target;
+      const botao = form.querySelector('.btn');
+      botao.disabled = true;
+
+      try {
+        await inserirSupabase('bairros', {
+          cidade_id: form.elements.cidade_id.value,
+          nome: form.elements.nome.value,
+          preco_m2_medio: valorOuNulo(form, 'preco_m2_medio'),
+          velocidade_venda_dias: valorOuNulo(form, 'velocidade_venda_dias'),
+          tipo_predominante: valorOuNulo(form, 'tipo_predominante'),
+          tendencia: valorOuNulo(form, 'tendencia'),
+        });
+        mostrarStatus(form, 'Bairro salvo com sucesso.', true);
+        form.reset();
+        carregarBairros();
+      } catch (erro) {
+        mostrarStatus(form, 'Não foi possível salvar o bairro.', false);
+      } finally {
+        botao.disabled = false;
+      }
+    });
+
+    document.getElementById('form-empreendimento').addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      const form = evento.target;
+      const botao = form.querySelector('.btn');
+      botao.disabled = true;
+
+      try {
+        await inserirSupabase('empreendimentos', {
+          bairro_id: form.elements.bairro_id.value,
+          nome: form.elements.nome.value,
+          construtora: valorOuNulo(form, 'construtora'),
+          tipologia: valorOuNulo(form, 'tipologia'),
+          status: valorOuNulo(form, 'status'),
+          unidades: valorOuNulo(form, 'unidades'),
+          preco_venda: valorOuNulo(form, 'preco_venda'),
+          dias_no_mercado: valorOuNulo(form, 'dias_no_mercado'),
+          fonte_dado: valorOuNulo(form, 'fonte_dado'),
+        });
+        mostrarStatus(form, 'Empreendimento salvo com sucesso.', true);
+        form.reset();
+      } catch (erro) {
+        mostrarStatus(form, 'Não foi possível salvar o empreendimento.', false);
+      } finally {
+        botao.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
