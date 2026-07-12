@@ -1,13 +1,17 @@
 // Edge Function: atualizar-cub
 // Pesquisa o CUB (Custo Unitário Básico) residencial padrão mais recente do
-// Sinduscon de um estado via Claude (com web_search) e salva o resultado na
-// tabela `cub_estados`.
+// Sinduscon de um estado via Gemini (com google_search) e salva o resultado
+// na tabela `cub_estados`.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+const GEMINI_MODEL = "gemini-flash-latest";
+const GEMINI_URL =
+  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -26,7 +30,7 @@ Responda APENAS em JSON válido, sem nenhum texto antes ou depois, exatamente ne
 
 Se não encontrar um dado confiável, retorne null em "valor_m2" e "confianca": "baixa".
 
-Faça no máximo 2 ou 3 buscas. Se depois disso não tiver encontrado uma fonte confiável, pare de pesquisar e responda imediatamente com "valor_m2" null e "confianca": "baixa" — não continue tentando buscas adicionais.`;
+Seja econômico: faça no máximo 2 ou 3 buscas. Se depois disso não tiver encontrado uma fonte confiável, pare de pesquisar e responda imediatamente com "valor_m2" null e "confianca": "baixa" — não continue insistindo indefinidamente.`;
 }
 
 function extrairJson(texto: string): string {
@@ -39,10 +43,29 @@ function extrairJson(texto: string): string {
   const fim = semMarkdown.lastIndexOf("}");
 
   if (inicio === -1 || fim === -1 || fim < inicio) {
-    throw new Error(`Resposta do Claude não contém um JSON reconhecível: ${texto}`);
+    throw new Error(`Resposta do Gemini não contém um JSON reconhecível: ${texto}`);
   }
 
   return semMarkdown.slice(inicio, fim + 1);
+}
+
+function extrairTextoCombinado(dadosGemini: any): string {
+  const partes = dadosGemini.candidates?.[0]?.content?.parts;
+
+  if (!Array.isArray(partes)) {
+    throw new Error("Resposta do Gemini não contém partes de conteúdo.");
+  }
+
+  const texto = partes
+    .filter((parte: { text?: string }) => typeof parte.text === "string")
+    .map((parte: { text?: string }) => parte.text)
+    .join("");
+
+  if (!texto) {
+    throw new Error("Resposta do Gemini não contém texto.");
+  }
+
+  return texto;
 }
 
 Deno.serve(async (req) => {
@@ -67,37 +90,24 @@ Deno.serve(async (req) => {
       );
     }
 
-    const respostaClaude = await fetch("https://api.anthropic.com/v1/messages", {
+    const respostaGemini = await fetch(GEMINI_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1024,
-        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 2 }],
-        messages: [{ role: "user", content: montarPrompt(uf) }],
+        contents: [{ role: "user", parts: [{ text: montarPrompt(uf) }] }],
+        tools: [{ google_search: {} }],
       }),
     });
 
-    if (!respostaClaude.ok) {
-      const erroTexto = await respostaClaude.text();
-      throw new Error(`Erro na API do Claude (status ${respostaClaude.status}): ${erroTexto}`);
+    if (!respostaGemini.ok) {
+      const erroTexto = await respostaGemini.text();
+      throw new Error(`Erro na API do Gemini (status ${respostaGemini.status}): ${erroTexto}`);
     }
 
-    const dadosClaude = await respostaClaude.json();
-    const blocosTexto = dadosClaude.content?.filter(
-      (bloco: { type: string }) => bloco.type === "text",
-    );
-    const blocoTexto = blocosTexto?.[blocosTexto.length - 1];
+    const dadosGemini = await respostaGemini.json();
+    const textoCombinado = extrairTextoCombinado(dadosGemini);
 
-    if (!blocoTexto) {
-      throw new Error("Resposta do Claude não contém texto.");
-    }
-
-    const resultado = JSON.parse(extrairJson(blocoTexto.text));
+    const resultado = JSON.parse(extrairJson(textoCombinado));
 
     const { data, error } = await supabase
       .from("cub_estados")
