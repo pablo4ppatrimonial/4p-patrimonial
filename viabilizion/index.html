@@ -320,12 +320,19 @@
       color: var(--text-muted);
     }
 
+    .links-extra {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
     .link-calculadora {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      margin-top: 20px;
       padding: 12px 24px;
       border: 1px solid var(--gold);
       color: var(--gold);
@@ -395,7 +402,10 @@
       <div id="resultado" class="resultado"></div>
     </div>
 
-    <a class="link-calculadora" href="/viabilizion/calculadora.html">Calculadora de Viabilidade</a>
+    <div class="links-extra">
+      <a class="link-calculadora" href="/viabilizion/calculadora.html">Calculadora de Viabilidade</a>
+      <a class="link-calculadora" href="/viabilizion/mcmv.html">Verificador MCMV/Caixa</a>
+    </div>
   </div>
 
   <footer>Viabilizion &mdash; dados para decisões imobiliárias mais seguras</footer>
