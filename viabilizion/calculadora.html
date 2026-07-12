@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Viabilizion — Calculadora de Viabilidade</title>
+  <meta name="description" content="Calculadora de viabilidade imobiliária: cenários pessimista, realista e otimista." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #e0c06a;
+      --gold-dark: #a8832a;
+      --bg: #0A0A0A;
+      --bg-card: #111111;
+      --bg-card2: #181818;
+      --text: #F0EDE8;
+      --text-muted: #888880;
+      --border: rgba(201,168,76,0.25);
+      --radius: 12px;
+      --red: #d16565;
+      --green: #6fbf8c;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      padding: 24px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(201,168,76,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      background: rgba(201,168,76,0.06);
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--gold);
+    }
+
+    .subtitle {
+      font-size: clamp(0.95rem, 2.2vw, 1.05rem);
+      color: var(--text-muted);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .link-voltar {
+      display: inline-block;
+      margin-top: 16px;
+      color: var(--gold);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .link-voltar:hover { text-decoration: underline; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    form .full { grid-column: 1 / -1; }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    input, select {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--gold);
+    }
+
+    select { cursor: pointer; }
+
+    .ajuda {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    .btn-calcular {
+      grid-column: 1 / -1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 28px;
+      background: var(--gold);
+      border: 1px solid var(--gold);
+      color: #0A0A0A;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-calcular:hover {
+      background: var(--gold-light);
+      border-color: var(--gold-light);
+    }
+
+    .resultados {
+      display: none;
+    }
+
+    .resultados.show {
+      display: block;
+    }
+
+    .resultados-titulo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .resultados-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 760px) {
+      .resultados-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .cenario-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      border-top: 3px solid var(--border-top-color, var(--gold));
+    }
+
+    .cenario-card.pessimista { --border-top-color: var(--red); }
+    .cenario-card.realista { --border-top-color: var(--gold); }
+    .cenario-card.otimista { --border-top-color: var(--green); }
+
+    .cenario-nome {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .pessimista .cenario-nome { color: var(--red); }
+    .realista .cenario-nome { color: var(--gold); }
+    .otimista .cenario-nome { color: var(--green); }
+
+    .cenario-premissa {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .metrica {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 0.85rem;
+      padding: 6px 0;
+    }
+
+    .metrica-label {
+      color: var(--text-muted);
+    }
+
+    .metrica-valor {
+      color: var(--text);
+      font-weight: 600;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .metrica-valor.positivo { color: var(--green); }
+    .metrica-valor.negativo { color: var(--red); }
+
+    .metrica.destaque {
+      border-top: 1px solid var(--border);
+      margin-top: 6px;
+      padding-top: 10px;
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      margin-top: 48px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="badge">Ferramenta</span>
+      <h1>Calculadora de <em>Viabilidade</em></h1>
+      <p class="subtitle">Simule cenários pessimista, realista e otimista para o seu empreendimento</p>
+      <a class="link-voltar" href="index.html">&larr; voltar para o Viabilizion</a>
+    </header>
+
+    <div class="card">
+      <form id="form-calculadora">
+        <label>Área do terreno (m²)
+          <input type="number" id="area-terreno" min="0" step="0.01" required />
+        </label>
+
+        <label>Valor do terreno (R$)
+          <input type="number" id="valor-terreno" min="0" step="0.01" required />
+        </label>
+
+        <label class="full">Tipologia
+          <select id="tipologia" required>
+            <option value="" disabled selected>Selecione</option>
+            <option value="Casa">Casa</option>
+            <option value="Sobrado">Sobrado</option>
+            <option value="Apartamento">Apartamento</option>
+            <option value="Multifamiliar">Multifamiliar</option>
+          </select>
+        </label>
+
+        <label>Número de unidades
+          <input type="number" id="num-unidades" min="1" step="1" required />
+        </label>
+
+        <label>Área construída total (m²)
+          <input type="number" id="area-construida" min="0" step="0.01" required />
+        </label>
+
+        <label>Preço de venda por unidade (R$)
+          <input type="number" id="preco-venda" min="0" step="0.01" required />
+        </label>
+
+        <label>
+          Custo de construção por m² / CUB (R$)
+          <input type="number" id="cub" min="0" step="0.01" required />
+          <span class="ajuda">Consulte o CUB atualizado no Sinduscon do seu estado.</span>
+        </label>
+
+        <label>Percentual de despesas indiretas (%)
+          <input type="number" id="despesas-percentual" min="0" step="0.1" value="25" required />
+        </label>
+
+        <button type="submit" class="btn-calcular">Calcular</button>
+      </form>
+    </div>
+
+    <div id="resultados" class="resultados">
+      <h2 class="resultados-titulo">Resultados por cenário</h2>
+      <div class="resultados-grid">
+        <div class="cenario-card pessimista">
+          <div class="cenario-nome">Pessimista</div>
+          <div class="cenario-premissa">Preço de venda -10% · CUB +10%</div>
+          <div id="cenario-pessimista"></div>
+        </div>
+        <div class="cenario-card realista">
+          <div class="cenario-nome">Realista</div>
+          <div class="cenario-premissa">Valores exatos digitados</div>
+          <div id="cenario-realista"></div>
+        </div>
+        <div class="cenario-card otimista">
+          <div class="cenario-nome">Otimista</div>
+          <div class="cenario-premissa">Preço de venda +10% · CUB -5%</div>
+          <div id="cenario-otimista"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Viabilizion &mdash; dados para decisões imobiliárias mais seguras</footer>
+
+  <script>
+    const form = document.getElementById('form-calculadora');
+    const resultados = document.getElementById('resultados');
+
+    function formatarMoeda(valor) {
+      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function formatarPercentual(valor) {
+      return `${valor.toFixed(1).replace('.', ',')}%`;
+    }
+
+    function calcularCenario(inputs, multiplicadorPreco, multiplicadorCub) {
+      const precoVendaCenario = inputs.precoVenda * multiplicadorPreco;
+      const cubCenario = inputs.cub * multiplicadorCub;
+
+      const vgv = precoVendaCenario * inputs.numUnidades;
+      const custoConstrucao = inputs.areaConstruida * cubCenario;
+      const custoTotal =
+        custoConstrucao + inputs.valorTerreno + (inputs.despesasPercentual / 100) * custoConstrucao;
+      const lucroBruto = vgv - custoTotal;
+      const margem = vgv !== 0 ? (lucroBruto / vgv) * 100 : 0;
+      const roi = custoTotal !== 0 ? (lucroBruto / custoTotal) * 100 : 0;
+      const pontoEquilibrio =
+        precoVendaCenario !== 0 ? Math.ceil(custoTotal / precoVendaCenario) : 0;
+
+      return { vgv, custoConstrucao, custoTotal, lucroBruto, margem, roi, pontoEquilibrio };
+    }
+
+    function renderizarCenario(elementId, resultado) {
+      const classeLucro = resultado.lucroBruto >= 0 ? 'positivo' : 'negativo';
+
+      document.getElementById(elementId).innerHTML = `
+        <div class="metrica">
+          <span class="metrica-label">VGV</span>
+          <span class="metrica-valor">${formatarMoeda(resultado.vgv)}</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-label">Custo de construção</span>
+          <span class="metrica-valor">${formatarMoeda(resultado.custoConstrucao)}</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-label">Custo total</span>
+          <span class="metrica-valor">${formatarMoeda(resultado.custoTotal)}</span>
+        </div>
+        <div class="metrica destaque">
+          <span class="metrica-label">Lucro bruto</span>
+          <span class="metrica-valor ${classeLucro}">${formatarMoeda(resultado.lucroBruto)}</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-label">Margem</span>
+          <span class="metrica-valor ${classeLucro}">${formatarPercentual(resultado.margem)}</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-label">ROI</span>
+          <span class="metrica-valor ${classeLucro}">${formatarPercentual(resultado.roi)}</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-label">Ponto de equilíbrio</span>
+          <span class="metrica-valor">${resultado.pontoEquilibrio} unidades</span>
+        </div>
+      `;
+    }
+
+    form.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+
+      const inputs = {
+        areaTerreno: Number(document.getElementById('area-terreno').value),
+        valorTerreno: Number(document.getElementById('valor-terreno').value),
+        tipologia: document.getElementById('tipologia').value,
+        numUnidades: Number(document.getElementById('num-unidades').value),
+        areaConstruida: Number(document.getElementById('area-construida').value),
+        precoVenda: Number(document.getElementById('preco-venda').value),
+        cub: Number(document.getElementById('cub').value),
+        despesasPercentual: Number(document.getElementById('despesas-percentual').value),
+      };
+
+      const pessimista = calcularCenario(inputs, 0.9, 1.1);
+      const realista = calcularCenario(inputs, 1, 1);
+      const otimista = calcularCenario(inputs, 1.1, 0.95);
+
+      renderizarCenario('cenario-pessimista', pessimista);
+      renderizarCenario('cenario-realista', realista);
+      renderizarCenario('cenario-otimista', otimista);
+
+      resultados.classList.add('show');
+      resultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  </script>
+</body>
+</html>
