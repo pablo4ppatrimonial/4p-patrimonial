@@ -343,11 +343,11 @@
         </label>
 
         <label>Área do terreno (m²)
-          <input type="number" id="area-terreno" min="0" step="0.01" required />
+          <input type="text" inputmode="decimal" id="area-terreno" placeholder="0" required />
         </label>
 
         <label>Valor do terreno (R$)
-          <input type="number" id="valor-terreno" min="0" step="0.01" required />
+          <input type="text" inputmode="decimal" id="valor-terreno" placeholder="0" required />
         </label>
 
         <label class="full">Tipologia
@@ -365,16 +365,16 @@
         </label>
 
         <label>Área construída total (m²)
-          <input type="number" id="area-construida" min="0" step="0.01" required />
+          <input type="text" inputmode="decimal" id="area-construida" placeholder="0" required />
         </label>
 
         <label>Preço de venda por unidade (R$)
-          <input type="number" id="preco-venda" min="0" step="0.01" required />
+          <input type="text" inputmode="decimal" id="preco-venda" placeholder="0" required />
         </label>
 
         <label>
           Custo de construção por m² / CUB (R$)
-          <input type="number" id="cub" min="0" step="0.01" required />
+          <input type="text" inputmode="decimal" id="cub" placeholder="0" required />
           <span class="ajuda" id="status-cub">Consulte o CUB atualizado no Sinduscon do seu estado.</span>
         </label>
 
@@ -425,6 +425,9 @@
     const selectTipologia = document.getElementById('tipologia');
     const inputCub = document.getElementById('cub');
 
+    const inputValorTerreno = document.getElementById('valor-terreno');
+    const inputPrecoVenda = document.getElementById('preco-venda');
+
     const TAMANHO_MEDIO_UNIDADE = { Casa: 70, Sobrado: 90, Apartamento: 60, Multifamiliar: 55 };
     const TEXTO_AJUDA_CUB = 'Consulte o CUB atualizado no Sinduscon do seu estado.';
 
@@ -437,18 +440,60 @@
       };
     }
 
+    // --- Formatação de milhar (pt-BR) nos campos de área/valor ---
+
+    function apenasDigitos(valor) {
+      return valor.replace(/\D/g, '');
+    }
+
+    function obterValorNumerico(input) {
+      const digitos = apenasDigitos(input.value);
+      return digitos === '' ? 0 : parseInt(digitos, 10);
+    }
+
+    function definirValorFormatado(input, numero) {
+      const arredondado = Math.round(numero);
+      input.value = arredondado > 0 ? arredondado.toLocaleString('pt-BR') : '';
+    }
+
+    function configurarCampoMilhar(input) {
+      input.addEventListener('input', () => {
+        const cursorPos = input.selectionStart;
+        const digitosAntesCursor = apenasDigitos(input.value.slice(0, cursorPos)).length;
+
+        const digitos = apenasDigitos(input.value);
+        const numero = digitos === '' ? null : parseInt(digitos, 10);
+        input.value = numero === null ? '' : numero.toLocaleString('pt-BR');
+
+        let contador = 0;
+        let novaPos = input.value.length;
+        for (let i = 0; i < input.value.length; i++) {
+          if (/\d/.test(input.value[i])) contador++;
+          if (contador === digitosAntesCursor) {
+            novaPos = i + 1;
+            break;
+          }
+        }
+        input.setSelectionRange(novaPos, novaPos);
+      });
+    }
+
+    [inputAreaTerreno, inputValorTerreno, inputAreaConstruida, inputPrecoVenda, inputCub].forEach(
+      configurarCampoMilhar,
+    );
+
     function recalcularAreaConstruida() {
-      const areaTerreno = Number(inputAreaTerreno.value);
+      const areaTerreno = obterValorNumerico(inputAreaTerreno);
       if (coeficienteAtual != null && areaTerreno > 0) {
         const areaMaxima = areaTerreno * coeficienteAtual;
-        inputAreaConstruida.value = areaMaxima.toFixed(2);
+        definirValorFormatado(inputAreaConstruida, areaMaxima);
         recalcularNumUnidades();
       }
     }
 
     function recalcularNumUnidades() {
       const tipologia = selectTipologia.value;
-      const areaConstruida = Number(inputAreaConstruida.value);
+      const areaConstruida = obterValorNumerico(inputAreaConstruida);
       const tamanhoMedio = TAMANHO_MEDIO_UNIDADE[tipologia];
 
       if (tipologia && tamanhoMedio && areaConstruida > 0) {
@@ -516,7 +561,7 @@
           !registro || Date.now() - new Date(registro.atualizado_em).getTime() > trintaDiasMs;
 
         if (registro && !desatualizado && registro.valor_m2 != null) {
-          inputCub.value = registro.valor_m2;
+          definirValorFormatado(inputCub, registro.valor_m2);
           statusCub.textContent = `CUB de ${uf} carregado (atualizado em ${new Date(registro.atualizado_em).toLocaleDateString('pt-BR')}).`;
           return;
         }
@@ -536,7 +581,7 @@
         const resultadoCub = await respostaFuncao.json();
 
         if (resultadoCub.valor_m2 != null) {
-          inputCub.value = resultadoCub.valor_m2;
+          definirValorFormatado(inputCub, resultadoCub.valor_m2);
           statusCub.textContent = `CUB pesquisado automaticamente (${resultadoCub.data_referencia ?? 'data não informada'}) — sujeito a revisão.`;
         } else {
           statusCub.textContent = `Não foi possível encontrar o CUB automaticamente. ${TEXTO_AJUDA_CUB}`;
@@ -624,13 +669,13 @@
       evento.preventDefault();
 
       const inputs = {
-        areaTerreno: Number(document.getElementById('area-terreno').value),
-        valorTerreno: Number(document.getElementById('valor-terreno').value),
+        areaTerreno: obterValorNumerico(inputAreaTerreno),
+        valorTerreno: obterValorNumerico(inputValorTerreno),
         tipologia: document.getElementById('tipologia').value,
         numUnidades: Number(document.getElementById('num-unidades').value),
-        areaConstruida: Number(document.getElementById('area-construida').value),
-        precoVenda: Number(document.getElementById('preco-venda').value),
-        cub: Number(document.getElementById('cub').value),
+        areaConstruida: obterValorNumerico(inputAreaConstruida),
+        precoVenda: obterValorNumerico(inputPrecoVenda),
+        cub: obterValorNumerico(inputCub),
         despesasPercentual: Number(document.getElementById('despesas-percentual').value),
       };
 
