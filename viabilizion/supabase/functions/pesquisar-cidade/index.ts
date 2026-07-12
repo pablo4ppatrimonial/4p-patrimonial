@@ -67,6 +67,37 @@ function extrairTextoCombinado(dadosGemini: any): string {
   return texto;
 }
 
+const STATUS_TRANSITORIOS = [429, 503];
+const MAX_TENTATIVAS = 3;
+
+function aguardar(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function chamarGeminiComRetry(corpo: unknown): Promise<Response> {
+  let ultimaResposta: Response | null = null;
+
+  for (let tentativa = 1; tentativa <= MAX_TENTATIVAS; tentativa++) {
+    const resposta = await fetch(GEMINI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpo),
+    });
+
+    if (resposta.ok || !STATUS_TRANSITORIOS.includes(resposta.status)) {
+      return resposta;
+    }
+
+    ultimaResposta = resposta;
+
+    if (tentativa < MAX_TENTATIVAS) {
+      await aguardar(1000 * tentativa);
+    }
+  }
+
+  return ultimaResposta!;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
@@ -89,13 +120,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const respostaGemini = await fetch(GEMINI_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: montarPrompt(nome, uf) }] }],
-        tools: [{ google_search: {} }],
-      }),
+    const respostaGemini = await chamarGeminiComRetry({
+      contents: [{ role: "user", parts: [{ text: montarPrompt(nome, uf) }] }],
+      tools: [{ google_search: {} }],
     });
 
     if (!respostaGemini.ok) {
