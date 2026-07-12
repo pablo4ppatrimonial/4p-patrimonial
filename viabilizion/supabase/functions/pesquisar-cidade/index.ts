@@ -23,14 +23,25 @@ function montarPrompt(nome: string, uf: string): string {
 Responda APENAS em JSON válido, sem nenhum texto antes ou depois, exatamente neste formato:
 {"coeficiente_aproveitamento": number ou null, "gabarito_metros": number ou null, "taxa_ocupacao": number ou null, "fonte": "string com o nome/site da fonte encontrada", "confianca": "alta" ou "media" ou "baixa"}
 
-Se não encontrar um dado confiável para algum campo, retorne null nesse campo. Se não encontrar nenhum dado confiável, retorne null nos três campos numéricos e "confianca": "baixa".`;
+Se não encontrar um dado confiável para algum campo, retorne null nesse campo. Se não encontrar nenhum dado confiável, retorne null nos três campos numéricos e "confianca": "baixa".
+
+Faça no máximo 2 ou 3 buscas. Se depois disso não tiver encontrado uma fonte confiável, pare de pesquisar e responda imediatamente com os campos numéricos null e "confianca": "baixa" — não continue tentando buscas adicionais.`;
 }
 
-function limparJsonMarkdown(texto: string): string {
-  return texto
+function extrairJson(texto: string): string {
+  const semMarkdown = texto
     .replace(/```json/gi, "")
     .replace(/```/g, "")
     .trim();
+
+  const inicio = semMarkdown.indexOf("{");
+  const fim = semMarkdown.lastIndexOf("}");
+
+  if (inicio === -1 || fim === -1 || fim < inicio) {
+    throw new Error(`Resposta do Claude não contém um JSON reconhecível: ${texto}`);
+  }
+
+  return semMarkdown.slice(inicio, fim + 1);
 }
 
 Deno.serve(async (req) => {
@@ -65,7 +76,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
-        tools: [{ type: "web_search_20260209", name: "web_search" }],
+        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 2 }],
         messages: [{ role: "user", content: montarPrompt(nome, uf) }],
       }),
     });
@@ -76,15 +87,16 @@ Deno.serve(async (req) => {
     }
 
     const dadosClaude = await respostaClaude.json();
-    const blocoTexto = dadosClaude.content?.find(
+    const blocosTexto = dadosClaude.content?.filter(
       (bloco: { type: string }) => bloco.type === "text",
     );
+    const blocoTexto = blocosTexto?.[blocosTexto.length - 1];
 
     if (!blocoTexto) {
       throw new Error("Resposta do Claude não contém texto.");
     }
 
-    const resultado = JSON.parse(limparJsonMarkdown(blocoTexto.text));
+    const resultado = JSON.parse(extrairJson(blocoTexto.text));
 
     const { data, error } = await supabase
       .from("cidades")
