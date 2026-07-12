@@ -69,3 +69,12 @@ begin
     alter table cidades add constraint cidades_nome_uf_key unique (nome, uf);
   end if;
 end $$;
+
+create table if not exists cub_estados (
+  id bigint generated always as identity primary key,
+  uf char(2) not null unique,
+  valor_m2 numeric(10,2),
+  data_referencia text,
+  fonte text,
+  atualizado_em timestamptz not null default now()
+);

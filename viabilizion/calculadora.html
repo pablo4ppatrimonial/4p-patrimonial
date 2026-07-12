@@ -159,6 +159,19 @@
       margin-top: 2px;
     }
 
+    .linha-cidade {
+      display: flex;
+      gap: 8px;
+    }
+
+    .linha-cidade input {
+      flex: 1;
+    }
+
+    .linha-cidade select {
+      flex: 0 0 84px;
+    }
+
     .btn-calcular {
       grid-column: 1 / -1;
       display: inline-flex;
@@ -291,6 +304,44 @@
 
     <div class="card">
       <form id="form-calculadora">
+        <label class="full">
+          Cidade (opcional — usada para sugerir área construída e CUB automaticamente)
+          <div class="linha-cidade">
+            <input type="text" id="input-cidade-calc" placeholder="Nome da cidade" autocomplete="off" />
+            <select id="input-uf-calc">
+              <option value="" disabled selected>UF</option>
+              <option value="AC">AC</option>
+              <option value="AL">AL</option>
+              <option value="AP">AP</option>
+              <option value="AM">AM</option>
+              <option value="BA">BA</option>
+              <option value="CE">CE</option>
+              <option value="DF">DF</option>
+              <option value="ES">ES</option>
+              <option value="GO">GO</option>
+              <option value="MA">MA</option>
+              <option value="MT">MT</option>
+              <option value="MS">MS</option>
+              <option value="MG">MG</option>
+              <option value="PA">PA</option>
+              <option value="PB">PB</option>
+              <option value="PR">PR</option>
+              <option value="PE">PE</option>
+              <option value="PI">PI</option>
+              <option value="RJ">RJ</option>
+              <option value="RN">RN</option>
+              <option value="RS">RS</option>
+              <option value="RO">RO</option>
+              <option value="RR">RR</option>
+              <option value="SC">SC</option>
+              <option value="SP">SP</option>
+              <option value="SE">SE</option>
+              <option value="TO">TO</option>
+            </select>
+          </div>
+          <span class="ajuda" id="status-cidade-calc">Preencha cidade e UF para sugerir área construída máxima e CUB automaticamente.</span>
+        </label>
+
         <label>Área do terreno (m²)
           <input type="number" id="area-terreno" min="0" step="0.01" required />
         </label>
@@ -324,7 +375,7 @@
         <label>
           Custo de construção por m² / CUB (R$)
           <input type="number" id="cub" min="0" step="0.01" required />
-          <span class="ajuda">Consulte o CUB atualizado no Sinduscon do seu estado.</span>
+          <span class="ajuda" id="status-cub">Consulte o CUB atualizado no Sinduscon do seu estado.</span>
         </label>
 
         <label>Percentual de despesas indiretas (%)
@@ -359,9 +410,155 @@
 
   <footer>Viabilizion &mdash; dados para decisões imobiliárias mais seguras</footer>
 
+  <script src="/viabilizion/config.js"></script>
   <script>
     const form = document.getElementById('form-calculadora');
     const resultados = document.getElementById('resultados');
+
+    const inputCidadeCalc = document.getElementById('input-cidade-calc');
+    const selectUfCalc = document.getElementById('input-uf-calc');
+    const statusCidadeCalc = document.getElementById('status-cidade-calc');
+    const statusCub = document.getElementById('status-cub');
+    const inputAreaTerreno = document.getElementById('area-terreno');
+    const inputAreaConstruida = document.getElementById('area-construida');
+    const inputNumUnidades = document.getElementById('num-unidades');
+    const selectTipologia = document.getElementById('tipologia');
+    const inputCub = document.getElementById('cub');
+
+    const TAMANHO_MEDIO_UNIDADE = { Casa: 70, Sobrado: 90, Apartamento: 60, Multifamiliar: 55 };
+    const TEXTO_AJUDA_CUB = 'Consulte o CUB atualizado no Sinduscon do seu estado.';
+
+    let coeficienteAtual = null;
+
+    function headersSupabase() {
+      return {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      };
+    }
+
+    function recalcularAreaConstruida() {
+      const areaTerreno = Number(inputAreaTerreno.value);
+      if (coeficienteAtual != null && areaTerreno > 0) {
+        const areaMaxima = areaTerreno * coeficienteAtual;
+        inputAreaConstruida.value = areaMaxima.toFixed(2);
+        recalcularNumUnidades();
+      }
+    }
+
+    function recalcularNumUnidades() {
+      const tipologia = selectTipologia.value;
+      const areaConstruida = Number(inputAreaConstruida.value);
+      const tamanhoMedio = TAMANHO_MEDIO_UNIDADE[tipologia];
+
+      if (tipologia && tamanhoMedio && areaConstruida > 0) {
+        const sugestao = Math.floor(areaConstruida / tamanhoMedio);
+        inputNumUnidades.value = sugestao > 0 ? sugestao : 1;
+      }
+    }
+
+    async function buscarCidadeCalculadora() {
+      const cidade = inputCidadeCalc.value.trim();
+      const uf = selectUfCalc.value;
+      if (!cidade || !uf) return;
+
+      statusCidadeCalc.textContent = 'Buscando cidade...';
+
+      try {
+        const url = `${SUPABASE_URL}/rest/v1/cidades?nome=ilike.*${encodeURIComponent(cidade)}*&uf=eq.${uf}&select=nome,uf,coeficiente_aproveitamento&limit=1`;
+        const resposta = await fetch(url, { headers: headersSupabase() });
+
+        if (!resposta.ok) {
+          throw new Error(`Erro na consulta (status ${resposta.status})`);
+        }
+
+        const dados = await resposta.json();
+
+        if (dados.length === 0) {
+          coeficienteAtual = null;
+          statusCidadeCalc.textContent = 'Cidade ainda não cadastrada — preencha os campos manualmente.';
+        } else {
+          const cidadeEncontrada = dados[0];
+
+          if (cidadeEncontrada.coeficiente_aproveitamento != null) {
+            coeficienteAtual = Number(cidadeEncontrada.coeficiente_aproveitamento);
+            statusCidadeCalc.textContent = `Cidade encontrada — coeficiente de aproveitamento: ${coeficienteAtual}.`;
+            recalcularAreaConstruida();
+          } else {
+            coeficienteAtual = null;
+            statusCidadeCalc.textContent = 'Cidade encontrada, mas sem coeficiente de aproveitamento cadastrado.';
+          }
+        }
+      } catch (erro) {
+        statusCidadeCalc.textContent = 'Não foi possível buscar a cidade agora.';
+      }
+
+      buscarCubEstado(uf);
+    }
+
+    async function buscarCubEstado(uf) {
+      if (!uf) return;
+
+      statusCub.textContent = 'Verificando CUB salvo...';
+
+      try {
+        const url = `${SUPABASE_URL}/rest/v1/cub_estados?uf=eq.${uf}&select=valor_m2,data_referencia,atualizado_em&order=atualizado_em.desc&limit=1`;
+        const resposta = await fetch(url, { headers: headersSupabase() });
+
+        if (!resposta.ok) {
+          throw new Error(`Erro na consulta de cub_estados (status ${resposta.status})`);
+        }
+
+        const dados = await resposta.json();
+        const registro = dados[0];
+        const trintaDiasMs = 30 * 24 * 60 * 60 * 1000;
+        const desatualizado =
+          !registro || Date.now() - new Date(registro.atualizado_em).getTime() > trintaDiasMs;
+
+        if (registro && !desatualizado && registro.valor_m2 != null) {
+          inputCub.value = registro.valor_m2;
+          statusCub.textContent = `CUB de ${uf} carregado (atualizado em ${new Date(registro.atualizado_em).toLocaleDateString('pt-BR')}).`;
+          return;
+        }
+
+        statusCub.textContent = 'Buscando CUB atualizado...';
+
+        const respostaFuncao = await fetch(`${SUPABASE_URL}/functions/v1/atualizar-cub`, {
+          method: 'POST',
+          headers: { ...headersSupabase(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uf }),
+        });
+
+        if (!respostaFuncao.ok) {
+          throw new Error(`Erro na função atualizar-cub (status ${respostaFuncao.status})`);
+        }
+
+        const resultadoCub = await respostaFuncao.json();
+
+        if (resultadoCub.valor_m2 != null) {
+          inputCub.value = resultadoCub.valor_m2;
+          statusCub.textContent = `CUB pesquisado automaticamente (${resultadoCub.data_referencia ?? 'data não informada'}) — sujeito a revisão.`;
+        } else {
+          statusCub.textContent = `Não foi possível encontrar o CUB automaticamente. ${TEXTO_AJUDA_CUB}`;
+        }
+      } catch (erro) {
+        statusCub.textContent = `Não foi possível buscar o CUB automaticamente. ${TEXTO_AJUDA_CUB}`;
+      }
+    }
+
+    inputCidadeCalc.addEventListener('blur', buscarCidadeCalculadora);
+
+    selectUfCalc.addEventListener('change', () => {
+      if (inputCidadeCalc.value.trim()) {
+        buscarCidadeCalculadora();
+      } else if (selectUfCalc.value) {
+        buscarCubEstado(selectUfCalc.value);
+      }
+    });
+
+    inputAreaTerreno.addEventListener('input', recalcularAreaConstruida);
+    selectTipologia.addEventListener('change', recalcularNumUnidades);
+    inputAreaConstruida.addEventListener('input', recalcularNumUnidades);
 
     function formatarMoeda(valor) {
       return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
