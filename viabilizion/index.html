@@ -24,6 +24,9 @@
       --text-muted: #888880;
       --border: rgba(201,168,76,0.25);
       --radius: 12px;
+      --red: #d16565;
+      --green: #6fbf8c;
+      --yellow: #d4b34a;
     }
 
     html { scroll-behavior: smooth; }
@@ -36,10 +39,6 @@
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
       padding: 24px;
       position: relative;
       overflow-x: hidden;
@@ -58,8 +57,13 @@
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 520px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    header {
       text-align: center;
+      margin-bottom: 32px;
     }
 
     .badge {
@@ -72,17 +76,17 @@
       color: var(--gold);
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      margin-bottom: 28px;
+      margin-bottom: 20px;
       background: rgba(201,168,76,0.06);
     }
 
     h1 {
       font-family: 'Playfair Display', serif;
-      font-size: clamp(2.2rem, 6vw, 3.4rem);
+      font-size: clamp(2.1rem, 5.5vw, 3.2rem);
       font-weight: 700;
       line-height: 1.15;
       color: #fff;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
     }
 
     h1 em {
@@ -91,79 +95,121 @@
     }
 
     .subtitle {
-      font-size: clamp(1rem, 2.5vw, 1.15rem);
+      font-size: clamp(0.95rem, 2.2vw, 1.1rem);
       color: var(--text-muted);
-      max-width: 420px;
-      margin: 0 auto 40px;
+      max-width: 480px;
+      margin: 0 auto;
     }
 
-    .search-card {
+    .card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 28px;
-      display: flex;
-      flex-direction: column;
+      margin-bottom: 28px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 16px;
     }
 
-    .search-form {
+    form .full { grid-column: 1 / -1; }
+
+    label {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-    }
-
-    @media (min-width: 520px) {
-      .search-form {
-        flex-direction: row;
-      }
-
-      .select-uf {
-        flex: 0 0 auto;
-        width: 84px;
-      }
-    }
-
-    .input-cidade {
-      flex: 1;
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 16px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 1rem;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .input-cidade::placeholder {
+      gap: 6px;
+      font-size: 0.85rem;
       color: var(--text-muted);
     }
 
-    .input-cidade:focus,
-    .select-uf:focus {
-      border-color: var(--gold);
-    }
-
-    .select-uf {
+    input, select {
       background: var(--bg-card2);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 14px 12px;
+      padding: 12px 14px;
       font-family: 'DM Sans', sans-serif;
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: var(--text);
       outline: none;
       transition: border-color 0.2s;
-      cursor: pointer;
     }
 
-    .btn-buscar {
+    input:focus, select:focus {
+      border-color: var(--gold);
+    }
+
+    select { cursor: pointer; }
+
+    .ajuda {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    .linha-cidade {
+      display: flex;
+      gap: 8px;
+    }
+
+    .linha-cidade input {
+      flex: 1;
+    }
+
+    .linha-cidade select {
+      flex: 0 0 84px;
+    }
+
+    .btn-opcoes-avancadas {
+      grid-column: 1 / -1;
+      background: none;
+      border: none;
+      color: var(--gold);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      padding: 4px 0;
+    }
+
+    .btn-opcoes-avancadas:hover {
+      text-decoration: underline;
+    }
+
+    .opcoes-avancadas {
+      grid-column: 1 / -1;
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding-top: 16px;
+      margin-top: 4px;
+      border-top: 1px solid var(--border);
+    }
+
+    .opcoes-avancadas.show {
+      display: grid;
+    }
+
+    .aviso-preco {
+      grid-column: 1 / -1;
+      display: none;
+      background: rgba(212,179,74,0.1);
+      border: 1px solid var(--yellow);
+      color: var(--yellow);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+    }
+
+    .btn-analisar {
+      grid-column: 1 / -1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
       padding: 14px 28px;
       background: var(--gold);
       border: 1px solid var(--gold);
@@ -173,22 +219,41 @@
       font-weight: 600;
       border-radius: 8px;
       cursor: pointer;
-      white-space: nowrap;
+      margin-top: 8px;
       transition: all 0.2s;
     }
 
-    .btn-buscar:hover {
+    .btn-analisar:hover {
       background: var(--gold-light);
       border-color: var(--gold-light);
     }
 
-    .btn-buscar:disabled {
+    .btn-analisar:disabled {
       opacity: 0.6;
       cursor: default;
     }
 
-    .resultado {
+    .resultados-completos {
       display: none;
+    }
+
+    .resultados-completos.show {
+      display: block;
+    }
+
+    .secao-resultado {
+      margin-bottom: 32px;
+    }
+
+    .secao-titulo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .resultado {
       text-align: left;
       background: var(--bg-card2);
       border: 1px solid var(--border);
@@ -196,8 +261,9 @@
       padding: 18px 20px;
     }
 
-    .resultado.show {
-      display: block;
+    .resultado.aviso p {
+      color: var(--text-muted);
+      margin: 0;
     }
 
     .resultado h3 {
@@ -211,11 +277,6 @@
       font-size: 0.9rem;
       color: var(--text);
       margin: 4px 0;
-    }
-
-    .resultado.aviso p {
-      color: var(--text-muted);
-      margin: 0;
     }
 
     .bairros-lista {
@@ -262,7 +323,7 @@
     }
 
     .tendencia.em-alta { color: var(--gold); }
-    .tendencia.em-queda { color: #d16565; }
+    .tendencia.em-queda { color: var(--red); }
     .tendencia.estagnado { color: var(--text-muted); }
 
     .top-tipologias {
@@ -320,38 +381,184 @@
       color: var(--text-muted);
     }
 
-    .links-extra {
+    .resultados-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 760px) {
+      .resultados-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .cenario-card {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      border-top: 3px solid var(--border-top-color, var(--gold));
+    }
+
+    .cenario-card.pessimista { --border-top-color: var(--red); }
+    .cenario-card.realista { --border-top-color: var(--gold); }
+    .cenario-card.otimista { --border-top-color: var(--green); }
+
+    .cenario-nome {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .pessimista .cenario-nome { color: var(--red); }
+    .realista .cenario-nome { color: var(--gold); }
+    .otimista .cenario-nome { color: var(--green); }
+
+    .cenario-premissa {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .metrica {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 0.85rem;
+      padding: 6px 0;
+    }
+
+    .metrica-label {
+      color: var(--text-muted);
+    }
+
+    .metrica-valor {
+      color: var(--text);
+      font-weight: 600;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .metrica-valor.positivo { color: var(--green); }
+    .metrica-valor.negativo { color: var(--red); }
+
+    .metrica.destaque {
+      border-top: 1px solid var(--border);
+      margin-top: 6px;
+      padding-top: 10px;
+    }
+
+    .resultado-mcmv {
+      text-align: left;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 22px;
+    }
+
+    .resultado-mcmv.sucesso { border-left-color: var(--green); }
+    .resultado-mcmv.alerta { border-left-color: var(--yellow); }
+    .resultado-mcmv.neutro { border-left-color: var(--text-muted); }
+
+    .resultado-mcmv h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
+
+    .resultado-mcmv.sucesso h3 { color: var(--green); }
+    .resultado-mcmv.alerta h3 { color: var(--yellow); }
+    .resultado-mcmv.neutro h3 { color: var(--text); }
+
+    .resultado-mcmv p {
+      font-size: 0.9rem;
+      color: var(--text);
+      margin: 4px 0;
+    }
+
+    .score-card {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .score-titulo {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.9rem;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+
+    .score-numero {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .score-numero-max {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .score-classificacao {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 6px;
+      margin-bottom: 18px;
+    }
+
+    .score-card.baixo .score-numero,
+    .score-card.baixo .score-classificacao { color: var(--red); }
+
+    .score-card.moderado .score-numero,
+    .score-card.moderado .score-classificacao { color: var(--yellow); }
+
+    .score-card.bom .score-numero,
+    .score-card.bom .score-classificacao { color: var(--green); }
+
+    .score-itens {
+      list-style: none;
+      text-align: left;
+      max-width: 420px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      margin-top: 20px;
+      gap: 8px;
     }
 
-    .link-calculadora {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 12px 24px;
-      border: 1px solid var(--gold);
-      color: var(--gold);
-      text-decoration: none;
+    .score-itens li {
       font-size: 0.9rem;
-      font-weight: 500;
-      border-radius: 8px;
-      transition: all 0.2s;
+      color: var(--text);
     }
 
-    .link-calculadora:hover {
-      background: var(--gold);
-      color: #0A0A0A;
+    .score-aviso {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--text-muted);
     }
 
     footer {
       position: relative;
       z-index: 1;
       margin-top: 48px;
+      text-align: center;
       font-size: 0.8rem;
       color: var(--text-muted);
     }
@@ -359,52 +566,143 @@
 </head>
 <body>
   <div class="container">
-    <span class="badge">Estudo de Viabilidade</span>
-    <h1>Viabiliz<em>ion</em></h1>
-    <p class="subtitle">Estudo de viabilidade imobiliária inteligente</p>
+    <header>
+      <span class="badge">Estudo de Viabilidade</span>
+      <h1>Viabiliz<em>ion</em></h1>
+      <p class="subtitle">Estudo de viabilidade imobiliária inteligente</p>
+    </header>
 
-    <div class="search-card">
-      <form id="form-busca" class="search-form">
-        <input type="text" id="input-cidade" class="input-cidade" placeholder="Digite o nome da cidade..." autocomplete="off" />
-        <select id="input-uf" class="select-uf" required>
-          <option value="" disabled selected>UF</option>
-          <option value="AC">AC</option>
-          <option value="AL">AL</option>
-          <option value="AP">AP</option>
-          <option value="AM">AM</option>
-          <option value="BA">BA</option>
-          <option value="CE">CE</option>
-          <option value="DF">DF</option>
-          <option value="ES">ES</option>
-          <option value="GO">GO</option>
-          <option value="MA">MA</option>
-          <option value="MT">MT</option>
-          <option value="MS">MS</option>
-          <option value="MG">MG</option>
-          <option value="PA">PA</option>
-          <option value="PB">PB</option>
-          <option value="PR">PR</option>
-          <option value="PE">PE</option>
-          <option value="PI">PI</option>
-          <option value="RJ">RJ</option>
-          <option value="RN">RN</option>
-          <option value="RS">RS</option>
-          <option value="RO">RO</option>
-          <option value="RR">RR</option>
-          <option value="SC">SC</option>
-          <option value="SP">SP</option>
-          <option value="SE">SE</option>
-          <option value="TO">TO</option>
-        </select>
-        <button type="submit" id="btn-buscar" class="btn-buscar">Buscar</button>
+    <div class="card">
+      <form id="form-principal">
+        <label class="full">
+          Cidade
+          <div class="linha-cidade">
+            <input type="text" id="input-cidade" placeholder="Nome da cidade" autocomplete="off" required />
+            <select id="input-uf" required>
+              <option value="" disabled selected>UF</option>
+              <option value="AC">AC</option>
+              <option value="AL">AL</option>
+              <option value="AP">AP</option>
+              <option value="AM">AM</option>
+              <option value="BA">BA</option>
+              <option value="CE">CE</option>
+              <option value="DF">DF</option>
+              <option value="ES">ES</option>
+              <option value="GO">GO</option>
+              <option value="MA">MA</option>
+              <option value="MT">MT</option>
+              <option value="MS">MS</option>
+              <option value="MG">MG</option>
+              <option value="PA">PA</option>
+              <option value="PB">PB</option>
+              <option value="PR">PR</option>
+              <option value="PE">PE</option>
+              <option value="PI">PI</option>
+              <option value="RJ">RJ</option>
+              <option value="RN">RN</option>
+              <option value="RS">RS</option>
+              <option value="RO">RO</option>
+              <option value="RR">RR</option>
+              <option value="SC">SC</option>
+              <option value="SP">SP</option>
+              <option value="SE">SE</option>
+              <option value="TO">TO</option>
+            </select>
+          </div>
+        </label>
+
+        <label>Área do terreno (m²)
+          <input type="text" inputmode="decimal" id="area-terreno" placeholder="0" required />
+        </label>
+
+        <label>Valor do terreno (R$)
+          <input type="text" inputmode="decimal" id="valor-terreno" placeholder="0" required />
+        </label>
+
+        <label class="full">Tipologia
+          <select id="tipologia" required>
+            <option value="" disabled selected>Selecione</option>
+            <option value="Casa">Casa</option>
+            <option value="Sobrado">Sobrado</option>
+            <option value="Apartamento">Apartamento</option>
+            <option value="Multifamiliar">Multifamiliar</option>
+          </select>
+        </label>
+
+        <button type="button" id="btn-opcoes-avancadas" class="btn-opcoes-avancadas">Opções avançadas &#9662;</button>
+
+        <div id="opcoes-avancadas" class="opcoes-avancadas">
+          <label class="full">
+            Bairro (opcional)
+            <input type="text" id="input-bairro" placeholder="Nome do bairro" autocomplete="off" />
+            <span class="ajuda">Preencha se quiser considerar dados de demanda do bairro, se disponíveis.</span>
+          </label>
+
+          <label>Número de unidades
+            <input type="number" id="num-unidades" min="1" step="1" placeholder="Sugestão automática" />
+          </label>
+
+          <label>Área construída total (m²)
+            <input type="text" inputmode="decimal" id="area-construida" placeholder="Sugestão automática" />
+          </label>
+
+          <label>Preço de venda por unidade (R$)
+            <input type="text" inputmode="decimal" id="preco-venda" placeholder="0" />
+          </label>
+
+          <label>
+            Custo de construção / CUB (R$)
+            <input type="text" inputmode="decimal" id="cub" placeholder="Sugestão automática" />
+            <span class="ajuda" id="status-cub">Consulte o CUB atualizado no Sinduscon do seu estado.</span>
+          </label>
+
+          <label>Percentual de despesas indiretas (%)
+            <input type="number" id="despesas-percentual" min="0" step="0.1" value="25" />
+          </label>
+        </div>
+
+        <div id="aviso-preco" class="aviso-preco">Precisamos do preço de venda esperado pra calcular a viabilidade.</div>
+
+        <button type="submit" id="btn-analisar" class="btn-analisar">Analisar</button>
       </form>
-
-      <div id="resultado" class="resultado"></div>
     </div>
 
-    <div class="links-extra">
-      <a class="link-calculadora" href="/viabilizion/calculadora.html">Calculadora de Viabilidade</a>
-      <a class="link-calculadora" href="/viabilizion/mcmv.html">Verificador MCMV/Caixa</a>
+    <div id="resultados-completos" class="resultados-completos">
+      <section class="secao-resultado">
+        <h2 class="secao-titulo">Sobre a região</h2>
+        <div id="resultado-regiao" class="resultado"></div>
+      </section>
+
+      <section class="secao-resultado">
+        <h2 class="secao-titulo">Cenários de viabilidade</h2>
+        <div class="resultados-grid">
+          <div class="cenario-card pessimista">
+            <div class="cenario-nome">Pessimista</div>
+            <div class="cenario-premissa">Preço de venda -10% · CUB +10%</div>
+            <div id="cenario-pessimista"></div>
+          </div>
+          <div class="cenario-card realista">
+            <div class="cenario-nome">Realista</div>
+            <div class="cenario-premissa">Valores exatos digitados</div>
+            <div id="cenario-realista"></div>
+          </div>
+          <div class="cenario-card otimista">
+            <div class="cenario-nome">Otimista</div>
+            <div class="cenario-premissa">Preço de venda +10% · CUB -5%</div>
+            <div id="cenario-otimista"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="secao-resultado">
+        <h2 class="secao-titulo">Enquadramento MCMV/Caixa</h2>
+        <div id="resultado-mcmv" class="resultado-mcmv"></div>
+      </section>
+
+      <section class="secao-resultado">
+        <h2 class="secao-titulo">Score de oportunidade</h2>
+        <div id="score-oportunidade" class="score-card"></div>
+      </section>
     </div>
   </div>
 
@@ -412,103 +710,146 @@
 
   <script src="/viabilizion/config.js"></script>
   <script>
-    const form = document.getElementById('form-busca');
-    const input = document.getElementById('input-cidade');
+    // --- Referências de elementos ---
+
+    const formPrincipal = document.getElementById('form-principal');
+    const inputCidade = document.getElementById('input-cidade');
     const selectUf = document.getElementById('input-uf');
-    const botao = document.getElementById('btn-buscar');
-    const resultado = document.getElementById('resultado');
+    const inputAreaTerreno = document.getElementById('area-terreno');
+    const inputValorTerreno = document.getElementById('valor-terreno');
+    const selectTipologia = document.getElementById('tipologia');
 
-    function mostrarResultado(html, aviso) {
-      resultado.innerHTML = html;
-      resultado.classList.toggle('aviso', Boolean(aviso));
-      resultado.classList.add('show');
-    }
+    const btnOpcoesAvancadas = document.getElementById('btn-opcoes-avancadas');
+    const opcoesAvancadas = document.getElementById('opcoes-avancadas');
+    const inputBairro = document.getElementById('input-bairro');
+    const inputNumUnidades = document.getElementById('num-unidades');
+    const inputAreaConstruida = document.getElementById('area-construida');
+    const inputPrecoVenda = document.getElementById('preco-venda');
+    const inputCub = document.getElementById('cub');
+    const inputDespesasPercentual = document.getElementById('despesas-percentual');
+    const statusCub = document.getElementById('status-cub');
+    const avisoPreco = document.getElementById('aviso-preco');
 
-    form.addEventListener('submit', async (evento) => {
-      evento.preventDefault();
+    const btnAnalisar = document.getElementById('btn-analisar');
+    const resultadosCompletos = document.getElementById('resultados-completos');
+    const resultadoRegiao = document.getElementById('resultado-regiao');
+    const resultadoMcmv = document.getElementById('resultado-mcmv');
 
-      const cidade = input.value.trim();
-      const uf = selectUf.value;
-      if (!cidade || !uf) return;
+    const TAMANHO_MEDIO_UNIDADE = { Casa: 70, Sobrado: 90, Apartamento: 60, Multifamiliar: 55 };
+    const TIPO_IMOVEL_MCMV = { Casa: 'Casa', Sobrado: 'Casa', Apartamento: 'Apartamento', Multifamiliar: 'Apartamento' };
+    const TEXTO_AJUDA_CUB = 'Consulte o CUB atualizado no Sinduscon do seu estado.';
 
-      botao.disabled = true;
-      botao.textContent = 'Buscando...';
-      mostrarResultado('<p>Buscando...</p>', true);
+    let coeficienteAtual = null;
+    let cidadeIdAtual = null;
+    let populacaoAtual = null;
+    let ultimoContextoMcmv = null;
 
-      const headers = {
+    const tocadoManualmente = { areaConstruida: false, numUnidades: false, cub: false };
+
+    function headersSupabase() {
+      return {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       };
+    }
 
-      try {
-        const url = `${SUPABASE_URL}/rest/v1/cidades?nome=ilike.*${encodeURIComponent(cidade)}*&uf=eq.${uf}&select=id,nome,uf,coeficiente_aproveitamento,gabarito_metros&limit=1`;
-        const resposta = await fetch(url, { headers });
+    // --- Opções avançadas ---
 
-        if (!resposta.ok) {
-          throw new Error(`Erro na consulta (status ${resposta.status})`);
+    function alternarOpcoesAvancadas(forcarAberto) {
+      const abrir = forcarAberto ?? !opcoesAvancadas.classList.contains('show');
+      opcoesAvancadas.classList.toggle('show', abrir);
+      btnOpcoesAvancadas.innerHTML = abrir ? 'Opções avançadas &#9652;' : 'Opções avançadas &#9662;';
+    }
+
+    btnOpcoesAvancadas.addEventListener('click', () => alternarOpcoesAvancadas());
+
+    // --- Formatação de milhar (pt-BR) nos campos de área/valor ---
+
+    function apenasDigitos(valor) {
+      return valor.replace(/\D/g, '');
+    }
+
+    function obterValorNumerico(input) {
+      const digitos = apenasDigitos(input.value);
+      return digitos === '' ? 0 : parseInt(digitos, 10);
+    }
+
+    function definirValorFormatado(input, numero) {
+      const arredondado = Math.round(numero);
+      input.value = arredondado > 0 ? arredondado.toLocaleString('pt-BR') : '';
+    }
+
+    function configurarCampoMilhar(input, chaveTocada) {
+      input.addEventListener('input', () => {
+        if (chaveTocada) tocadoManualmente[chaveTocada] = true;
+
+        const cursorPos = input.selectionStart;
+        const digitosAntesCursor = apenasDigitos(input.value.slice(0, cursorPos)).length;
+
+        const digitos = apenasDigitos(input.value);
+        const numero = digitos === '' ? null : parseInt(digitos, 10);
+        input.value = numero === null ? '' : numero.toLocaleString('pt-BR');
+
+        let contador = 0;
+        let novaPos = input.value.length;
+        for (let i = 0; i < input.value.length; i++) {
+          if (/\d/.test(input.value[i])) contador++;
+          if (contador === digitosAntesCursor) {
+            novaPos = i + 1;
+            break;
+          }
         }
+        input.setSelectionRange(novaPos, novaPos);
+      });
+    }
 
-        const dados = await resposta.json();
+    configurarCampoMilhar(inputAreaTerreno);
+    configurarCampoMilhar(inputValorTerreno);
+    configurarCampoMilhar(inputAreaConstruida, 'areaConstruida');
+    configurarCampoMilhar(inputPrecoVenda);
+    configurarCampoMilhar(inputCub, 'cub');
 
-        if (dados.length === 0) {
-          await pesquisarCidadeAutomaticamente(cidade, uf, headers);
-        } else {
-          const cidadeEncontrada = dados[0];
-          const bairrosHtml = await buscarBairrosHtml(cidadeEncontrada.id, headers);
-          const topTipologiasHtml = await buscarTopTipologiasHtml(cidadeEncontrada.id, headers);
-
-          mostrarResultado(`
-            <h3>${cidadeEncontrada.nome} - ${cidadeEncontrada.uf}</h3>
-            <p><strong>Coeficiente de aproveitamento:</strong> ${cidadeEncontrada.coeficiente_aproveitamento ?? 'não informado'}</p>
-            <p><strong>Gabarito:</strong> ${cidadeEncontrada.gabarito_metros ?? 'não informado'} m</p>
-            ${bairrosHtml}
-            ${topTipologiasHtml}
-          `, false);
-        }
-      } catch (erro) {
-        mostrarResultado('<p>Não foi possível consultar os dados agora. Tente novamente.</p>', true);
-      } finally {
-        botao.disabled = false;
-        botao.textContent = 'Buscar';
-      }
+    inputNumUnidades.addEventListener('input', () => {
+      tocadoManualmente.numUnidades = true;
     });
 
-    async function pesquisarCidadeAutomaticamente(cidade, uf, headers) {
-      mostrarResultado('<p>Pesquisando dados públicos, aguarde...</p>', true);
+    inputPrecoVenda.addEventListener('input', () => {
+      avisoPreco.style.display = 'none';
+    });
 
-      const resposta = await fetch(`${SUPABASE_URL}/functions/v1/pesquisar-cidade`, {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: cidade, uf }),
-      });
+    // --- Sugestões automáticas (área construída / número de unidades) ---
 
-      if (!resposta.ok) {
-        throw new Error(`Erro na pesquisa automática (status ${resposta.status})`);
+    function recalcularAreaConstruida() {
+      if (tocadoManualmente.areaConstruida) return;
+      const areaTerreno = obterValorNumerico(inputAreaTerreno);
+      if (coeficienteAtual != null && areaTerreno > 0) {
+        const areaMaxima = areaTerreno * coeficienteAtual;
+        definirValorFormatado(inputAreaConstruida, areaMaxima);
+        recalcularNumUnidades();
       }
+    }
 
-      const cidadeEncontrada = await resposta.json();
+    function recalcularNumUnidades() {
+      if (tocadoManualmente.numUnidades) return;
+      const tipologia = selectTipologia.value;
+      const areaConstruida = obterValorNumerico(inputAreaConstruida);
+      const tamanhoMedio = TAMANHO_MEDIO_UNIDADE[tipologia];
 
-      const semDados =
-        cidadeEncontrada.coeficiente_aproveitamento == null &&
-        cidadeEncontrada.gabarito_metros == null &&
-        cidadeEncontrada.taxa_ocupacao == null;
+      if (tipologia && tamanhoMedio && areaConstruida > 0) {
+        const sugestao = Math.floor(areaConstruida / tamanhoMedio);
+        inputNumUnidades.value = sugestao > 0 ? sugestao : 1;
+      }
+    }
 
-      const fonteHtml = cidadeEncontrada.fonte_dado
-        ? `<p><strong>Fonte:</strong> ${cidadeEncontrada.fonte_dado}</p>`
-        : '';
+    inputAreaTerreno.addEventListener('input', recalcularAreaConstruida);
+    selectTipologia.addEventListener('change', recalcularNumUnidades);
+    inputAreaConstruida.addEventListener('input', recalcularNumUnidades);
 
-      const disclaimerHtml = semDados
-        ? '<p class="disclaimer">Dado pesquisado automaticamente, sujeito a revisão.</p>'
-        : '<p class="disclaimer">Dado pesquisado automaticamente (via IA + busca na web), sujeito a revisão.</p>';
+    // --- Sobre a região: cidade, bairros e top tipologias ---
 
-      mostrarResultado(`
-        <h3>${cidadeEncontrada.nome} - ${cidadeEncontrada.uf}</h3>
-        <p><strong>Coeficiente de aproveitamento:</strong> ${cidadeEncontrada.coeficiente_aproveitamento ?? 'não encontrado'}</p>
-        <p><strong>Gabarito:</strong> ${cidadeEncontrada.gabarito_metros != null ? cidadeEncontrada.gabarito_metros + ' m' : 'não encontrado'}</p>
-        <p><strong>Taxa de ocupação:</strong> ${cidadeEncontrada.taxa_ocupacao ?? 'não encontrado'}</p>
-        ${fonteHtml}
-        ${disclaimerHtml}
-      `, false);
+    function mostrarSecaoRegiao(html, aviso) {
+      resultadoRegiao.innerHTML = html;
+      resultadoRegiao.classList.toggle('aviso', Boolean(aviso));
     }
 
     function classeTendencia(tendencia) {
@@ -517,10 +858,10 @@
       return 'estagnado';
     }
 
-    async function buscarBairrosHtml(cidadeId, headers) {
+    async function buscarBairrosHtml(cidadeId) {
       try {
         const url = `${SUPABASE_URL}/rest/v1/bairros?cidade_id=eq.${cidadeId}&select=nome,preco_m2_medio,tendencia&order=nome.asc`;
-        const resposta = await fetch(url, { headers });
+        const resposta = await fetch(url, { headers: headersSupabase() });
 
         if (!resposta.ok) return '';
 
@@ -543,10 +884,10 @@
       }
     }
 
-    async function buscarTopTipologiasHtml(cidadeId, headers) {
+    async function buscarTopTipologiasHtml(cidadeId) {
       try {
         const urlBairros = `${SUPABASE_URL}/rest/v1/bairros?cidade_id=eq.${cidadeId}&select=id`;
-        const respostaBairros = await fetch(urlBairros, { headers });
+        const respostaBairros = await fetch(urlBairros, { headers: headersSupabase() });
         if (!respostaBairros.ok) return '';
 
         const bairros = await respostaBairros.json();
@@ -554,7 +895,7 @@
 
         const idsBairros = bairros.map((bairro) => bairro.id);
         const urlEmpreendimentos = `${SUPABASE_URL}/rest/v1/empreendimentos?bairro_id=in.(${idsBairros.join(',')})&select=tipologia,dias_no_mercado`;
-        const respostaEmpreendimentos = await fetch(urlEmpreendimentos, { headers });
+        const respostaEmpreendimentos = await fetch(urlEmpreendimentos, { headers: headersSupabase() });
         if (!respostaEmpreendimentos.ok) return '';
 
         const empreendimentos = await respostaEmpreendimentos.json();
@@ -598,6 +939,491 @@
         return '';
       }
     }
+
+    async function analisarCidade(cidade, uf) {
+      mostrarSecaoRegiao('<p>Buscando cidade...</p>', true);
+
+      try {
+        const url = `${SUPABASE_URL}/rest/v1/cidades?nome=ilike.*${encodeURIComponent(cidade)}*&uf=eq.${uf}&select=id,nome,uf,coeficiente_aproveitamento,gabarito_metros,taxa_ocupacao,populacao&limit=1`;
+        const resposta = await fetch(url, { headers: headersSupabase() });
+
+        if (!resposta.ok) {
+          throw new Error(`Erro na consulta (status ${resposta.status})`);
+        }
+
+        const dados = await resposta.json();
+
+        if (dados.length === 0) {
+          cidadeIdAtual = null;
+          coeficienteAtual = null;
+          populacaoAtual = null;
+          await pesquisarCidadeAutomaticamente(cidade, uf);
+          return;
+        }
+
+        const cidadeEncontrada = dados[0];
+        cidadeIdAtual = cidadeEncontrada.id;
+        populacaoAtual = cidadeEncontrada.populacao != null ? Number(cidadeEncontrada.populacao) : null;
+        coeficienteAtual =
+          cidadeEncontrada.coeficiente_aproveitamento != null
+            ? Number(cidadeEncontrada.coeficiente_aproveitamento)
+            : null;
+
+        recalcularAreaConstruida();
+
+        const bairrosHtml = await buscarBairrosHtml(cidadeIdAtual);
+        const topTipologiasHtml = await buscarTopTipologiasHtml(cidadeIdAtual);
+
+        mostrarSecaoRegiao(`
+          <h3>${cidadeEncontrada.nome} - ${cidadeEncontrada.uf}</h3>
+          <p><strong>Coeficiente de aproveitamento:</strong> ${cidadeEncontrada.coeficiente_aproveitamento ?? 'não informado'}</p>
+          <p><strong>Gabarito:</strong> ${cidadeEncontrada.gabarito_metros ?? 'não informado'} m</p>
+          ${bairrosHtml}
+          ${topTipologiasHtml}
+        `, false);
+      } catch (erro) {
+        cidadeIdAtual = null;
+        coeficienteAtual = null;
+        populacaoAtual = null;
+        mostrarSecaoRegiao('<p>Não foi possível consultar os dados agora. Tente novamente.</p>', true);
+      }
+    }
+
+    async function pesquisarCidadeAutomaticamente(cidade, uf) {
+      mostrarSecaoRegiao('<p>Pesquisando dados da cidade...</p>', true);
+
+      try {
+        const respostaFuncao = await fetch(`${SUPABASE_URL}/functions/v1/pesquisar-cidade`, {
+          method: 'POST',
+          headers: { ...headersSupabase(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: cidade, uf }),
+        });
+
+        if (!respostaFuncao.ok) {
+          throw new Error(`Erro na pesquisa automática (status ${respostaFuncao.status})`);
+        }
+
+        const cidadeEncontrada = await respostaFuncao.json();
+        cidadeIdAtual = cidadeEncontrada.id ?? null;
+        coeficienteAtual =
+          cidadeEncontrada.coeficiente_aproveitamento != null
+            ? Number(cidadeEncontrada.coeficiente_aproveitamento)
+            : null;
+
+        recalcularAreaConstruida();
+
+        const semDados =
+          cidadeEncontrada.coeficiente_aproveitamento == null &&
+          cidadeEncontrada.gabarito_metros == null &&
+          cidadeEncontrada.taxa_ocupacao == null;
+
+        const fonteHtml = cidadeEncontrada.fonte_dado
+          ? `<p><strong>Fonte:</strong> ${cidadeEncontrada.fonte_dado}</p>`
+          : '';
+
+        const disclaimerHtml = semDados
+          ? '<p class="disclaimer">Dado pesquisado automaticamente, sujeito a revisão.</p>'
+          : '<p class="disclaimer">Dado pesquisado automaticamente (via IA + busca na web), sujeito a revisão.</p>';
+
+        mostrarSecaoRegiao(`
+          <h3>${cidadeEncontrada.nome} - ${cidadeEncontrada.uf}</h3>
+          <p><strong>Coeficiente de aproveitamento:</strong> ${cidadeEncontrada.coeficiente_aproveitamento ?? 'não encontrado'}</p>
+          <p><strong>Gabarito:</strong> ${cidadeEncontrada.gabarito_metros != null ? cidadeEncontrada.gabarito_metros + ' m' : 'não encontrado'}</p>
+          <p><strong>Taxa de ocupação:</strong> ${cidadeEncontrada.taxa_ocupacao ?? 'não encontrado'}</p>
+          ${fonteHtml}
+          ${disclaimerHtml}
+        `, false);
+      } catch (erro) {
+        coeficienteAtual = null;
+        cidadeIdAtual = null;
+        mostrarSecaoRegiao('<p>Não foi possível pesquisar essa cidade automaticamente.</p>', true);
+      }
+    }
+
+    // --- CUB ---
+
+    async function buscarCubEstado(uf) {
+      if (!uf || tocadoManualmente.cub) return;
+
+      statusCub.textContent = 'Verificando CUB salvo...';
+
+      try {
+        const url = `${SUPABASE_URL}/rest/v1/cub_estados?uf=eq.${uf}&select=valor_m2,data_referencia,atualizado_em&order=atualizado_em.desc&limit=1`;
+        const resposta = await fetch(url, { headers: headersSupabase() });
+
+        if (!resposta.ok) {
+          throw new Error(`Erro na consulta de cub_estados (status ${resposta.status})`);
+        }
+
+        const dados = await resposta.json();
+        const registro = dados[0];
+        const trintaDiasMs = 30 * 24 * 60 * 60 * 1000;
+        const desatualizado =
+          !registro || Date.now() - new Date(registro.atualizado_em).getTime() > trintaDiasMs;
+
+        if (registro && !desatualizado && registro.valor_m2 != null) {
+          definirValorFormatado(inputCub, registro.valor_m2);
+          statusCub.textContent = `CUB de ${uf} carregado (atualizado em ${new Date(registro.atualizado_em).toLocaleDateString('pt-BR')}).`;
+          return;
+        }
+
+        statusCub.textContent = 'Buscando CUB atualizado...';
+
+        const respostaFuncao = await fetch(`${SUPABASE_URL}/functions/v1/atualizar-cub`, {
+          method: 'POST',
+          headers: { ...headersSupabase(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uf }),
+        });
+
+        if (!respostaFuncao.ok) {
+          throw new Error(`Erro na função atualizar-cub (status ${respostaFuncao.status})`);
+        }
+
+        const resultadoCub = await respostaFuncao.json();
+
+        if (resultadoCub.valor_m2 != null) {
+          definirValorFormatado(inputCub, resultadoCub.valor_m2);
+          statusCub.textContent = `CUB pesquisado automaticamente (${resultadoCub.data_referencia ?? 'data não informada'}) — sujeito a revisão.`;
+        } else {
+          statusCub.textContent = `Não foi possível encontrar o CUB automaticamente. ${TEXTO_AJUDA_CUB}`;
+        }
+      } catch (erro) {
+        statusCub.textContent = `Não foi possível buscar o CUB automaticamente. ${TEXTO_AJUDA_CUB}`;
+      }
+    }
+
+    // --- Cenários de viabilidade ---
+
+    function formatarMoeda(valor) {
+      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function formatarPercentual(valor) {
+      return `${valor.toFixed(1).replace('.', ',')}%`;
+    }
+
+    function calcularCenario(inputs, multiplicadorPreco, multiplicadorCub) {
+      const precoVendaCenario = inputs.precoVenda * multiplicadorPreco;
+      const cubCenario = inputs.cub * multiplicadorCub;
+
+      const vgv = precoVendaCenario * inputs.numUnidades;
+      const custoConstrucao = inputs.areaConstruida * cubCenario;
+      const custoTotal =
+        custoConstrucao + inputs.valorTerreno + (inputs.despesasPercentual / 100) * custoConstrucao;
+      const lucroBruto = vgv - custoTotal;
+      const margem = vgv !== 0 ? (lucroBruto / vgv) * 100 : 0;
+      const roi = custoTotal !== 0 ? (lucroBruto / custoTotal) * 100 : 0;
+      const pontoEquilibrio =
+        precoVendaCenario !== 0 ? Math.ceil(custoTotal / precoVendaCenario) : 0;
+
+      return { vgv, custoConstrucao, custoTotal, lucroBruto, margem, roi, pontoEquilibrio };
+    }
+
+    function renderizarCenario(elementId, resultado) {
+      const classeLucro = resultado.lucroBruto >= 0 ? 'positivo' : 'negativo';
+
+      document.getElementById(elementId).innerHTML = `
+        <div class="metrica">
+          <span class="metrica-label">VGV</span>
+          <span class="metrica-valor">${formatarMoeda(resultado.vgv)}</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-label">Custo de construção</span>
+          <span class="metrica-valor">${formatarMoeda(resultado.custoConstrucao)}</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-label">Custo total</span>
+          <span class="metrica-valor">${formatarMoeda(resultado.custoTotal)}</span>
+        </div>
+        <div class="metrica destaque">
+          <span class="metrica-label">Lucro bruto</span>
+          <span class="metrica-valor ${classeLucro}">${formatarMoeda(resultado.lucroBruto)}</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-label">Margem</span>
+          <span class="metrica-valor ${classeLucro}">${formatarPercentual(resultado.margem)}</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-label">ROI</span>
+          <span class="metrica-valor ${classeLucro}">${formatarPercentual(resultado.roi)}</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-label">Ponto de equilíbrio</span>
+          <span class="metrica-valor">${resultado.pontoEquilibrio} unidades</span>
+        </div>
+      `;
+    }
+
+    // --- Enquadramento MCMV/Caixa ---
+
+    async function executarCalculoMcmv(tipoImovelMcmv, areaUnidadeMedia, precoVendaUnidade, populacao) {
+      resultadoMcmv.className = 'resultado-mcmv';
+      resultadoMcmv.innerHTML = '<p>Verificando enquadramento...</p>';
+
+      try {
+        const headers = headersSupabase();
+
+        const urlFaixa =
+          `${SUPABASE_URL}/rest/v1/faixas_mcmv?teto_imovel=gte.${precoVendaUnidade}` +
+          `&populacao_cidade_min=lte.${populacao}` +
+          `&or=(populacao_cidade_max.gte.${populacao},populacao_cidade_max.is.null)` +
+          `&order=teto_imovel.asc&limit=1`;
+        const respostaFaixa = await fetch(urlFaixa, { headers });
+
+        if (!respostaFaixa.ok) {
+          throw new Error(`Erro na consulta de faixas (status ${respostaFaixa.status})`);
+        }
+
+        const faixas = await respostaFaixa.json();
+
+        if (faixas.length === 0) {
+          resultadoMcmv.className = 'resultado-mcmv neutro';
+          resultadoMcmv.innerHTML = `
+            <h3>Este imóvel está acima dos tetos do MCMV</h3>
+            <p>Financiamento possível apenas via SBPE/SFH, sem subsídio, com juros de mercado.</p>
+          `;
+          return;
+        }
+
+        const faixa = faixas[0];
+
+        const urlMetragem = `${SUPABASE_URL}/rest/v1/metragem_minima_mcmv?tipo_imovel=eq.${encodeURIComponent(tipoImovelMcmv)}&select=metragem_minima&limit=1`;
+        const respostaMetragem = await fetch(urlMetragem, { headers });
+        const metragens = respostaMetragem.ok ? await respostaMetragem.json() : [];
+        const metragemMinima = metragens.length > 0 ? Number(metragens[0].metragem_minima) : null;
+
+        if (metragemMinima != null && areaUnidadeMedia < metragemMinima) {
+          resultadoMcmv.className = 'resultado-mcmv alerta';
+          resultadoMcmv.innerHTML = `
+            <h3>⚠️ Preço se enquadra, mas a área está abaixo do mínimo exigido (${metragemMinima} m²)</h3>
+            <p>Área média por unidade: ${areaUnidadeMedia.toFixed(0)} m² &middot; Faixa: ${faixa.faixa}</p>
+          `;
+          return;
+        }
+
+        const subsidioHtml =
+          faixa.subsidio_max != null
+            ? `<p><strong>Subsídio máximo:</strong> ${formatarMoeda(faixa.subsidio_max)}</p>`
+            : '';
+
+        resultadoMcmv.className = 'resultado-mcmv sucesso';
+        resultadoMcmv.innerHTML = `
+          <h3>✅ Enquadra na ${faixa.faixa}</h3>
+          <p><strong>Teto do imóvel:</strong> ${formatarMoeda(faixa.teto_imovel)}</p>
+          <p><strong>Faixa de juros:</strong> ${faixa.taxa_juros_min ?? '-'}% a ${faixa.taxa_juros_max ?? '-'}% a.a.</p>
+          ${subsidioHtml}
+          <p class="disclaimer">Sujeito à análise de crédito da Caixa Econômica Federal — este é um enquadramento indicativo, não uma aprovação.</p>
+        `;
+      } catch (erro) {
+        resultadoMcmv.className = 'resultado-mcmv neutro';
+        resultadoMcmv.innerHTML = '<p>Não foi possível verificar o enquadramento agora. Tente novamente.</p>';
+      }
+    }
+
+    function mostrarResultadoMcmvPopulacaoFaltando() {
+      resultadoMcmv.className = 'resultado-mcmv neutro';
+      resultadoMcmv.innerHTML = `
+        <p>Precisamos da população da cidade para verificar o enquadramento no MCMV.</p>
+        <label class="full" style="margin-top: 12px;">
+          População estimada da cidade
+          <input type="number" id="input-populacao-manual" min="0" step="1" />
+          <span class="ajuda">Não encontramos a população dessa cidade. Você pode consultar no IBGE (Estimativas de População) ou preencher aproximadamente.</span>
+        </label>
+      `;
+
+      const inputManual = document.getElementById('input-populacao-manual');
+      inputManual.addEventListener('change', async () => {
+        const valor = Number(inputManual.value);
+        if (valor > 0 && ultimoContextoMcmv) {
+          populacaoAtual = valor;
+          const { tipoImovelMcmv, areaUnidadeMedia, precoVendaUnidade } = ultimoContextoMcmv;
+          await executarCalculoMcmv(tipoImovelMcmv, areaUnidadeMedia, precoVendaUnidade, populacaoAtual);
+        }
+      });
+    }
+
+    async function calcularEnquadramentoMcmv(tipologiaSelecionada, areaConstruidaTotal, numUnidadesTotal, precoVendaUnidade) {
+      const tipoImovelMcmv = TIPO_IMOVEL_MCMV[tipologiaSelecionada] ?? 'Apartamento';
+      const areaUnidadeMedia = numUnidadesTotal > 0 ? areaConstruidaTotal / numUnidadesTotal : areaConstruidaTotal;
+
+      ultimoContextoMcmv = { tipoImovelMcmv, areaUnidadeMedia, precoVendaUnidade };
+
+      if (populacaoAtual == null) {
+        mostrarResultadoMcmvPopulacaoFaltando();
+        return;
+      }
+
+      await executarCalculoMcmv(tipoImovelMcmv, areaUnidadeMedia, precoVendaUnidade, populacaoAtual);
+    }
+
+    // --- Score de oportunidade ---
+
+    async function buscarDemandaBairro() {
+      const bairroNome = inputBairro.value.trim();
+      if (!bairroNome || cidadeIdAtual == null) return null;
+
+      try {
+        const url = `${SUPABASE_URL}/rest/v1/bairros?nome=ilike.*${encodeURIComponent(bairroNome)}*&cidade_id=eq.${cidadeIdAtual}&select=velocidade_venda_dias&limit=1`;
+        const resposta = await fetch(url, { headers: headersSupabase() });
+        if (!resposta.ok) return null;
+
+        const dados = await resposta.json();
+        if (dados.length === 0 || dados[0].velocidade_venda_dias == null) return null;
+
+        return Number(dados[0].velocidade_venda_dias);
+      } catch (erro) {
+        return null;
+      }
+    }
+
+    function calcularPontosMargem(margemRealista) {
+      if (margemRealista < 0) return 0;
+      if (margemRealista >= 25) return 40;
+      return (margemRealista / 25) * 40;
+    }
+
+    function calcularPontosRisco(diferenca) {
+      if (diferenca >= 30) return 0;
+      if (diferenca <= 5) return 30;
+      return Math.min(30, Math.max(0, (30 * (30 - diferenca)) / 25));
+    }
+
+    function calcularPontosDemanda(diasNoMercado) {
+      if (diasNoMercado <= 30) return 30;
+      if (diasNoMercado >= 120) return 0;
+      return Math.min(30, Math.max(0, (30 * (120 - diasNoMercado)) / 90));
+    }
+
+    function classificarScore(score) {
+      if (score <= 40) return { rotulo: 'Requer Atenção', classe: 'baixo' };
+      if (score <= 70) return { rotulo: 'Oportunidade Moderada', classe: 'moderado' };
+      return { rotulo: 'Boa Oportunidade', classe: 'bom' };
+    }
+
+    function renderizarScoreOportunidade(realista, pessimista, diasNoMercado) {
+      const margemRealista = realista.margem;
+      const diferenca = margemRealista - pessimista.margem;
+
+      const pontosMargem = calcularPontosMargem(margemRealista);
+      const pontosRisco = calcularPontosRisco(diferenca);
+      const demandaCalculada = diasNoMercado != null;
+      const pontosDemanda = demandaCalculada ? calcularPontosDemanda(diasNoMercado) : null;
+
+      const scoreFinal = Math.round(
+        demandaCalculada
+          ? pontosMargem + pontosRisco + pontosDemanda
+          : ((pontosMargem + pontosRisco) / 70) * 100,
+      );
+
+      const { rotulo, classe } = classificarScore(scoreFinal);
+
+      const itemMargem =
+        margemRealista > 20
+          ? '✅ Margem acima de 20%'
+          : margemRealista >= 0
+            ? '⚠️ Margem baixa (abaixo de 20%)'
+            : '⚠️ Margem negativa';
+
+      const itemRisco =
+        diferenca <= 10
+          ? '✅ Baixo risco entre cenários'
+          : diferenca <= 20
+            ? '⚠️ Risco moderado entre cenários'
+            : '⚠️ Alto risco entre cenários';
+
+      const itemDemanda = demandaCalculada
+        ? diasNoMercado <= 60
+          ? '✅ Bairro com alta velocidade de venda'
+          : diasNoMercado <= 90
+            ? '⚠️ Bairro com velocidade de venda moderada'
+            : '⚠️ Bairro com baixa velocidade de venda'
+        : '⚠️ Demanda do bairro não avaliada';
+
+      const avisoHtml = !demandaCalculada
+        ? '<p class="score-aviso">Componente de demanda do bairro não avaliado — cadastre o bairro para uma nota mais completa.</p>'
+        : '';
+
+      const scoreEl = document.getElementById('score-oportunidade');
+      scoreEl.className = `score-card ${classe}`;
+      scoreEl.innerHTML = `
+        <div class="score-titulo">Score de Oportunidade</div>
+        <div class="score-numero">${scoreFinal}<span class="score-numero-max">/100</span></div>
+        <div class="score-classificacao">${rotulo}</div>
+        <ul class="score-itens">
+          <li>${itemMargem}</li>
+          <li>${itemRisco}</li>
+          <li>${itemDemanda}</li>
+        </ul>
+        ${avisoHtml}
+      `;
+    }
+
+    // --- Fluxo principal: Analisar ---
+
+    formPrincipal.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+
+      const cidade = inputCidade.value.trim();
+      const uf = selectUf.value;
+      const tipologia = selectTipologia.value;
+
+      if (!cidade || !uf || !tipologia) return;
+
+      btnAnalisar.disabled = true;
+      btnAnalisar.textContent = 'Analisando...';
+
+      try {
+        // 1 e 2: busca a cidade e sugere área construída / número de unidades
+        await analisarCidade(cidade, uf);
+
+        // 3: busca ou sugere o CUB
+        await buscarCubEstado(uf);
+
+        // 4: preço de venda é o único campo que precisa ser digitado sempre
+        const precoVenda = obterValorNumerico(inputPrecoVenda);
+        if (!precoVenda) {
+          alternarOpcoesAvancadas(true);
+          avisoPreco.style.display = 'block';
+          inputPrecoVenda.focus();
+          return;
+        }
+        avisoPreco.style.display = 'none';
+
+        const inputs = {
+          areaTerreno: obterValorNumerico(inputAreaTerreno),
+          valorTerreno: obterValorNumerico(inputValorTerreno),
+          tipologia,
+          numUnidades: Number(inputNumUnidades.value) || 1,
+          areaConstruida: obterValorNumerico(inputAreaConstruida),
+          precoVenda,
+          cub: obterValorNumerico(inputCub),
+          despesasPercentual: Number(inputDespesasPercentual.value) || 0,
+        };
+
+        // 5: cenários de viabilidade
+        const pessimista = calcularCenario(inputs, 0.9, 1.1);
+        const realista = calcularCenario(inputs, 1, 1);
+        const otimista = calcularCenario(inputs, 1.1, 0.95);
+
+        renderizarCenario('cenario-pessimista', pessimista);
+        renderizarCenario('cenario-realista', realista);
+        renderizarCenario('cenario-otimista', otimista);
+
+        resultadosCompletos.classList.add('show');
+
+        // 6: enquadramento MCMV/Caixa
+        await calcularEnquadramentoMcmv(tipologia, inputs.areaConstruida, inputs.numUnidades, inputs.precoVenda);
+
+        // 7: score de oportunidade
+        const diasNoMercado = await buscarDemandaBairro();
+        renderizarScoreOportunidade(realista, pessimista, diasNoMercado);
+
+        resultadosCompletos.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } finally {
+        btnAnalisar.disabled = false;
+        btnAnalisar.textContent = 'Analisar';
+      }
+    });
   </script>
 </body>
 </html>
