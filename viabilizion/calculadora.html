@@ -520,8 +520,7 @@
         const dados = await resposta.json();
 
         if (dados.length === 0) {
-          coeficienteAtual = null;
-          statusCidadeCalc.textContent = 'Cidade ainda não cadastrada — preencha os campos manualmente.';
+          await pesquisarCidadeAutomaticamenteCalc(cidade, uf);
         } else {
           const cidadeEncontrada = dados[0];
 
@@ -531,7 +530,8 @@
             recalcularAreaConstruida();
           } else {
             coeficienteAtual = null;
-            statusCidadeCalc.textContent = 'Cidade encontrada, mas sem coeficiente de aproveitamento cadastrado.';
+            statusCidadeCalc.textContent =
+              'Cidade encontrada, mas sem coeficiente de aproveitamento cadastrado — preencha a área construída manualmente.';
           }
         }
       } catch (erro) {
@@ -539,6 +539,38 @@
       }
 
       buscarCubEstado(uf);
+    }
+
+    async function pesquisarCidadeAutomaticamenteCalc(cidade, uf) {
+      statusCidadeCalc.textContent = 'Pesquisando dados da cidade...';
+
+      try {
+        const respostaFuncao = await fetch(`${SUPABASE_URL}/functions/v1/pesquisar-cidade`, {
+          method: 'POST',
+          headers: { ...headersSupabase(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: cidade, uf }),
+        });
+
+        if (!respostaFuncao.ok) {
+          throw new Error(`Erro na pesquisa automática (status ${respostaFuncao.status})`);
+        }
+
+        const cidadeEncontrada = await respostaFuncao.json();
+
+        if (cidadeEncontrada.coeficiente_aproveitamento != null) {
+          coeficienteAtual = Number(cidadeEncontrada.coeficiente_aproveitamento);
+          statusCidadeCalc.textContent = `Cidade pesquisada automaticamente — coeficiente de aproveitamento: ${coeficienteAtual}.`;
+          recalcularAreaConstruida();
+        } else {
+          coeficienteAtual = null;
+          statusCidadeCalc.textContent =
+            'Não encontramos o coeficiente de aproveitamento dessa cidade — preencha a área construída manualmente.';
+        }
+      } catch (erro) {
+        coeficienteAtual = null;
+        statusCidadeCalc.textContent =
+          'Não foi possível pesquisar essa cidade automaticamente — preencha a área construída manualmente.';
+      }
     }
 
     async function buscarCubEstado(uf) {
