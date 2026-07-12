@@ -9,7 +9,8 @@ create table if not exists cidades (
   gabarito_metros numeric(6,2),
   taxa_ocupacao numeric(5,2),
   fonte_dado text,
-  atualizado_em timestamptz not null default now()
+  atualizado_em timestamptz not null default now(),
+  unique (nome, uf)
 );
 
 create table if not exists faixas_mcmv (
@@ -56,3 +57,15 @@ create table if not exists empreendimentos (
   fonte_dado text,
   atualizado_em timestamptz not null default now()
 );
+
+-- Garante a constraint unique(nome, uf) em bancos onde a tabela cidades já
+-- existia antes dessa restrição ser adicionada (necessária para o upsert da
+-- Edge Function pesquisar-cidade).
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'cidades_nome_uf_key'
+  ) then
+    alter table cidades add constraint cidades_nome_uf_key unique (nome, uf);
+  end if;
+end $$;
