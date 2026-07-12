@@ -265,6 +265,52 @@
     .tendencia.em-queda { color: #d16565; }
     .tendencia.estagnado { color: var(--text-muted); }
 
+    .top-tipologias {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .top-tipologias h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      color: var(--gold);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .tipologia-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(201,168,76,0.12);
+    }
+
+    .tipologia-item:last-child {
+      border-bottom: none;
+    }
+
+    .tipologia-medalha {
+      flex: 0 0 auto;
+      font-size: 1.05rem;
+      width: 24px;
+    }
+
+    .tipologia-nome {
+      flex: 1;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .tipologia-info {
+      color: var(--text-muted);
+      text-align: right;
+      white-space: nowrap;
+      font-size: 0.78rem;
+    }
+
     .disclaimer {
       margin-top: 12px;
       padding-top: 12px;
@@ -399,12 +445,14 @@
         } else {
           const cidadeEncontrada = dados[0];
           const bairrosHtml = await buscarBairrosHtml(cidadeEncontrada.id, headers);
+          const topTipologiasHtml = await buscarTopTipologiasHtml(cidadeEncontrada.id, headers);
 
           mostrarResultado(`
             <h3>${cidadeEncontrada.nome} - ${cidadeEncontrada.uf}</h3>
             <p><strong>Coeficiente de aproveitamento:</strong> ${cidadeEncontrada.coeficiente_aproveitamento ?? 'não informado'}</p>
             <p><strong>Gabarito:</strong> ${cidadeEncontrada.gabarito_metros ?? 'não informado'} m</p>
             ${bairrosHtml}
+            ${topTipologiasHtml}
           `, false);
         }
       } catch (erro) {
@@ -480,6 +528,62 @@
         `).join('');
 
         return `<div class="bairros-lista"><h4>Bairros cadastrados</h4>${itens}</div>`;
+      } catch (erro) {
+        return '';
+      }
+    }
+
+    async function buscarTopTipologiasHtml(cidadeId, headers) {
+      try {
+        const urlBairros = `${SUPABASE_URL}/rest/v1/bairros?cidade_id=eq.${cidadeId}&select=id`;
+        const respostaBairros = await fetch(urlBairros, { headers });
+        if (!respostaBairros.ok) return '';
+
+        const bairros = await respostaBairros.json();
+        if (bairros.length === 0) return '';
+
+        const idsBairros = bairros.map((bairro) => bairro.id);
+        const urlEmpreendimentos = `${SUPABASE_URL}/rest/v1/empreendimentos?bairro_id=in.(${idsBairros.join(',')})&select=tipologia,dias_no_mercado`;
+        const respostaEmpreendimentos = await fetch(urlEmpreendimentos, { headers });
+        if (!respostaEmpreendimentos.ok) return '';
+
+        const empreendimentos = await respostaEmpreendimentos.json();
+        const validos = empreendimentos.filter(
+          (empreendimento) => empreendimento.tipologia && empreendimento.dias_no_mercado != null,
+        );
+        if (validos.length === 0) return '';
+
+        const grupos = {};
+        validos.forEach((empreendimento) => {
+          const tipologia = empreendimento.tipologia;
+          if (!grupos[tipologia]) {
+            grupos[tipologia] = { soma: 0, contagem: 0 };
+          }
+          grupos[tipologia].soma += Number(empreendimento.dias_no_mercado);
+          grupos[tipologia].contagem += 1;
+        });
+
+        const ranking = Object.entries(grupos)
+          .map(([tipologia, dados]) => ({
+            tipologia,
+            mediaDias: dados.soma / dados.contagem,
+            contagem: dados.contagem,
+          }))
+          .sort((a, b) => a.mediaDias - b.mediaDias)
+          .slice(0, 3);
+
+        if (ranking.length === 0) return '';
+
+        const medalhas = ['🥇', '🥈', '🥉'];
+        const itens = ranking.map((item, indice) => `
+          <div class="tipologia-item">
+            <span class="tipologia-medalha">${medalhas[indice] ?? `${indice + 1}º`}</span>
+            <span class="tipologia-nome">${item.tipologia}</span>
+            <span class="tipologia-info">${item.mediaDias.toFixed(0)} dias no mercado &middot; ${item.contagem} empreendimento${item.contagem > 1 ? 's' : ''}</span>
+          </div>
+        `).join('');
+
+        return `<div class="top-tipologias"><h4>Top ${ranking.length} Tipologia${ranking.length > 1 ? 's' : ''} Mais Vendida${ranking.length > 1 ? 's' : ''}</h4>${itens}</div>`;
       } catch (erro) {
         return '';
       }
