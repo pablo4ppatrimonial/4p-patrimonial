@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Viabilizion — Estudo de Viabilidade Imobiliária</title>
+  <meta name="description" content="Viabilizion: estudo de viabilidade imobiliária inteligente para o mercado brasileiro." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #e0c06a;
+      --gold-dark: #a8832a;
+      --bg: #0A0A0A;
+      --bg-card: #111111;
+      --bg-card2: #181818;
+      --text: #F0EDE8;
+      --text-muted: #888880;
+      --border: rgba(201,168,76,0.25);
+      --radius: 12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(201,168,76,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 520px;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      background: rgba(201,168,76,0.06);
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.2rem, 6vw, 3.4rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--gold);
+    }
+
+    .subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
+      color: var(--text-muted);
+      max-width: 420px;
+      margin: 0 auto 40px;
+    }
+
+    .search-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .search-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    @media (min-width: 520px) {
+      .search-form {
+        flex-direction: row;
+      }
+    }
+
+    .input-cidade {
+      flex: 1;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-cidade::placeholder {
+      color: var(--text-muted);
+    }
+
+    .input-cidade:focus {
+      border-color: var(--gold);
+    }
+
+    .btn-buscar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: var(--gold);
+      border: 1px solid var(--gold);
+      color: #0A0A0A;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .btn-buscar:hover {
+      background: var(--gold-light);
+      border-color: var(--gold-light);
+    }
+
+    .btn-buscar:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .resultado {
+      display: none;
+      text-align: left;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+
+    .resultado.show {
+      display: block;
+    }
+
+    .resultado h3 {
+      font-family: 'Playfair Display', serif;
+      color: var(--gold);
+      font-size: 1.15rem;
+      margin-bottom: 10px;
+    }
+
+    .resultado p {
+      font-size: 0.9rem;
+      color: var(--text);
+      margin: 4px 0;
+    }
+
+    .resultado.aviso p {
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      margin-top: 48px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <span class="badge">Estudo de Viabilidade</span>
+    <h1>Viabiliz<em>ion</em></h1>
+    <p class="subtitle">Estudo de viabilidade imobiliária inteligente</p>
+
+    <div class="search-card">
+      <form id="form-busca" class="search-form">
+        <input type="text" id="input-cidade" class="input-cidade" placeholder="Digite o nome da cidade..." autocomplete="off" />
+        <button type="submit" id="btn-buscar" class="btn-buscar">Buscar</button>
+      </form>
+
+      <div id="resultado" class="resultado"></div>
+    </div>
+  </div>
+
+  <footer>Viabilizion &mdash; dados para decisões imobiliárias mais seguras</footer>
+
+  <script src="config.js"></script>
+  <script>
+    const form = document.getElementById('form-busca');
+    const input = document.getElementById('input-cidade');
+    const botao = document.getElementById('btn-buscar');
+    const resultado = document.getElementById('resultado');
+
+    function mostrarResultado(html, aviso) {
+      resultado.innerHTML = html;
+      resultado.classList.toggle('aviso', Boolean(aviso));
+      resultado.classList.add('show');
+    }
+
+    form.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+
+      const cidade = input.value.trim();
+      if (!cidade) return;
+
+      botao.disabled = true;
+      botao.textContent = 'Buscando...';
+      mostrarResultado('<p>Buscando...</p>', true);
+
+      try {
+        const url = `${SUPABASE_URL}/rest/v1/cidades?nome=ilike.*${encodeURIComponent(cidade)}*&select=nome,coeficiente_aproveitamento,gabarito_metros&limit=1`;
+        const resposta = await fetch(url, {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+        });
+
+        if (!resposta.ok) {
+          throw new Error(`Erro na consulta (status ${resposta.status})`);
+        }
+
+        const dados = await resposta.json();
+
+        if (dados.length === 0) {
+          mostrarResultado('<p>Cidade ainda não cadastrada.</p>', true);
+        } else {
+          const cidadeEncontrada = dados[0];
+          mostrarResultado(`
+            <h3>${cidadeEncontrada.nome}</h3>
+            <p><strong>Coeficiente de aproveitamento:</strong> ${cidadeEncontrada.coeficiente_aproveitamento ?? 'não informado'}</p>
+            <p><strong>Gabarito:</strong> ${cidadeEncontrada.gabarito_metros ?? 'não informado'} m</p>
+          `, false);
+        }
+      } catch (erro) {
+        mostrarResultado('<p>Não foi possível consultar os dados agora. Tente novamente.</p>', true);
+      } finally {
+        botao.disabled = false;
+        botao.textContent = 'Buscar';
+      }
+    });
+  </script>
+</body>
+</html>
