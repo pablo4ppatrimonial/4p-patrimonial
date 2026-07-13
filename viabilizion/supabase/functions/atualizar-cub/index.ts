@@ -25,12 +25,16 @@ const CORS_HEADERS = {
 function montarPrompt(uf: string): string {
   return `Pesquise o valor mais recente do CUB (Custo Unitário Básico) residencial padrão (padrão médio, R-1 ou equivalente) divulgado pelo Sinduscon do estado de ${uf}, Brasil.
 
+Estratégia de busca:
+1. Primeiro tente encontrar a tabela oficial publicada pelo Sinduscon do estado (site do Sinduscon estadual, ou notícias recentes citando o valor).
+2. Se não encontrar rápido por aí, faça também buscas mais genéricas, do tipo "CUB residencial ${uf} valor atual" ou "CUB m2 padrão médio ${uf} mês ano".
+
 Responda APENAS em JSON válido, sem nenhum texto antes ou depois, exatamente neste formato:
 {"valor_m2": number ou null, "data_referencia": "string tipo mês/ano", "fonte": "string com o nome/site da fonte encontrada", "confianca": "alta" ou "media" ou "baixa"}
 
 Se não encontrar um dado confiável, retorne null em "valor_m2" e "confianca": "baixa".
 
-Seja econômico: faça no máximo 2 ou 3 buscas. Se depois disso não tiver encontrado uma fonte confiável, pare de pesquisar e responda imediatamente com "valor_m2" null e "confianca": "baixa" — não continue insistindo indefinidamente.`;
+Você tem até 4 ou 5 buscas disponíveis — use-as para tentar abordagens diferentes (site oficial do Sinduscon, depois busca genérica) antes de desistir. Só pare e responda com "valor_m2" null e "confianca": "baixa" depois de esgotar essas tentativas sem achar nenhuma fonte confiável.`;
 }
 
 function extrairJson(texto: string): string {

@@ -22,14 +22,23 @@ const CORS_HEADERS = {
 };
 
 function montarPrompt(nome: string, uf: string): string {
-  return `Pesquise o coeficiente de aproveitamento, o gabarito (altura máxima em metros) e a taxa de ocupação definidos no plano diretor / código de obras vigente da cidade de ${nome}, ${uf}, Brasil.
+  return `Pesquise o coeficiente de aproveitamento, o gabarito (altura máxima em metros) e a taxa de ocupação definidos no plano diretor / lei de zoneamento / uso e ocupação do solo vigente da cidade de ${nome}, ${uf}, Brasil.
+
+Estratégia de busca:
+1. Primeiro tente encontrar o nome oficial da lei do plano diretor ou da lei de zoneamento/uso e ocupação do solo dessa cidade.
+2. Se não encontrar rápido por aí, faça também buscas mais genéricas, do tipo "coeficiente de aproveitamento residencial ${nome} ${uf}" ou "gabarito máximo ${nome} ${uf} plano diretor".
+
+Importante sobre zoneamento variável por zona:
+- Muitas cidades têm coeficiente de aproveitamento, gabarito e taxa de ocupação diferentes por zona (residencial, comercial, centro, eixos de adensamento, etc.).
+- Quando isso acontecer, NÃO retorne null só porque o valor varia por zona. Em vez disso, retorne o valor mais comum/típico para USO RESIDENCIAL, que é o que importa para o nosso caso de uso (estudo de viabilidade de empreendimentos residenciais).
+- Nesse caso, marque "confianca" como "media" e inclua no campo "fonte" uma nota do tipo "Valor residencial padrão — cidade tem zoneamento variável por zona" (além do nome da lei/site, se souber).
 
 Responda APENAS em JSON válido, sem nenhum texto antes ou depois, exatamente neste formato:
 {"coeficiente_aproveitamento": number ou null, "gabarito_metros": number ou null, "taxa_ocupacao": number ou null, "fonte": "string com o nome/site da fonte encontrada", "confianca": "alta" ou "media" ou "baixa"}
 
-Se não encontrar um dado confiável para algum campo, retorne null nesse campo. Se não encontrar nenhum dado confiável, retorne null nos três campos numéricos e "confianca": "baixa".
+Só retorne null nos três campos numéricos e "confianca": "baixa" quando você realmente não encontrar NENHUMA lei, plano diretor ou documento oficial de zoneamento dessa cidade — não quando encontrar o documento mas os valores variarem por zona (nesse caso, use a regra do valor residencial padrão acima).
 
-Seja econômico: faça no máximo 2 ou 3 buscas. Se depois disso não tiver encontrado uma fonte confiável, pare de pesquisar e responda imediatamente com os campos numéricos null e "confianca": "baixa" — não continue insistindo indefinidamente.`;
+Você tem até 4 ou 5 buscas disponíveis — use-as para tentar abordagens diferentes (nome oficial da lei, depois busca genérica) antes de desistir. Só pare e responda com os campos numéricos null e "confianca": "baixa" depois de esgotar essas tentativas sem achar nenhum documento oficial.`;
 }
 
 function extrairJson(texto: string): string {
