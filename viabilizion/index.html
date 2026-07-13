@@ -393,6 +393,23 @@
       }
     }
 
+    .grafico-container {
+      position: relative;
+      height: 300px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 16px;
+    }
+
+    .grafico-score-container {
+      position: relative;
+      height: 200px;
+      margin-top: 8px;
+      padding: 0 10px;
+    }
+
     .cenario-card {
       background: var(--bg-card2);
       border: 1px solid var(--border);
@@ -692,6 +709,10 @@
             <div id="cenario-otimista"></div>
           </div>
         </div>
+
+        <div class="grafico-container">
+          <canvas id="grafico-cenarios"></canvas>
+        </div>
       </section>
 
       <section class="secao-resultado">
@@ -702,12 +723,17 @@
       <section class="secao-resultado">
         <h2 class="secao-titulo">Score de oportunidade</h2>
         <div id="score-oportunidade" class="score-card"></div>
+
+        <div class="grafico-score-container">
+          <canvas id="grafico-score"></canvas>
+        </div>
       </section>
     </div>
   </div>
 
   <footer>Viabilizion &mdash; dados para decisões imobiliárias mais seguras</footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/viabilizion/config.js"></script>
   <script>
     // --- Referências de elementos ---
@@ -1154,6 +1180,102 @@
       `;
     }
 
+    // --- Gráfico: VGV e Lucro Bruto por cenário ---
+
+    Chart.defaults.color = '#888880';
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+    Chart.defaults.borderColor = 'rgba(201,168,76,0.12)';
+
+    let graficoCenarios = null;
+
+    function formatarMoedaCompacta(valor) {
+      const absoluto = Math.abs(valor);
+      if (absoluto >= 1000000) return `R$ ${(valor / 1000000).toFixed(1).replace('.', ',')} mi`;
+      if (absoluto >= 1000) return `R$ ${(valor / 1000).toFixed(0)} mil`;
+      return formatarMoeda(valor);
+    }
+
+    function renderizarGraficoCenarios(pessimista, realista, otimista) {
+      const ctx = document.getElementById('grafico-cenarios').getContext('2d');
+
+      if (graficoCenarios) {
+        graficoCenarios.destroy();
+      }
+
+      graficoCenarios = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['VGV', 'Lucro Bruto'],
+          datasets: [
+            {
+              label: 'Pessimista',
+              data: [pessimista.vgv, pessimista.lucroBruto],
+              backgroundColor: '#d16565',
+              borderRadius: 4,
+              maxBarThickness: 48,
+            },
+            {
+              label: 'Realista',
+              data: [realista.vgv, realista.lucroBruto],
+              backgroundColor: '#C9A84C',
+              borderRadius: 4,
+              maxBarThickness: 48,
+            },
+            {
+              label: 'Otimista',
+              data: [otimista.vgv, otimista.lucroBruto],
+              backgroundColor: '#6fbf8c',
+              borderRadius: 4,
+              maxBarThickness: 48,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#F0EDE8',
+                boxWidth: 12,
+                boxHeight: 12,
+                padding: 16,
+                font: { size: 12 },
+              },
+            },
+            tooltip: {
+              backgroundColor: '#181818',
+              borderColor: 'rgba(201,168,76,0.3)',
+              borderWidth: 1,
+              titleColor: '#C9A84C',
+              bodyColor: '#F0EDE8',
+              padding: 10,
+              callbacks: {
+                label: (contexto) => `${contexto.dataset.label}: ${formatarMoeda(contexto.parsed.y)}`,
+              },
+            },
+          },
+          scales: {
+            x: {
+              ticks: { color: '#F0EDE8', font: { size: 13, weight: '500' } },
+              grid: { display: false },
+              border: { color: 'rgba(201,168,76,0.2)' },
+            },
+            y: {
+              ticks: {
+                color: '#888880',
+                font: { size: 11 },
+                callback: (valor) => formatarMoedaCompacta(valor),
+              },
+              grid: { color: 'rgba(201,168,76,0.08)' },
+              border: { display: false },
+            },
+          },
+        },
+      });
+    }
+
     // --- Enquadramento MCMV/Caixa ---
 
     async function executarCalculoMcmv(tipoImovelMcmv, areaUnidadeMedia, precoVendaUnidade, populacao) {
@@ -1300,6 +1422,114 @@
       return { rotulo: 'Boa Oportunidade', classe: 'bom' };
     }
 
+    // --- Medidor (gauge) do Score de Oportunidade ---
+
+    let graficoScore = null;
+
+    const gaugeAgulhaPlugin = {
+      id: 'gaugeAgulha',
+      afterDraw(chart, args, opts) {
+        if (opts.valor == null) return;
+
+        const { ctx } = chart;
+        const arco = chart.getDatasetMeta(0).data[0];
+        if (!arco) return;
+
+        const centroX = arco.x;
+        const centroY = arco.y;
+        const raio = arco.outerRadius * 0.85;
+
+        const fracao = Math.min(1, Math.max(0, opts.valor / 100));
+        const angulo = Math.PI * (1 - fracao);
+
+        const pontaX = centroX + raio * Math.cos(angulo);
+        const pontaY = centroY - raio * Math.sin(angulo);
+
+        ctx.save();
+        ctx.strokeStyle = '#F0EDE8';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(centroX, centroY);
+        ctx.lineTo(pontaX, pontaY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#F0EDE8';
+        ctx.beginPath();
+        ctx.arc(centroX, centroY, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      },
+    };
+
+    const gaugeTextoPlugin = {
+      id: 'gaugeTexto',
+      afterDraw(chart, args, opts) {
+        if (opts.valor == null) return;
+
+        const { ctx } = chart;
+        const arco = chart.getDatasetMeta(0).data[0];
+        if (!arco) return;
+
+        const centroX = arco.x;
+        const centroY = arco.y;
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = opts.cor ?? '#C9A84C';
+        ctx.font = "700 30px 'Playfair Display', serif";
+        ctx.fillText(String(Math.round(opts.valor)), centroX, centroY - 4);
+
+        ctx.fillStyle = '#888880';
+        ctx.font = "500 11px 'DM Sans', sans-serif";
+        ctx.fillText('/ 100', centroX, centroY + 16);
+        ctx.restore();
+      },
+    };
+
+    function renderizarGraficoScore(scoreFinal, classe) {
+      const ctx = document.getElementById('grafico-score').getContext('2d');
+      const cores = { baixo: '#d16565', moderado: '#d4b34a', bom: '#6fbf8c' };
+
+      if (graficoScore) {
+        graficoScore.destroy();
+      }
+
+      graficoScore = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Requer Atenção (0-40)', 'Oportunidade Moderada (41-70)', 'Boa Oportunidade (71-100)'],
+          datasets: [
+            {
+              data: [40, 30, 30],
+              backgroundColor: ['#d16565', '#d4b34a', '#6fbf8c'],
+              borderColor: '#181818',
+              borderWidth: 2,
+              circumference: 180,
+              rotation: -90,
+              cutout: '72%',
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 10, bottom: 0 } },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#888880', boxWidth: 10, boxHeight: 10, font: { size: 10.5 }, padding: 12 },
+            },
+            tooltip: { enabled: false },
+            gaugeAgulha: { valor: scoreFinal },
+            gaugeTexto: { valor: scoreFinal, cor: cores[classe] ?? '#C9A84C' },
+          },
+        },
+        plugins: [gaugeAgulhaPlugin, gaugeTextoPlugin],
+      });
+    }
+
     function renderizarScoreOportunidade(realista, pessimista, diasNoMercado) {
       const margemRealista = realista.margem;
       const diferenca = margemRealista - pessimista.margem;
@@ -1356,6 +1586,8 @@
         </ul>
         ${avisoHtml}
       `;
+
+      renderizarGraficoScore(scoreFinal, classe);
     }
 
     // --- Fluxo principal: Analisar ---
@@ -1409,7 +1641,10 @@
         renderizarCenario('cenario-realista', realista);
         renderizarCenario('cenario-otimista', otimista);
 
+        // O canvas precisa estar visível (dimensões reais) antes de o Chart.js
+        // desenhar, então a seção é exibida antes de criar os gráficos.
         resultadosCompletos.classList.add('show');
+        renderizarGraficoCenarios(pessimista, realista, otimista);
 
         // 6: enquadramento MCMV/Caixa
         await calcularEnquadramentoMcmv(tipologia, inputs.areaConstruida, inputs.numUnidades, inputs.precoVenda);
