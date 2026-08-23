@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>[ ALERTAS DE LEILÃO ] — 4P Mentoria</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e0f;--bg2:#0d1412;--panel:#0e1513;--panel2:#101a17;
+  --border:#173028;--border2:#1f4536;
+  --green:#00ff41;--green-dim:#0a8f2c;--green-glow:rgba(0,255,65,.35);
+  --amber:#ffb020;--amber-dim:#8a5c10;
+  --red:#ff3b30;--yellow:#ffd60a;--blue:#3fa9f5;--grey:#5a6a63;
+  --text:#c8f5d4;--text2:#6b9a7c;--text3:#3f584a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;font-size:13px;line-height:1.5;position:relative;overflow-x:hidden}
+
+/* ── scanlines + vignette (sutil, não atrapalha leitura) ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,255,65,.035) 0px,rgba(0,255,65,.035) 1px,transparent 1px,transparent 3px);
+  mix-blend-mode:overlay;
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:9997;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55) 100%);
+}
+@keyframes flicker{0%,96%,100%{opacity:1}97%{opacity:.94}98%{opacity:1}99%{opacity:.97}}
+.scan-target{animation:flicker 7s infinite}
+
+a{color:inherit}
+::selection{background:var(--green);color:#000}
+
+/* ── loading ── */
+#loading{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#loading .l1{color:var(--green);font-size:13px;letter-spacing:3px}
+#loading .l2{color:var(--text3);font-size:11px}
+.blink{animation:blinkop 1s step-start infinite}
+@keyframes blinkop{50%{opacity:0}}
+
+/* ── topbar ── */
+.topbar{border-bottom:1px solid var(--border);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:linear-gradient(180deg,rgba(0,255,65,.04),transparent)}
+.topbar-brand{display:flex;align-items:center;gap:10px}
+.topbar-brand .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blinkop 1.4s ease-in-out infinite}
+.topbar-title{font-weight:700;letter-spacing:2px;color:var(--green);text-shadow:0 0 8px var(--green-glow)}
+.topbar-sub{color:var(--text3);font-size:10px;letter-spacing:1.5px;margin-left:8px}
+.topbar-actions{display:flex;align-items:center;gap:10px;font-size:11px}
+.tbtn{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:7px 12px;border-radius:2px;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:1px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.tbtn:hover{border-color:var(--green);color:var(--green);box-shadow:0 0 10px rgba(0,255,65,.15)}
+
+.wrap{max-width:1180px;margin:0 auto;padding:22px 22px 60px}
+
+/* ── bloco tipo "classificado" ── */
+.crt-frame{position:relative;border:1px solid var(--border2);background:var(--panel);padding:18px 20px;margin-bottom:22px}
+.crt-frame::before,.crt-frame::after{content:'';position:absolute;width:14px;height:14px;border-color:var(--green-dim);opacity:.8}
+.crt-frame::before{top:-1px;left:-1px;border-top:2px solid;border-left:2px solid}
+.crt-frame::after{bottom:-1px;right:-1px;border-bottom:2px solid;border-right:2px solid}
+.crt-frame .cnr2::before,.crt-frame .cnr2::after{content:''}
+
+.eyebrow{color:var(--amber);font-size:10.5px;letter-spacing:3px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.eyebrow .brk{color:var(--amber-dim)}
+h1.section-title{color:var(--green);font-size:15px;letter-spacing:1.5px;font-weight:700;margin-bottom:4px;text-shadow:0 0 6px rgba(0,255,65,.25)}
+.section-hint{color:var(--text3);font-size:10.5px;letter-spacing:.5px;margin-bottom:16px}
+
+/* ── PARTE A: form ── */
+.grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 18px;margin-bottom:16px}
+.field label{display:block;color:var(--text2);font-size:10px;letter-spacing:1.5px;margin-bottom:6px;text-transform:uppercase}
+.field label .req{color:var(--amber)}
+.field input[type=text],.field input[type=number]{
+  width:100%;background:#040705;border:1px solid var(--border2);color:var(--green);
+  padding:9px 10px;font-family:inherit;font-size:12.5px;border-radius:2px;outline:none;transition:all .15s;
+}
+.field input::placeholder{color:var(--text3)}
+.field input:focus{border-color:var(--green);box-shadow:0 0 0 1px var(--green-glow),0 0 12px rgba(0,255,65,.15)}
+.chk-row{display:flex;flex-wrap:wrap;gap:8px}
+.chk{display:flex;align-items:center;gap:6px;border:1px solid var(--border2);padding:7px 10px;border-radius:2px;cursor:pointer;font-size:11.5px;color:var(--text2);transition:all .15s;user-select:none}
+.chk:hover{border-color:var(--green-dim);color:var(--text)}
+.chk input{accent-color:var(--green);width:13px;height:13px}
+.chk.on{border-color:var(--green);color:var(--green);background:rgba(0,255,65,.06);box-shadow:0 0 8px rgba(0,255,65,.12)}
+
+.form-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:6px}
+.btn-term{
+  background:transparent;border:1px solid var(--green-dim);color:var(--green);
+  padding:11px 20px;font-family:inherit;font-weight:700;font-size:11.5px;letter-spacing:2px;
+  cursor:pointer;border-radius:2px;transition:all .15s;
+}
+.btn-term:hover{background:rgba(0,255,65,.08);border-color:var(--green);box-shadow:0 0 16px rgba(0,255,65,.25)}
+.btn-term:disabled{opacity:.4;cursor:not-allowed}
+#pref-status{font-size:10.5px;color:var(--text3);letter-spacing:.5px}
+#pref-status.ok{color:var(--green)}
+#pref-status.err{color:var(--red)}
+
+/* ── PARTE B: feed ── */
+.feed-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:18px}
+.counter{display:flex;align-items:baseline;gap:10px}
+.counter .n{font-size:30px;font-weight:800;color:var(--green);text-shadow:0 0 14px var(--green-glow);letter-spacing:1px}
+.counter .lbl{font-size:10.5px;color:var(--text2);letter-spacing:2.5px}
+.quick-filters{display:flex;gap:8px;flex-wrap:wrap}
+.qf{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:8px 14px;font-family:inherit;font-size:10.5px;letter-spacing:1.5px;cursor:pointer;border-radius:2px;transition:all .15s}
+.qf:hover{border-color:var(--text2);color:var(--text)}
+.qf.active{border-color:var(--green);color:var(--green);background:rgba(0,255,65,.07);box-shadow:0 0 10px rgba(0,255,65,.15)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.card{
+  position:relative;background:var(--panel);border:1px solid var(--border);border-radius:2px;
+  overflow:hidden;transition:border-color .2s,box-shadow .2s,transform .2s;cursor:default;
+}
+.card:hover{border-color:var(--green-dim);box-shadow:0 0 22px rgba(0,255,65,.14),inset 0 0 30px rgba(0,255,65,.03);transform:translateY(-2px)}
+.card::before,.card::after{content:'';position:absolute;width:10px;height:10px;border-color:var(--green-dim);z-index:2;opacity:0;transition:opacity .2s}
+.card:hover::before{opacity:1;top:6px;left:6px;border-top:1.5px solid;border-left:1.5px solid}
+.card:hover::after{opacity:1;bottom:6px;right:6px;border-bottom:1.5px solid;border-right:1.5px solid}
+
+.card-img{width:100%;height:150px;background:#050a08 center/cover no-repeat;position:relative;border-bottom:1px solid var(--border)}
+.card-img.empty{display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:10px;letter-spacing:1.5px}
+.badge{position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:800;letter-spacing:1.5px;padding:4px 9px;border-radius:2px;border:1px solid;text-transform:uppercase;backdrop-filter:blur(2px);z-index:1}
+.badge-excelente{color:#ff5a3c;border-color:#ff5a3c;background:rgba(255,59,0,.12);animation:pulsebadge 1.4s ease-in-out infinite}
+.badge-boa{color:var(--yellow);border-color:var(--yellow);background:rgba(255,214,10,.1)}
+.badge-regular{color:var(--blue);border-color:var(--blue);background:rgba(63,169,245,.1)}
+.badge-fraca{color:var(--grey);border-color:var(--grey);background:rgba(90,106,99,.12)}
+@keyframes pulsebadge{0%,100%{opacity:1;box-shadow:0 0 6px rgba(255,90,60,.5)}50%{opacity:.55;box-shadow:0 0 2px rgba(255,90,60,.2)}}
+
+.card-score{position:absolute;top:8px;left:8px;font-size:10px;font-weight:800;color:var(--green);background:rgba(0,0,0,.55);border:1px solid var(--green-dim);padding:3px 7px;border-radius:2px;letter-spacing:1px}
+
+.card-body{padding:13px 14px 14px}
+.card-title{font-size:12.5px;color:var(--text);font-weight:600;line-height:1.4;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:35px}
+.card-loc{font-size:10.5px;color:var(--amber);letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.card-vals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;border-top:1px dashed var(--border2);border-bottom:1px dashed var(--border2);padding:9px 0}
+.card-vals .vlabel{font-size:8.5px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.card-vals .vval{font-size:12px;color:var(--text);font-weight:700}
+.card-vals .vval.discount{color:var(--green);text-shadow:0 0 6px rgba(0,255,65,.3)}
+.card-meta{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:12px}
+.card-meta .tipo{border:1px solid var(--border2);padding:2px 7px;border-radius:2px;color:var(--text2);letter-spacing:.5px}
+.card-cta{display:block;text-align:center;width:100%;background:transparent;border:1px solid var(--green-dim);color:var(--green);
+  padding:9px;font-family:inherit;font-weight:700;font-size:10.5px;letter-spacing:1.5px;cursor:pointer;border-radius:2px;
+  text-decoration:none;transition:all .15s}
+.card-cta:hover{background:rgba(0,255,65,.1);border-color:var(--green);box-shadow:0 0 14px rgba(0,255,65,.25)}
+
+.empty-state,.err-state{border:1px dashed var(--border2);padding:40px 20px;text-align:center;color:var(--text3);font-size:11.5px;letter-spacing:1px}
+.err-state{color:var(--red);border-color:rgba(255,59,48,.3)}
+.loading-feed{padding:30px;text-align:center;color:var(--text3);font-size:11px;letter-spacing:2px}
+
+@media(max-width:640px){
+  .topbar{padding:12px 14px}
+  .wrap{padding:16px 14px 40px}
+  .counter .n{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="l1">⌐ INICIALIZANDO PAINEL DE INTELIGÊNCIA ¬</div>
+  <div class="l2">verificando credenciais<span class="blink">_</span></div>
+</div>
+
+<div id="app" style="display:none">
+
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="dot"></span>
+      <span class="topbar-title">[ ALERTAS DE LEILÃO ]</span>
+      <span class="topbar-sub">STATUS: ATIVO</span>
+    </div>
+    <div class="topbar-actions">
+      <a class="tbtn" href="index.html">&lt; VOLTAR AO PAINEL</a>
+      <button class="tbtn" id="btn-logout">SAIR</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- PARTE A — PARÂMETROS DE BUSCA -->
+    <div class="crt-frame scan-target">
+      <div class="eyebrow"><span class="brk">⌐</span> ACESSO RESTRITO — CONFIGURAÇÃO DE ALVO <span class="brk">¬</span></div>
+      <h1 class="section-title">PARÂMETROS DE BUSCA</h1>
+      <div class="section-hint">defina os critérios de monitoramento. os alvos exibidos abaixo serão filtrados automaticamente.</div>
+
+      <form id="form-prefs">
+        <div class="grid-form">
+          <div class="field">
+            <label>Estados (UF)</label>
+            <input type="text" id="f-estados" placeholder="Ex: SP, RJ, GO">
+          </div>
+          <div class="field">
+            <label>Cidades</label>
+            <input type="text" id="f-cidades" placeholder="Ex: Praia Grande, Santos, Guarujá">
+          </div>
+          <div class="field">
+            <label>Valor máximo (R$)</label>
+            <input type="number" id="f-valor-max" placeholder="Sem limite" min="0" step="1000">
+          </div>
+          <div class="field">
+            <label>Desconto mínimo (%)</label>
+            <input type="number" id="f-desconto-min" value="30" min="0" max="100" step="1">
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:16px">
+          <label>Tipo de imóvel</label>
+          <div class="chk-row" id="tipos-row">
+            <label class="chk"><input type="checkbox" value="casa"> Casa</label>
+            <label class="chk"><input type="checkbox" value="apartamento"> Apartamento</label>
+            <label class="chk"><input type="checkbox" value="terreno"> Terreno</label>
+            <label class="chk"><input type="checkbox" value="comercial"> Comercial</label>
+            <label class="chk"><input type="checkbox" value="rural"> Rural</label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-term" id="btn-salvar">[ SALVAR PARÂMETROS ]</button>
+          <span id="pref-status"></span>
+        </div>
+      </form>
+    </div>
+
+    <!-- PARTE B — FEED DE OPORTUNIDADES -->
+    <div class="crt-frame scan-target">
+      <div class="eyebrow"><span class="brk">⌐</span> LISTA DE ALVOS MONITORADOS <span class="brk">¬</span></div>
+
+      <div class="feed-head">
+        <div class="counter">
+          <span class="n" id="counter-n">0</span>
+          <span class="lbl">ALVOS DETECTADOS</span>
+        </div>
+        <div class="quick-filters">
+          <button class="qf active" data-f="todos">[ TODOS ]</button>
+          <button class="qf" data-f="excelente">[ EXCELENTES ]</button>
+          <button class="qf" data-f="boa">[ BOAS ]</button>
+        </div>
+      </div>
+
+      <div id="feed-container">
+        <div class="loading-feed">varrendo a base de dados<span class="blink">_</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="/vendor/supabase.js" onerror="window._sbErr=true"></script>
+<script>if(window._sbErr){document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');}</script>
+<script>
+const SUPABASE_URL = 'https://vfmtntdaohuwitajxyqc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmbXRudGRhb2h1d2l0YWp4eXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3ODgyOTksImV4cCI6MjA5MjM2NDI5OX0.ZM5IcM2OhVL5koj68xqP22reVFQ4ZVOR9rJ9ovxeYVI';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let prefsRowId = null;
+let todosLeiloes = [];
+let filtroAtivo = 'todos';
+
+const TIPO_KEYWORDS = {
+  casa: ['casa'],
+  apartamento: ['apartamento', 'apto', 'flat', 'kitnet'],
+  terreno: ['terreno', 'lote'],
+  comercial: ['comercial', 'loja', 'sala', 'escritório', 'escritorio', 'galpão', 'galpao', 'prédio', 'predio', 'conjunto'],
+  rural: ['rural', 'fazenda', 'sítio', 'sitio', 'chácara', 'chacara', 'área rural', 'area rural'],
+};
+
+function normalizar(str) {
+  return (str || '').toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+function formatarMoeda(v) {
+  if (v === null || v === undefined) return 'N/D';
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
+}
+
+function formatarData(iso) {
+  if (!iso) return 'DATA N/D';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'DATA N/D';
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function init() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      window.location.href = '../auth.html?redirect=mentoria';
+      return;
+    }
+    currentUser = session.user;
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      await sb.auth.signOut();
+      window.location.href = '../auth.html';
+    });
+    document.getElementById('form-prefs').addEventListener('submit', salvarPreferencias);
+    document.querySelectorAll('#tipos-row .chk').forEach(chk => {
+      chk.addEventListener('click', () => setTimeout(() => chk.classList.toggle('on', chk.querySelector('input').checked), 0));
+    });
+    document.querySelectorAll('.qf').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.qf').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filtroAtivo = btn.dataset.f;
+        renderFeed();
+      });
+    });
+
+    await carregarPreferencias();
+    await carregarFeed();
+  } catch (err) {
+    console.error(err);
+    document.getElementById('loading').innerHTML = '<div class="l1" style="color:#ff3b30">⌐ FALHA NA INICIALIZAÇÃO ¬</div><div class="l2">' + (err.message || err) + '</div>';
+  }
+}
+
+async function carregarPreferencias() {
+  const { data, error } = await sb
+    .from('preferencias_leilao')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+
+  if (error) { console.error('preferencias_leilao:', error.message); return; }
+  if (!data) return;
+
+  prefsRowId = data.id;
+  document.getElementById('f-estados').value = (data.estados || []).join(', ');
+  document.getElementById('f-cidades').value = (data.cidades || []).join(', ');
+  document.getElementById('f-valor-max').value = data.valor_maximo || '';
+  document.getElementById('f-desconto-min').value = (data.desconto_minimo ?? 30);
+
+  const tipos = data.tipos_imovel || [];
+  document.querySelectorAll('#tipos-row .chk').forEach(chk => {
+    const input = chk.querySelector('input');
+    if (tipos.includes(input.value)) {
+      input.checked = true;
+      chk.classList.add('on');
+    }
+  });
+}
+
+function lerFormPreferencias() {
+  const estados = document.getElementById('f-estados').value
+    .split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+  const cidades = document.getElementById('f-cidades').value
+    .split(',').map(s => s.trim()).filter(Boolean);
+  const tipos_imovel = Array.from(document.querySelectorAll('#tipos-row input:checked')).map(i => i.value);
+  const valorMaxRaw = document.getElementById('f-valor-max').value;
+  const valor_maximo = valorMaxRaw ? Number(valorMaxRaw) : null;
+  const descontoRaw = document.getElementById('f-desconto-min').value;
+  const desconto_minimo = descontoRaw !== '' ? Number(descontoRaw) : 30;
+  return { estados, cidades, tipos_imovel, valor_maximo, desconto_minimo };
+}
+
+async function salvarPreferencias(ev) {
+  ev.preventDefault();
+  const btn = document.getElementById('btn-salvar');
+  const status = document.getElementById('pref-status');
+  btn.disabled = true;
+  status.className = '';
+  status.textContent = 'gravando parâmetros...';
+
+  try {
+    const payload = { ...lerFormPreferencias(), user_id: currentUser.id, ativo: true };
+
+    let error;
+    if (prefsRowId) {
+      ({ error } = await sb.from('preferencias_leilao').update(payload).eq('id', prefsRowId));
+    } else {
+      const { data, error: insErr } = await sb.from('preferencias_leilao').insert(payload).select('id').single();
+      error = insErr;
+      if (data) prefsRowId = data.id;
+    }
+
+    if (error) throw error;
+
+    status.className = 'ok';
+    status.textContent = '[ OK ] parâmetros salvos com sucesso';
+    await carregarFeed();
+  } catch (err) {
+    console.error(err);
+    status.className = 'err';
+    status.textContent = '[ ERRO ] ' + (err.message || 'falha ao gravar');
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => { status.textContent = ''; status.className = ''; }, 5000);
+  }
+}
+
+async function carregarFeed() {
+  const container = document.getElementById('feed-container');
+  container.innerHTML = '<div class="loading-feed">varrendo a base de dados<span class="blink">_</span></div>';
+
+  const { data, error } = await sb
+    .from('leiloes')
+    .select('id,titulo,cidade,estado,imagem_url,valor_avaliacao,valor_lance_minimo,percentual_desconto,data_leilao,classificacao,score,url_original,tipo_imovel,status')
+    .eq('status', 'ativo')
+    .order('score', { ascending: false })
+    .limit(300);
+
+  if (error) {
+    container.innerHTML = '<div class="err-state">⌐ FALHA AO CONSULTAR A BASE ¬<br>' + error.message + '</div>';
+    return;
+  }
+
+  const prefs = lerFormPreferencias();
+  const temPrefs = prefs.estados.length || prefs.cidades.length || prefs.tipos_imovel.length ||
+    prefs.valor_maximo || (prefs.desconto_minimo && prefs.desconto_minimo !== 30);
+
+  let filtrados = data || [];
+
+  if (temPrefs) {
+    const estadosNorm = prefs.estados.map(normalizar);
+    const cidadesNorm = prefs.cidades.map(normalizar);
+
+    filtrados = filtrados.filter(l => {
+      if (estadosNorm.length && !estadosNorm.includes(normalizar(l.estado))) return false;
+      if (cidadesNorm.length && !cidadesNorm.includes(normalizar(l.cidade))) return false;
+
+      if (prefs.tipos_imovel.length) {
+        const tipoNorm = normalizar(l.tipo_imovel);
+        const bate = prefs.tipos_imovel.some(t => (TIPO_KEYWORDS[t] || [t]).some(kw => tipoNorm.includes(kw)));
+        if (!bate) return false;
+      }
+
+      if (prefs.valor_maximo) {
+        const valorRef = l.valor_lance_minimo ?? l.valor_avaliacao;
+        if (valorRef === null || valorRef === undefined || valorRef > prefs.valor_maximo) return false;
+      }
+
+      if (prefs.desconto_minimo) {
+        if (l.percentual_desconto === null || l.percentual_desconto === undefined) return false;
+        if (l.percentual_desconto < prefs.desconto_minimo) return false;
+      }
+
+      return true;
+    });
+  } else {
+    filtrados = filtrados.slice(0, 20);
+  }
+
+  todosLeiloes = filtrados;
+  renderFeed();
+}
+
+function renderFeed() {
+  const container = document.getElementById('feed-container');
+  let lista = todosLeiloes;
+  if (filtroAtivo === 'excelente') lista = lista.filter(l => l.classificacao === 'excelente');
+  if (filtroAtivo === 'boa') lista = lista.filter(l => l.classificacao === 'boa');
+
+  document.getElementById('counter-n').textContent = lista.length;
+
+  if (lista.length === 0) {
+    container.innerHTML = '<div class="empty-state">⌐ NENHUM ALVO ENCONTRADO COM OS PARÂMETROS ATUAIS ¬<br>ajuste os filtros acima e tente novamente</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="cards">' + lista.map(renderCard).join('') + '</div>';
+}
+
+function renderCard(l) {
+  const classe = l.classificacao || 'fraca';
+  const img = l.imagem_url
+    ? '<div class="card-img" style="background-image:url(\'' + l.imagem_url.replace(/'/g, "\\'") + '\')"></div>'
+    : '<div class="card-img empty">[ SEM IMAGEM ]</div>';
+
+  const desconto = (l.percentual_desconto !== null && l.percentual_desconto !== undefined)
+    ? l.percentual_desconto + '%' : 'N/D';
+
+  return `
+    <div class="card">
+      ${img}
+      <span class="card-score">SCORE ${l.score ?? '—'}</span>
+      <span class="badge badge-${classe}">${classe}</span>
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(l.titulo || 'Sem título')}</div>
+        <div class="card-loc">📍 ${escapeHtml(l.cidade || 'N/D')}${l.estado ? ' / ' + escapeHtml(l.estado) : ''}</div>
+        <div class="card-vals">
+          <div>
+            <div class="vlabel">Avaliação</div>
+            <div class="vval">${formatarMoeda(l.valor_avaliacao)}</div>
+          </div>
+          <div>
+            <div class="vlabel">Lance mínimo</div>
+            <div class="vval discount">${formatarMoeda(l.valor_lance_minimo)}</div>
+          </div>
+        </div>
+        <div class="card-meta">
+          <span class="tipo">${escapeHtml(l.tipo_imovel || 'imóvel')}</span>
+          <span>desconto ${desconto}</span>
+        </div>
+        <div class="card-meta" style="margin-bottom:12px">
+          <span>🗓 ${formatarData(l.data_leilao)}</span>
+        </div>
+        <a class="card-cta" href="${escapeHtml(l.url_original || '#')}" target="_blank" rel="noopener noreferrer">[ ACESSAR FONTE ]</a>
+      </div>
+    </div>`;
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str ?? '';
+  return d.innerHTML;
+}
+
+init();
+</script>
+</body>
+</html>
