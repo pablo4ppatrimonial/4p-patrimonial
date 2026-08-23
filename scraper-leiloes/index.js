@@ -1,6 +1,10 @@
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 const megaleiloes = require('./fontes/megaleiloes');
+const portalzuk = require('./fontes/portalzuk');
+const freitasleiloeiro = require('./fontes/freitasleiloeiro');
+
+const FONTES = [megaleiloes, portalzuk, freitasleiloeiro];
 
 const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
 
@@ -10,6 +14,15 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function randomDelay() {
+  const ms = 1000 + Math.random() * 1000;
+  return delay(ms);
+}
 
 async function salvarLeiloes(imoveis) {
   if (imoveis.length === 0) return 0;
@@ -24,12 +37,29 @@ async function salvarLeiloes(imoveis) {
 }
 
 async function main() {
-  console.log('Coletando imóveis em leilão (Mega Leilões)...');
-  const imoveis = await megaleiloes.coletar(3);
-  console.log(`Coletados ${imoveis.length} imóveis na listagem.`);
+  const coletadosPorFonte = {};
+  const todosImoveis = [];
 
-  const salvos = await salvarLeiloes(imoveis);
+  for (let i = 0; i < FONTES.length; i += 1) {
+    const fonte = FONTES[i];
+    console.log(`Coletando imóveis em leilão (${fonte.FONTE})...`);
+    try {
+      const imoveis = await fonte.coletar();
+      console.log(`  -> ${imoveis.length} imóveis coletados de ${fonte.FONTE}`);
+      coletadosPorFonte[fonte.FONTE] = imoveis.length;
+      todosImoveis.push(...imoveis);
+    } catch (err) {
+      console.error(`  -> erro ao coletar ${fonte.FONTE}:`, err.message || err);
+      coletadosPorFonte[fonte.FONTE] = 0;
+    }
+    if (i < FONTES.length - 1) await randomDelay();
+  }
+
+  console.log(`Total coletado: ${todosImoveis.length} imóveis`);
+
+  const salvos = await salvarLeiloes(todosImoveis);
   console.log(`Leilões salvos/atualizados no Supabase: ${salvos}`);
+  console.log('Resumo por fonte (coletados):', coletadosPorFonte);
 }
 
 main().catch((err) => {
