@@ -1,0 +1,17 @@
+{
+  "name": "scraper-leiloes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Coletor de dados de leiloes de imoveis para o Supabase",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5"
+  }
+}

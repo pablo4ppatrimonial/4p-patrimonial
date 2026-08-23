@@ -1,0 +1,33 @@
+name: Scraper de Leilões
+
+on:
+  schedule:
+    # 6h da manhã em Brasília (UTC-3, sem horário de verão) = 9h UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scraper-leiloes
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: scraper-leiloes/package-lock.json
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Rodar scraper
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node index.js
