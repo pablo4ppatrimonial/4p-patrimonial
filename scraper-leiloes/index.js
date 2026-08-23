@@ -3,6 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const megaleiloes = require('./fontes/megaleiloes');
 const portalzuk = require('./fontes/portalzuk');
 const freitasleiloeiro = require('./fontes/freitasleiloeiro');
+const { pontuarLeiloes } = require('./pontuacao');
 
 const FONTES = [megaleiloes, portalzuk, freitasleiloeiro];
 
@@ -60,6 +61,9 @@ async function main() {
   const salvos = await salvarLeiloes(todosImoveis);
   console.log(`Leilões salvos/atualizados no Supabase: ${salvos}`);
   console.log('Resumo por fonte (coletados):', coletadosPorFonte);
+
+  console.log('\nCalculando pontuação dos leilões ativos...');
+  await pontuarLeiloes(supabase);
 }
 
 main().catch((err) => {
